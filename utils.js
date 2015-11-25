@@ -12,7 +12,7 @@ module.exports = {
 	IAM: function(mode,cb){
         switch(mode){
     		case('dir'):
-                hf({files:['./cbt_tunnels.js','./test.js','./gfx.js','./utils.js','./package.json','./tunnel_start.js'],algorithm:'sha512'},function(err,hash){
+                hf({files:['./cbt_tunnels.js','./test.js','./gfx.js','./utils.js','./tunnel_start.js'],algorithm:'sha512'},function(err,hash){
         			if(!err&&hash){
         				cb(null,hash);
 
