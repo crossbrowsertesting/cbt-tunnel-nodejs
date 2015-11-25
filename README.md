@@ -4,7 +4,7 @@
 
 There are three options provided for you to do this:
 
-&nbsp;&nbsp;&nbsp;&nbsp;#####simpleproxy:<br>
+#####simpleproxy:<br>
 
 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.<br>
 
