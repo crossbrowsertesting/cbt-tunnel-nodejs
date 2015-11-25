@@ -8,7 +8,7 @@ There are three options provided for you to do this:
 
 	This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.
 
-	Basic usage: 'node startTunnel.js --username USERNAME --authkey AUTHKEY --simpleproxy'
+	Basic usage: 'node tunnel_start.js --username USERNAME --authkey AUTHKEY --simpleproxy'
 
 #####webserver:<br>
 

@@ -1,12 +1,12 @@
 var CLI = require('clui'),
     clc = require('cli-color'),
     os  = require('os'),
-    //blessed = require('blessed')
 	blessed = require('blessed'),
 	_ = require('lodash'),
 	utils = require('./utils.js');
 
 var Line        = CLI.Line,
+	LineBuffer	= CLI.LineBuffer,
 	Gauge       = CLI.Gauge,
 	Sparkline   = CLI.Sparkline,
 	drawTimeout,
@@ -15,6 +15,8 @@ var Line        = CLI.Line,
 
 module.exports = {
 	draw: function(inbound,outbound) {
+		console.log('\u001b[2J');
+		console.log('\u001b[100;0H');
 		var blankLine = new Line().fill().output();
 		blankLine.output();
 
