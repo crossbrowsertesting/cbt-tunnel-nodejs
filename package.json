@@ -1,6 +1,6 @@
 {
   "name": "cbt_tunnels",
-  "version": "0.0.0",
+  "version": "0.0.01",
   "description": "This module offers connectivity to CrossBrowserTesting.com for websites that are behind a firewall, static and unhosted, or accessible only by proxy.",
   "main": "tunnel_start.js",
   "dependencies": {
