@@ -12,14 +12,13 @@ module.exports = {
 	IAM: function(mode,cb){
         switch(mode){
     		case('dir'):
-                console.log(ls(''));
                 hf({files:['./cbt_tunnels.js','./test.js','./gfx.js','./utils.js','./package.json','./tunnel_start.js'],algorithm:'sha512'},function(err,hash){
-                    if(!err&&!_.isNull(hash)){
-                        console.log(hash);
-                        cb(null,hash);
-                    }else{
-                        cb(err,null);
-                    }
+        			if(!err&&hash){
+        				cb(null,hash);
+
+        			}else{
+        				cb(err,null);
+        			}
         		});
                 break;
             case('tar'):

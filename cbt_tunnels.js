@@ -169,8 +169,20 @@ function cbtSocket(params) {
         conn.on("dead", function(){
             clearInterval(self.drawTimeout);
             popper(msgs.dead(),'dead',params);
+            setTimeout(function(){
+                self.end(function(err,killit){
+                    if(!err&&killit==='killit'){
+                        process.exit(0);
+                    }else if(err){
+                        console.log(err);
+                        setTimeout(function(){
+                            process.exit(1);
+                        },10000);
+                    }
+                },10000);
+            });
         });
-
+        
         conn.on('old',function(data){
             clearInterval(self.drawTimeout);
             popper(msgs.old(),'old',params);
