@@ -2,7 +2,6 @@ var CLI = require('clui'),
     clc = require('cli-color'),
     os  = require('os'),
     //blessed = require('blessed')
-	term = require( 'terminal-kit' ).terminal,
 	blessed = require('blessed'),
 	_ = require('lodash'),
 	utils = require('./utils.js');
@@ -16,7 +15,6 @@ var Line        = CLI.Line,
 
 module.exports = {
 	draw: function(inbound,outbound) {
-		term.eraseDisplay();
 		var blankLine = new Line().fill().output();
 		blankLine.output();
 
