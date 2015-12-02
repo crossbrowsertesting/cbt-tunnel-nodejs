@@ -1,34 +1,38 @@
 {
   "name": "cbt_tunnels",
-  "version": "0.0.11",
-  "description": "This module offers connectivity to CrossBrowserTesting.com for websites that are behind a firewall, static and unhosted, or accessible only by proxy.",
-  "main": "tunnel_start.js",
+  "version": "0.0.14",
+  "description": "Creates a local connection to CrossBrowserTesting.com which allows you to test sites behind your firewall or to access web pages that are saved locally on your machine. In just a few seconds, you can establish a connection which allows you to do live testing, screenshots, or run Selenium scripts against any of the internal sites you have access to.  This command line version uses WSS (secure websockets over https, port 443) to create the local connection.  It can be scripted, so it is useful if you want to initiate a local connection programmatically before running automated javascript, screenshots, or selenium tests.",
   "dependencies": {
     "blessed": "^0.1.81",
     "cli-color": "^1.1.0",
     "clui": "^0.3.1",
-    "express": "^4.13.3",
-    "hash-files": "^1.0.0",
     "lodash": "^3.10.1",
     "request": "^2.67.0",
-    "serve-index": "^1.7.2",
-    "serve-static": "^1.10.0",
-    "shelljs": "^0.5.3",
-    "socket.io-client": "^1.3.7",
     "yargs": "^3.30.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "test.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/crossbrowsertesting/cbt_tunnels.git"
   },
-  "author": "Warner Johnson : CrossBrowserTesting.com <warner@crossbrowsertesting.com> (https://crossbrowsertesting.com/)",
+  "keywords": [
+    "CrossBrowserTesting.com",
+    "CrossBrowserTesting",
+    "CBT",
+    "browser",
+    "testing"
+  ],
+  "author": "Warner Johnson : CrossBrowserTesting.com <warner@crossbrowsertesting.com> (https://github.com/crossbrowsertesting/)",
+  "preferGlobal": true,
+  "bin": {
+    "cbt_tunnels": "tunnel_start.js"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/crossbrowsertesting/cbt_tunnels/issues"
   },
-  "homepage": "https://crossbrowsertesting.com"
+  "homepage": "https://github.com/crossbrowsertesting/cbt_tunnels#readme"
 }

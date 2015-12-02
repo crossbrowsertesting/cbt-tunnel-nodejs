@@ -1,6 +1,5 @@
 var net = require('net'),
     tls = require('tls'),
-    fs = require('fs'),
     connection_list = {},
     request = require('request'),
     _ = require('lodash'),
@@ -141,20 +140,7 @@ function cbtSocket(params) {
         });
 
         conn.on("hello", function() {
-            utils.IAM('dir',function(err,data){
-                if(!err && !_.isNull(data)){
-                    conn.emit('established',{is: data});
-                    console.log('Sent hash to server...');
-                }else if(err){
-                    popper(err+"\n"+data);
-                    self.end(function(err,killit){
-                        console.log(err);
-                        setTimeout(function(){
-                            process.exit(1);
-                        },10000);
-                    });
-                }
-            });
+            conn.emit('established');
         });
 
         conn.on("progress",function(data){
@@ -162,30 +148,8 @@ function cbtSocket(params) {
             console.log(data);
         });
 
-        conn.on("legit", function(data) {
-            console.log('cbt_tunnels.js is current version!');
-        });
-
-        conn.on("dead", function(){
-            clearInterval(self.drawTimeout);
-            popper(msgs.dead(),'dead',params);
-            setTimeout(function(){
-                self.end(function(err,killit){
-                    if(!err&&killit==='killit'){
-                        process.exit(0);
-                    }else if(err){
-                        console.log(err);
-                        setTimeout(function(){
-                            process.exit(1);
-                        },10000);
-                    }
-                },10000);
-            });
-        });
-        
-        conn.on('old',function(data){
-            clearInterval(self.drawTimeout);
-            popper(msgs.old(),'old',params);
+        conn.on('versions',function(data){
+            utils.checkVersion(data,params);
         });
 
         conn.on("data", function(data,fn){

@@ -41,6 +41,14 @@ module.exports = {
 			.output();
 
 		blankLine.output();
+
+		var quitLine = new Line()
+			.padding(2)
+			.column('(to quit cbt_tunnels, press ctrl+c)',100,[clc.cyan])
+			.fill()
+			.output();
+
+		blankLine.output();
 	},
 
 	popper: function(message,subContent,params){
@@ -114,15 +122,7 @@ module.exports = {
 
 	msgs: {
 		help: function(){
-		    return "{bold}cbt_tunnels.js is a simple program that allows you to test websites that are otherwise inaccessible to our service.{/bold}\n\n{left}There are three options provided for you to do this:\n\n{underline}simpleproxy:\n{/underline}This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.\nBasic usage:\n    'node startTunnel.js --username USERNAME --authkey AUTHKEY --simpleproxy'\n\n{underline}webserver:\n{/underline}This allows you to host static files on your computer that are not currently hosted on a server, as well as routing through your computer to access local,\nprivileged sites.\nBasic usage:\n    'node tunnel_start.js --authkey AUTHKEY --password PASSWORD --webserver --dir PATH/TO/DIR --port OPENPORT'\n\n{underline}tunnel:\n{/underline}The tunnel still routes through your computer to download site data, but it further directs that connection \nthrough a proxy of your choosing (always be wary in choosing a proxy--free and unsecure proxies are known to steal personal data).\nBasic usage:\n    'node tunnel_start.js --username USERNAME --authkey AUTHKEY --tunnel --proxyIp PROXYIP --proxyPort PROXYPORT'\n\n{underline}Further flags:\n{/underline}    '--kill KILLFILENAME'  |  Appending this flag allows you specify the\n                           |  name of a 'kill file' that if placed in \n                           |  the current directory will cause the \n                           |  program to gracefully shutdown.\n{underline}_                          |\n{/underline}    '--v'                  |  Specifiying this flag enables verbose \n                           |  mode; you'll see most of the\n                           |  traffic handling.\n{underline}_                          |\n{/underline}\n\n{bold}Exit: q, ESC, or CTRL+C{/bold}{/left}";
-		},
-
-		old: function(){
-			return "{bold}Your version of cbt_tunnels is out-of-date, but still supported. In order to update it now:{/bold}\n\n - Exit this program\n - Navigate to the node_modules directory where cbt_tunnels is installed\n - Run: npm remove cbt_tunnels\n - Run: npm install cbt_tunnels\n\n(hit q, ESC, or CTRL+C to exit this screen)";
-		},
-
-		dead: function(){
-			return "{bold}Your version of cbt_tunnels is out-of-date and no longer supported. You cannot connect to the CrossBrowserTesting servers with it. In order to update it now:{/bold}\n\n - Exit this program\n - Navigate to the node_modules directory where cbt_tunnels is installed\n - Run: npm remove cbt_tunnels\n - Run: npm install cbt_tunnels\n\n(hit q, ESC, or CTRL+C to exit)";
+		    return "{bold}Creates a local connection to CrossBrowserTesting.com which allows you to test sites behind your firewall or to access web pages that are saved locally on your machine. In just a few seconds, you can establish a connection which allows you to do live testing, screenshots, or run Selenium scripts against any of the internal sites you have access to.  This command line version uses WSS (secure websockets over https, port 443) to create the local connection.  It can be scripted, so it is useful if you want to initiate a local connection programmatically before running automated javascript, screenshots, or selenium tests.{/bold}\n\n{left}There are three options provided for you to do this:\n\n{underline}simpleproxy:\n{/underline}This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.\nBasic usage:\n    'node startTunnel.js --username USERNAME --authkey AUTHKEY --simpleproxy'\n\n{underline}webserver:\n{/underline}This allows you to host static files on your computer that are not currently hosted on a server, as well as routing through your computer to access local,\nprivileged sites.\nBasic usage:\n    'node tunnel_start.js --authkey AUTHKEY --password PASSWORD --webserver --dir PATH/TO/DIR --port OPENPORT'\n\n{underline}tunnel:\n{/underline}The tunnel still routes through your computer to download site data, but it further directs that connection \nthrough a proxy of your choosing (always be wary in choosing a proxy--free and unsecure proxies are known to steal personal data).\nBasic usage:\n    'node tunnel_start.js --username USERNAME --authkey AUTHKEY --tunnel --proxyIp PROXYIP --proxyPort PROXYPORT'\n\n{underline}Further flags:\n{/underline}    '--kill KILLFILENAME'  |  Appending this flag allows you specify the\n                           |  name of a 'kill file' that if placed in \n                           |  the current directory will cause the \n                           |  program to gracefully shutdown.\n{underline}_                          |\n{/underline}    '--v'                  |  Specifiying this flag enables verbose \n                           |  mode; you'll see most of the\n                           |  traffic handling.\n{underline}_                          |\n{/underline}\n\n{bold}Exit: q, ESC, or CTRL+C{/bold}{/left}";
 		}
 	}
 

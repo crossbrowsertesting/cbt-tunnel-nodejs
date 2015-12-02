@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 var _ = require('lodash'),
     request = require('request'),
     cbtSocket = (require('./cbt_tunnels')),
@@ -24,7 +26,7 @@ var argCheck = function(){
         msgs.help();
     }
     if((_.isUndefined(argv.username)) || (_.isNull(argv.username))){
-        popper('You must specify a username.\n(click here for help, or run with the --h or --help flags)',msgs.help(),agrv);
+        popper('You must specify a username.\n(click here for help, or run with the --h or --help flags)',msgs.help(),argv);
         return;
     }else if((_.isUndefined(argv.authkey)) || _.isNull(argv.authkey)){
         popper('You must specifiy an authkey.\n(click here for help, or run with the --h or --help flags)',msgs.help(),argv);
@@ -212,9 +214,6 @@ var startTunnel = function(params){
                         if(!err&&data){
                             console.log('Put...ed? Placed! Placed...');
                             console.log('Completely connected!');
-                            if(!argv.v){
-                                cbts.spin();
-                            }
                         }else{
                             console.log(err);
 
