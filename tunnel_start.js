@@ -7,8 +7,8 @@ var _ = require('lodash'),
     fs = require('fs'),
     cbts = null,
     gfx = require('./gfx.js'),
-    msgs = gfx.msgs,
-    popper = gfx.popper,
+    warn = gfx.warn,
+    help = gfx.help,
     cbtUrls = {
         server: "crossbrowsertesting.com", 
         node: "app.crossbrowsertesting.com"
@@ -23,13 +23,16 @@ var debug = _.filter(process.argv, function(arg){
 var argCheck = function(){
     var count = 0;
     if(argv.h || argv.help){
-        msgs.help();
+        help();
     }
     if((_.isUndefined(argv.username)) || (_.isNull(argv.username))){
-        popper('You must specify a username.\n(click here for help, or run with the --h or --help flags)',msgs.help(),argv);
+        warn('You must specify a username.\n');
+        help();
+
         return;
     }else if((_.isUndefined(argv.authkey)) || _.isNull(argv.authkey)){
-        popper('You must specifiy an authkey.\n(click here for help, or run with the --h or --help flags)',msgs.help(),argv);
+        warn('You must specifiy an authkey.\n');
+        help();
         return;
     }
     for(param in argv){
@@ -39,10 +42,11 @@ var argCheck = function(){
         }
     }
     if(count>1){
-        popper('Too many tunnel types specifed. You must specify the type of tunnel with one,\nand only one, of the following flags:\n  --simpleproxy\n  --webserver\n  --tunnel\nEvery flag excepting simpleproxy requires additional parameters.\n\n{bold}(click here for help, or run this again with the --h or --help flag)\n\nExit: q, ESC, or CTRL+C{/bold}',msgs.help(),argv);
+        warn('Too many tunnel types specifed. You must specify the type of tunnel with one,\nand only one, of the following flags:\n  --simpleproxy\n  --webserver\n  --tunnel\nEvery flag excepting simpleproxy requires additional parameters.\n\n');
+        help();
         return;
     }else if(count<=0){
-        console.log('No tunnel type specified. Defaulting to simpleproxy.');
+        warn('No tunnel type specified. Defaulting to simpleproxy.');
         return 'simpleproxy';
     }else{
         return tType;
@@ -78,9 +82,11 @@ var cmdParse = function(){
                             _.merge(params,opts);
                             startTunnel(params);
                         }else if(_.isUndefined(argv.proxyIp)||_.isNull(argv.proxyIp)){
-                            popper('You must specify the proxy IP (--proxyIp) to create a tunnel.\n\n{bold}(click here for help, or run this again with the --h or --help flag)\n\nExit: q, ESC, or CTRL+C{/bold}',msgs.help(),params);
+                            warn('You must specify the proxy IP (--proxyIp) to create a tunnel.\n\n');
+                            help();
                         }else{
-                            popper('You must specify the proxy port (--proxyPort) to create a tunnel.\n\n{bold}(click here for help, or run this again with the --h or --help flag)\n\nExit: q, ESC, or CTRL+C{/bold}',msgs.help(),params);
+                            warn('You must specify the proxy port (--proxyPort) to create a tunnel.\n\n');
+                            help();
                         }
                     break;
                     case 'webserver':
@@ -92,9 +98,11 @@ var cmdParse = function(){
                             _.merge(params,opts);
                             startTunnel(params);
                         }else if(_.isUndefined(argv.dir)||_.isNull(argv.dir)){
-                            popper('You must specifiy a directory (--dir) to create a webserver.\n\n{bold}(click here for help, or run this again with the --h or --help flag)\n\nExit: q, ESC, or CTRL+C{/bold}',msgs.help(),params);
+                            warn('You must specifiy a directory (--dir) to create a webserver.\n\n');
+                            help();
                         }else{
-                            popper('You must specifiy a server port (--port) to create a webserver.\n\n{bold}(click here for help, or run this again with the --h or --help flag)\n\nExit: q, ESC, or CTRL+C{/bold}',msgs.help(),params);
+                            warn('You must specifiy a server port (--port) to create a webserver.\n\n');
+                            help();
                         }
                         break;
                     default:
@@ -289,7 +297,8 @@ var isDebug = function(){
 
         default:
             if((Object.keys(argv)).length<=2){
-                popper('You need to specify at least a few parameters to create a tunnel.\n\n{bold}(click here for help, or run this again with the --h or --help flag)\n\nExit: q, ESC, or CTRL+C{/bold}',msgs.help(),argv);
+                warn('You need to specify at least a few parameters to create a tunnel.\n\n');
+                help();
             }else{
                 cmdParse();
             }

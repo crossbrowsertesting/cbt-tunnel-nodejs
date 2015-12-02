@@ -4,8 +4,6 @@ var net = require('net'),
     request = require('request'),
     _ = require('lodash'),
     gfx = require('./gfx.js'),
-    popper = gfx.popper,
-    msgs = gfx.msgs,
     utils  = require('./utils.js');
 
 function pad(n, width, z) {
@@ -302,20 +300,20 @@ function cbtSocket(params) {
         });
     }
 
-    self.spin = function(){
+    self.spin = function(old){
         inbound = 0;
         outbound = 0;
-        gfx.draw(getInbound(),getOutbound());
+        gfx.draw(getInbound(),getOutbound(),old);
         self.drawTimeout = setInterval(function(){
-            gfx.draw(getInbound(),getOutbound());
+            gfx.draw(getInbound(),getOutbound(),old);
             inbound = 0;
             outbound = 0;
         }, 1000);
         process.stdout.on('resize', function() {
             clearInterval(self.drawTimeout);
-            gfx.draw(getInbound(),getOutbound());
+            gfx.draw(getInbound(),getOutbound(),old);
             self.drawTimeout = setInterval(function(){
-                gfx.draw(getInbound(),getOutbound());
+                gfx.draw(getInbound(),getOutbound(),old);
                 inbound = 0;
                 outbound = 0;
             }, 1000);

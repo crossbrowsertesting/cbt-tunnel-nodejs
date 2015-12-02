@@ -1,23 +1,25 @@
 var NPM_CONFIG_LOGLEVEL = 'verbose';
 var _ = require('lodash'),
     gfx = require('./gfx.js'),
-    popper = gfx.popper,
-    msgs = gfx.msgs,
-    version = '0.0.14';
+    warn = gfx.warn,
+    help = gfx.help,
+    version = '0.0.16';
 
 module.exports = {
     checkVersion: function(data,params){
         var gfx = require('./gfx.js'),
-            popper = gfx.popper;
+            warn = gfx.warn,
+            help = gfx.help;
         data=JSON.parse(data);
         if(data.current!==version){
             if(_.indexOf(data.old,version)>-1){
-                popper(data.msgs.old.replace('nnnn','\n'),'old',params);
+                params.context.spin({msg: data.msgs.old.replace('nnnn','\n\n\t')});
             }else{
-                popper(data.msgs.dead.replace('nnnn','\n'),'dead',params);
+                warn(data.msgs.dead.replace('nnnn','\n\n\t'));
+                warn('To upgrade cbt_tunnels: npm update -g cbt_tunnels');
             }
         }else{
-            params.context.spin();
+            params.context.spin(false);
         }
     },
     killLever: function(cbts){
