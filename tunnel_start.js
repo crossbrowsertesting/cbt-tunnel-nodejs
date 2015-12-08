@@ -152,7 +152,7 @@ var postTunnel = function(username,authkey,tType,cb){
             authorization: 'authorized '+auth
         },
         qs: {
-            tunnel_source: 'chromeext',
+            tunnel_source: 'nodews',
             tunnel_type: tType
         }
     }
@@ -185,7 +185,7 @@ var putTunnel = function(username,authkey,params,data,cb){
             local_port: (_.isUndefined(params.port) ? '' : params.port),
             message:'SUCCESS',
             state:'1',
-            tunnel_source: 'chromeext',
+            tunnel_source: 'nodews',
             tunnel_type: params.tType
         }
     }
