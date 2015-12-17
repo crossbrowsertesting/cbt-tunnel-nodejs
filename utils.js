@@ -3,25 +3,29 @@ var _ = require('lodash'),
     gfx = require('./gfx.js'),
     warn = gfx.warn,
     help = gfx.help,
-    version = '0.0.17';
+    version = '0.0.18';
 
 module.exports = {
     checkVersion: function(data,params){
         var gfx = require('./gfx.js'),
             warn = gfx.warn,
             help = gfx.help;
+
         data=JSON.parse(data);
         if(data.current!==version){
             if(_.indexOf(data.old,version)>-1){
                 params.context.spin({msg: data.msgs.old.replace('nnnn','\n\n\t')});
             }else{
                 warn(data.msgs.dead.replace('nnnn','\n\n\t'));
-                warn('To upgrade cbt_tunnels: npm update -g cbt_tunnels');
+                params.context.endWrap();
             }
         }else{
-            params.context.spin(false);
+            if(!params.verbose){
+                params.context.spin();
+            }
         }
     },
+
     killLever: function(cbts){
         process.on('SIGINT',function(){
             console.log('\nAttempting a graceful shutdown...');

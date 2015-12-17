@@ -4,6 +4,7 @@ var net = require('net'),
     request = require('request'),
     _ = require('lodash'),
     gfx = require('./gfx.js'),
+    warn = gfx.warn,
     utils  = require('./utils.js');
 
 function pad(n, width, z) {
@@ -29,81 +30,76 @@ function cbtSocket(params) {
     }
 
 
-    self.startStaticServer = function(){
+    self.startStaticServer = function(attempt){
         self.localServe = require('express')();
         self.serveDir = require('serve-index');
         self.serveStatic = require('serve-static');
         self.directory = params.directory;
-        var sPort = self.sPort = params.port;
-        self.localServe.use('/', self.serveDir(self.directory, {'icons': true}));
+        var sPort = self.sPort = params.port || 8080+attempt;
+        self.localServe.use('/', self.serveDir(self.directory, {'icons': true, 'hidden': true, 'view':'details'}));
         self.localServe.use('/', self.serveStatic(self.directory));
         self.server = self.localServe.listen(sPort);
-        console.log("Server listening on "+sPort);
+        self.server.on('error',function(err){
+            if(err.code == 'EADDRINUSE' && attempt<9 && (!params.port)){
+                warn('Port '+(8080+attempt)+' in use');
+                self.startStaticServer(attempt+1);
+            }else if(attempt>=9){
+                warn('Tried serving local directory on ports 8080-8089--all appear to be in use. Please specify a custom port using the --port flag.');
+                self.endWrap();
+            }else if(params.port){
+                warn(params.port+' in use. Please choose a different port.');
+                self.endWrap();
+            }else{
+                warn('Error starting webserver.');
+                self.endWrap();
+            }
+        });
+        self.server.on('listening',function(){
+            console.log('Server listening on port '+sPort);
+        })
     }
 
-    if(!params.debug){
-        var tType = self.tType = params.tType;
-        self.auth_header = (new Buffer(params.username+':'+params.authkey)).toString('base64');
-        self.t = params.t;
-        self.userId = params.userId;
-        self.authkey = params.authkey;
-        self.qPort = (params.bytecode ? pad((params.tcpPort-11000),3) : pad((params.tcpPort-11000), 3));
-        self.wsPort = params.tcpPort+1000;
-        self.cbtServer = 'https://' + params.cbtServer;
-        self.path = '/wsstunnel' + self.qPort + '/socket.io';
-        self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
-        self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
-        switch(tType){
-            case 'simple':
-            break;
-            case 'webserver':
-                self.startStaticServer();
-            break;
-            case 'tunnel':
-                var tType = self.tType = 'tunnel';
-                var port = proxyPort = params.proxyPort;
-                var host = proxyHost = params.proxyIp;
-            break;
-            default:
-        }
-        var conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, timeout: 999999999});
-
-    }else{
-        var tType = self.tType = params.tType;
-        self.cbtServer = 'http://127.0.0.1:10000';
-        self.path = (tType==='tunnel' ? '/wsstunnel-2000/socket.io/':'/wsstunnel-4000/socket.io/');
-        self.query = 'userid=0&authkey=0&EIO=3&t=0&transport=polling';
-        var conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query});
-        switch(tType){
-            case 'simple':
-            break;
-            case 'server':
-                self.localServe = require('express')();
-                self.serveDir = require('serve-index');
-                self.serveStatic = require('serve-static');
-                self.directory = '/Users/bosh/Documents/';
-                var sPort = self.sPort = 11000;
-                self.startStaticServer(sPort);
-            break;
-            case 'tunnel':
-                var tType = self.tType = 'tunnel';
-                var port = proxyPort = '8888';
-                var host = proxyHost = '127.0.0.1';
-            break;
-            default:
-
-        }
+    var tType = self.tType = params.tType;
+    self.auth_header = (new Buffer(params.username+':'+params.authkey)).toString('base64');
+    self.t = params.t;
+    self.userId = params.userId;
+    self.authkey = params.authkey;
+    self.qPort = (params.bytecode ? pad((params.tcpPort-11000),3) : pad((params.tcpPort-11000), 3));
+    self.wsPort = params.tcpPort+1000;
+    self.cbtServer = 'https://' + params.cbtServer;
+    self.path = '/wsstunnel' + self.qPort + '/socket.io';
+    self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
+    self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
+    switch(tType){
+        case 'simple':
+        break;
+        case 'webserver':
+            self.startStaticServer(0);
+        break;
+        case 'tunnel':
+            var tType = self.tType = 'tunnel';
+            var port = proxyPort = params.proxyPort;
+            var host = proxyHost = params.proxyIp;
+        break;
+        default:
     }
+    var conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true});
 
     self.start = function(cb){
+
+        var ping = setInterval(function(){
+            conn.emit('ping');
+        },10000);
 
         console.log('Started connection attempt!');
 
         conn.on('reconnect_error',function(e){
+            console.log('Reconnect error');
             console.log(e);
         });
 
         conn.on('connect_error',function(e){
+            console.log('Connect error');
             console.log(e);
         });
 
@@ -114,7 +110,7 @@ function cbtSocket(params) {
         });
 
         conn.on('connect',function(){
-            console.log('Connected!');
+            console.log('Connecting as '+self.tType+'...');
             cb(null,self);
         });
 
@@ -122,19 +118,10 @@ function cbtSocket(params) {
             console.log('Reconnected! ...?');
         });
 
-        conn.on("disconnect", function(data,err){
+        conn.on("disconnect", function(data){
             console.log(data);
-            console.log("Server.js disconnected.");
-            self.end(function(err,killit){
-                if(!err&&killit==='killit'){
-                    process.exit(1);
-                }else if(err){
-                    console.log(err);
-                    setTimeout(function(){
-                        process.exit(1);
-                    },10000);
-                }
-            });
+            console.log("CBT server disconnected.");
+            self.endWrap();
         });
 
         conn.on("hello", function() {
@@ -152,6 +139,7 @@ function cbtSocket(params) {
 
         conn.on("data", function(data,fn){
             var id = data.id;
+
             if (!connection_list[id]) {
                 connection_list[id] = { id : data.id , client : null };
                 connection_list[id].established=false;
@@ -179,7 +167,10 @@ function cbtSocket(params) {
                 inbound += 1;
                 var port = self.port = ( tType==='tunnel' ? proxyPort : data.port );
                 var host = self.host = ( tType==='tunnel' ? proxyHost : data.host );
-                if(host==='local'){
+                if(host==='local'&&self.tType==='webserver'){
+                    host='localhost';
+                    port = self.sPort;
+                }else if(host==='local'){
                     host='localhost';
                 }
                 if(params.verbose){
@@ -200,8 +191,10 @@ function cbtSocket(params) {
                 });
             
                 client.on('error',function(error){
-                    console.log('Error on '+id+'!');
-                    console.log(error.stack);
+                    if(params.verbose){
+                        console.log('Error on '+id+'!');
+                        console.log(error.stack);
+                    }
                     conn.emit("htmlrecv", 
                         { id : id, data : null, finished : true }
                     );
@@ -261,7 +254,7 @@ function cbtSocket(params) {
                         if(params.verbose){
                             console.log(id+" socket closed by external site.");
                         }
-                        if(err){
+                        if(err&&params.verbose){
                             console.log('Error on close of '+id);
                         }
                         conn.emit("htmlrecv", 
@@ -277,7 +270,7 @@ function cbtSocket(params) {
             if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
                 client=connection_list[id].client;
                 client.write(data.data, function(err){
-                    if(err){
+                    if(err&&params.verbose){
                         console.log("Error writing!");
                         console.log(err);
                         conn.emit("htmlrecv", 
@@ -290,7 +283,6 @@ function cbtSocket(params) {
                     }
                     outbound+=1;
                     if(params.verbose){
-                        console.log(outbound);
                         console.log(id, 'Wrote to '+id);
                     }
 
@@ -303,17 +295,17 @@ function cbtSocket(params) {
     self.spin = function(old){
         inbound = 0;
         outbound = 0;
-        gfx.draw(getInbound(),getOutbound(),old);
+        gfx.draw(getInbound(),getOutbound(),old,self.tType);
         self.drawTimeout = setInterval(function(){
-            gfx.draw(getInbound(),getOutbound(),old);
+            gfx.draw(getInbound(),getOutbound(),old,self.tType);
             inbound = 0;
             outbound = 0;
         }, 1000);
         process.stdout.on('resize', function() {
             clearInterval(self.drawTimeout);
-            gfx.draw(getInbound(),getOutbound(),old);
+            gfx.draw(getInbound(),getOutbound(),old,self.tType);
             self.drawTimeout = setInterval(function(){
-                gfx.draw(getInbound(),getOutbound(),old);
+                gfx.draw(getInbound(),getOutbound(),old,self.tType);
                 inbound = 0;
                 outbound = 0;
             }, 1000);
@@ -322,6 +314,7 @@ function cbtSocket(params) {
 
     self.end = function(cb){
         clearInterval(self.drawTimeout);
+        clearInterval(self.ping);
         var optionsDelete = {
             url: 'http://'+self.tunnelapi,
             method: 'DELETE',
@@ -351,6 +344,19 @@ function cbtSocket(params) {
             }else{
                 cb(error,null);
                 console.log(error);
+            }
+        });
+    }
+
+    self.endWrap = function(){
+        self.end(function(err,killit){
+            if(!err&&killit==='killit'){
+                process.exit(1);
+            }else if(err){
+                console.log(err);
+                setTimeout(function(){
+                    process.exit(1);
+                },10000);
             }
         });
     }
