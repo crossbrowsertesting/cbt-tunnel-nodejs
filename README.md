@@ -6,27 +6,40 @@
 	
 	npm install -g cbt_tunnels
 
+#####Scripted usage:
+	
+	var cbt = require('cbt_tunnels');
+
 There are three options provided for you to do this:
 
 #####simpleproxy:
 
 	This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.
 
-	Basic usage: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --simpleproxy'
+	Basic usage: 
+		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --simpleproxy'
+		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tType":"simpleproxy"},function(err){ if(!err) do stuff })'
 
 #####webserver:<br>
 
 	This allows you to host static files on your computer that are not currently hosted on a server, as well as routing through your computer to access local or privileged sites.
 	
-	Basic usage: 'cbt_tunnels --authkey AUTHKEY --password PASSWORD --webserver --dir PATH/TO/DIR --port OPENPORT'
+	Basic usage: 
+		Command line: 'cbt_tunnels --authkey AUTHKEY --password PASSWORD --webserver --dir PATH/TO/DIR (optional: --port OPENPORT)'
+		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tType":"webserver","dir":"PATH/TO/DIR", (optional: "port":"PORT") },function(err){ if(!err) do stuff })'
 
 #####tunnel:<br>
 	The tunnel still routes through your computer to download site data, but it further directs that connection through a proxy of your choosing (always be wary in choosing a proxy--free and unsecure proxies are known to steal personal data).
 
-	Basic usage: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --tunnel --proxyIp PROXYIP --proxyPort PROXYPORT'
+	Basic usage: 
+		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --tunnel --proxyIp PROXYIP --proxyPort PROXYPORT'
+		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tType":"tunnel","proxyIp":"PROXYIP","proxyPort":"PROXYPORT"},function(err){ if(!err) do stuff })'
 
 #####Further flags:<br>
-	'--kill KILLFILENAME'
-		Appending this flag allows you specify the name of a 'kill file' that if placed in the current directory will cause the program to gracefully shutdown.
-	'--v'
+	Kill file:
+	Command line: '--kill KILLFILENAME'
+	Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tType":"simpleproxy","kill":"KILLFILENAME"},function(err){ if(!err) do stuff })'
+		The kill file option allows you specify the name of a 'kill file' that if placed in the current directory will cause the program to gracefully shutdown.
+	Command line: '--v'
+	Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tType":"simpleproxy","v":true},function(err){ if(!err) do stuff })'
 		Specifiying this flag enables verbose mode; you'll see most of the traffic handling.
