@@ -1,12 +1,9 @@
-#! /usr/bin/env node
-
 var _ = require('lodash'),
     request = require('request'),
     cbtSocket = (require('./cbt_tunnels')),
     argv = require('yargs').argv,
     fs = require('fs'),
     gfx = require('./gfx.js'),
-    killLever = require('./utils.js').killLever,
     cbts = null,
     warn = gfx.warn,
     help = gfx.help,
@@ -14,7 +11,8 @@ var _ = require('lodash'),
         server: "crossbrowsertesting.com", 
         node: "app.crossbrowsertesting.com"
     },
-    tType;
+    tType,
+    cmd = false;
 
 
 var typeCheck = function(){
@@ -50,7 +48,7 @@ var typeCheck = function(){
     }
 }
 
-var cmdParse = function(){
+var cmdParse = function(cb){
     cbtUrls = ((argv.test) ? {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"} : {server: "crossbrowsertesting.com", node: "app.crossbrowsertesting.com"});
     var tType = typeCheck();
     if(!_.isUndefined(tType)&& !_.isNull(tType)){
@@ -63,7 +61,11 @@ var cmdParse = function(){
                     username: argv.username,
                     authkey: data.auth_key, 
                     tType:tType,
-                    userId:data.user_id
+                    userId:data.user_id,
+                    cb: cb
+                }
+                if(cmd){
+                    params.cmd = true;
                 }
                 switch(tType){
                     case 'simpleproxy':
@@ -215,19 +217,24 @@ var startTunnel = function(params){
                         if(!err&&data){
                             console.log('PUT request successful!');
                             console.log('Completely connected!');
+                            params.cb(null);
                             
                         }else{
                             console.log(err);
+                            params.cb(err);
+                            cbts.endWrap();
                         }
                     });
                 }else{
                     console.log(err);
+                    params.cb(err);
                     cbts.endWrap();
                 }
             });
         }else{
             console.log(err);
             setTimeout(function(){
+                params.cb(err);
                 process.exit(1);
             },10000);
         }
@@ -252,14 +259,45 @@ var startTunnel = function(params){
     }
 }
 
-// var init = function(tType,username,authkey,params){
-//         argv.cli = true;
-//         argv.username = username;
-//         argv.authkey = authkey;
-//         argv.v = params.verbose;
-//         argv.test = params.test;
-//     }
-// }
-
-cmdParse();
+module.exports = {
+    start: function(params,cb){
+        if(params.cmd){
+            cmd = true;
+        }
+        switch(params.tType){
+            case 'simpleproxy':
+                argv.simpleproxy = true;
+                break;
+            case 'webserver':
+                argv.webserver = true;
+                break;
+            case 'tunnel':
+                argv.tunnel = true;
+                break;
+            default:
+        }
+        _.merge(argv,params);
+        cmdParse(function(err){
+            if(!err){
+                cb(null);
+            }else{
+                cb(err);
+            }
+        });
+    },
+    stop: function(){
+        if(!_.isNull(cbts)){
+            cbts.endWrap();
+        }else{
+            warn('You must start the tunnel first by calling the function "start" with the relevant parameters.');
+        }
+    },
+    status: function(){
+        if(!_.isNull(cbts) && !_.isUndefined(cbts)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+}
 

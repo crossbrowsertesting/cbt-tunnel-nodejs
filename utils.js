@@ -1,9 +1,8 @@
-var NPM_CONFIG_LOGLEVEL = 'verbose';
 var _ = require('lodash'),
     gfx = require('./gfx.js'),
     warn = gfx.warn,
     help = gfx.help,
-    version = '0.0.18';
+    version = '0.0.19';
 
 module.exports = {
     checkVersion: function(data,params){
@@ -18,9 +17,9 @@ module.exports = {
             }else{
                 warn(data.msgs.dead.replace('nnnn','\n\n\t'));
                 params.context.endWrap();
-            }
+            } 
         }else{
-            if(!params.verbose){
+            if(!params.verbose&&params.cmd){
                 params.context.spin();
             }
         }
@@ -30,38 +29,16 @@ module.exports = {
         process.on('SIGINT',function(){
             console.log('\nAttempting a graceful shutdown...');
             if(!_.isNull(cbts)&&!_.isUndefined(cbts)){
-                cbts.end(function(err,killit){
-                    if(!err&&killit==='killit'){
-                        process.exit(0);
-                    }else{
-                        if(err){
-                            console.log(err);
-                        }
-                        setTimeout(function(){
-                            process.exit(1);
-                        },10000);
-                    }
-                });
+                cbts.endWrap();
             }
-        })
+        });
 
         process.on('SIGTERM',function(){
             console.log('Attempting a graceful shutdown...');
             if(!_.isNull(cbts)&&!_.isUndefined(cbts)){
-                cbts.end(function(err,killit){
-                    if(!err&&killit==='killit'){
-                        process.exit(0);
-                    }else{
-                        if(err){
-                            console.log(err);
-                        }
-                        setTimeout(function(){
-                            process.exit(1);
-                        },10000);
-                    }
-                });
+                cbts.endWrap();
             }
-        })
+        });
     } 
 
 }
