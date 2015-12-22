@@ -264,17 +264,12 @@ module.exports = {
         if(params.cmd){
             cmd = true;
         }
-        switch(params.tType){
-            case 'simpleproxy':
-                argv.simpleproxy = true;
-                break;
-            case 'webserver':
-                argv.webserver = true;
-                break;
-            case 'tunnel':
-                argv.tunnel = true;
-                break;
-            default:
+        if(params.dir&&!params.proxyIp&&!params.proxyPort){
+            argv.webserver = true;
+        }else if(!_.isUndefined(params.proxyIp)&&!_.isUndefined(params.proxyPort)&&!params.dir&&!params.port){
+            argv.tunnel = true;
+        }else{
+            argv.simpleproxy = true;
         }
         _.merge(argv,params);
         cmdParse(function(err){
