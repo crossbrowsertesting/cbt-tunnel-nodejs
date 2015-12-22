@@ -25,7 +25,7 @@ There are three options provided for you to do this:
 	This allows you to host static files on your computer that are not currently hosted on a server, as well as routing through your computer to access local or privileged sites.
 	
 	Basic usage: 
-		Command line: 'cbt_tunnels --authkey AUTHKEY --password PASSWORD --webserver --dir PATH/TO/DIR (optional: --port OPENPORT)'
+		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --webserver --dir PATH/TO/DIR (optional: --port OPENPORT)'
 		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tType":"webserver","dir":"PATH/TO/DIR", (optional: "port":"PORT") },function(err){ if(!err) do stuff })'
 
 #####tunnel:<br>
@@ -42,4 +42,4 @@ There are three options provided for you to do this:
 		The kill file option allows you specify the name of a 'kill file' that if placed in the current directory will cause the program to gracefully shutdown.
 	Command line: '--v'
 	Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tType":"simpleproxy","v":true},function(err){ if(!err) do stuff })'
-		Specifiying this flag enables verbose mode; you'll see most of the traffic handling.
+		Specifying this flag enables verbose mode; you'll see most of the traffic handling.
