@@ -12,45 +12,14 @@ var _ = require('lodash'),
         node: "app.crossbrowsertesting.com"
     },
     tType,
-    cmd = false;
+    cmd = false,
+    valid = ['_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test'];
 
 
-var typeCheck = function(){
-    var count = 0;
-    if(argv.h || argv.help){
-        help();
-        process.exit(0);
-    }
-    if((_.isUndefined(argv.username)) || (_.isNull(argv.username))){
-        help();
-        warn('You must specify a username.\n');
-        return;
-    }else if((_.isUndefined(argv.authkey)) || _.isNull(argv.authkey)){
-        help();
-        warn('You must specifiy an authkey.\n');
-        return;
-    }
-    for(param in argv){
-        if(param == 'tunnel' || param == 'simpleproxy' || param == 'webserver'){
-            tType = param;
-            count+=1;
-        }
-    }
-    if(count>1){
-        help();
-        warn('Too many tunnel types specifed. You must specify the type of tunnel with one, and only one, of the following flags:\n  --simpleproxy\n  --webserver\n  --tunnel\nEvery flag excepting simpleproxy requires additional parameters.\n\n');
-        return;
-    }else if(count<=0){
-        warn('No tunnel type specified. Defaulting to simpleproxy.');
-        return 'simpleproxy';
-    }else{
-        return tType;
-    }
-}
 
 var cmdParse = function(cb){
     cbtUrls = ((argv.test) ? {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"} : {server: "crossbrowsertesting.com", node: "app.crossbrowsertesting.com"});
-    var tType = typeCheck();
+    var tType = argv.tType;
     if(!_.isUndefined(tType)&& !_.isNull(tType)){
         accountInfo(argv.username,argv.authkey,function(err,data){
             if(!err&&data){
@@ -66,6 +35,10 @@ var cmdParse = function(cb){
                 }
                 if(cmd){
                     params.cmd = true;
+                }
+                if(!_.isUndefined(argv.ready)&&!_.isNull(argv.ready)){
+
+                    params.ready = argv.ready;
                 }
                 switch(tType){
                     case 'simpleproxy':
@@ -261,15 +234,47 @@ var startTunnel = function(params){
 
 module.exports = {
     start: function(params,cb){
+        var u = _.union(_.keys(params),valid);
+        var v = _.isEqual(u.sort(),valid.sort());
+        if(!v){
+            help();
+            warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),valid.sort())+"\n");
+            process.exit(1);
+        }
         if(params.cmd){
             cmd = true;
         }
-        if(params.dir&&!params.proxyIp&&!params.proxyPort){
-            argv.webserver = true;
-        }else if(!_.isUndefined(params.proxyIp)&&!_.isUndefined(params.proxyPort)&&!params.dir&&!params.port){
-            argv.tunnel = true;
+        if(params.dir){
+            if((_.isNull(params.proxyIp)||_.isUndefined(params.proxyIp))&&(_.isNull(params.proxyPort)||_.isUndefined(params.proxyPort))){
+                argv.tType = 'webserver';
+            }else{
+                help();
+                warn("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
+                process.exit(1);
+            }
+        }else if(!_.isUndefined(params.proxyIp)&&!_.isNull(params.proxyIp)&&!_.isUndefined(params.proxyPort)&&!_.isNull(params.proxyPort)){
+            if(!params.dir&&!params.port){
+                argv.tType = 'tunnel';
+            }else{
+                help();
+                warn("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
+                process.exit(1);
+            }
+        }else if((!_.isUndefined(params.proxyIp)&&!_.isNull(params.proxyIp))||(!_.isUndefined(params.proxyPort)&&!_.isNull(params.proxyPort))){
+            help();
+            warn("Starting a proxy server tunnel requires both a proxyIp and a proxyPort");
+            process.exit(1);
         }else{
-            argv.simpleproxy = true;
+            argv.tType = 'simpleproxy';
+        }
+        if((_.isUndefined(params.username)) || (_.isNull(params.username))){
+            help();
+            warn('You must specify a username.\n');
+            process.exit(1);
+        }else if((_.isUndefined(argv.authkey)) || _.isNull(argv.authkey)){
+            help();
+            warn('You must specifiy an authkey.\n');
+            process.exit(1);
         }
         _.merge(argv,params);
         cmdParse(function(err){

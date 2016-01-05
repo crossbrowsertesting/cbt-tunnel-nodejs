@@ -1,5 +1,6 @@
 var net = require('net'),
     tls = require('tls'),
+    fs  = require('fs'),
     connection_list = {},
     request = require('request'),
     _ = require('lodash'),
@@ -70,6 +71,7 @@ function cbtSocket(params) {
     self.path = '/wsstunnel' + self.qPort + '/socket.io';
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
     self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
+    self.ready = params.ready;
     switch(tType){
         case 'simple':
         break;
@@ -112,6 +114,21 @@ function cbtSocket(params) {
         conn.on('connect',function(){
             console.log('Connecting as '+self.tType+'...');
             cb(null,self);
+            if(!_.isUndefined(self.ready)&&!_.isNull(self.ready)){
+                fs.open(self.ready,'wx',function(err,fd){
+                    if(err){
+                        warn('The path specified for the "ready" file already exists or cannot be created (likely for permissions issues).');
+                        self.endWrap();   
+                    }else{
+                        fs.close(fd, function(err){
+                            if(err){
+                                console.log(err);
+                                self.endWrap();
+                            }
+                        });
+                    }
+                });
+            }
         });
 
         conn.on('reconnect',function(){
@@ -346,12 +363,22 @@ function cbtSocket(params) {
                 console.log(error);
             }
         });
+        if(self.ready){
+            fs.unlink(self.ready,function(err){
+                if(err){
+                    console.log(err);
+                    setTimeout(function(){
+                        process.exit(1);
+                    },10000);
+                } 
+            })
+        }
     }
 
     self.endWrap = function(){
         self.end(function(err,killit){
             if(!err&&killit==='killit'){
-                process.exit(1);
+                process.exit(0);
             }else if(err){
                 console.log(err);
                 setTimeout(function(){
