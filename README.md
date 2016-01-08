@@ -43,7 +43,7 @@ There are three options provided for you to do this:
 		When the tunnel is up-and-running, an empty file will be placed in the path specified by the user.
 
 		Basic usage:
-			Command line: '--ready READYFILEPATH'
+			Command line: '--ready READYFILENAME'
 			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","ready":"READYFILEPATH"},function(err){ if(!err) do stuff })'
 
 	Verbose mode:

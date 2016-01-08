@@ -78,80 +78,11 @@ module.exports = {
 
 		blankLine.output();
 	},
-
-	// popper: function(message,subContent,params){
-	//     var screen = blessed.screen({
-	//       smartCSR: true
-	//     });
-	//     screen.key(['C-c', 'q','escape'], function(ch, key) {
-	//     	if(!params.v && params.context){
-	//     		params.context.spin();
-	//     	}
- //    		return screen.destroy();
- //  		});
-	//     screen.title = 'cbt_tunnels.js';
-	//     var box = blessed.text({
-	//     	ignoreLocked: ['C-c'],
-	// 		scrollable: true,
-	// 		alwaysScroll: true,
-	// 		top: 'center',
-	// 		left: 'center',
-	// 		align: 'center',
-	// 		width: '100%',
-	// 		height: '100%',
-	// 		content: message,
-	// 		tags: true,
-	// 		border: {
-	// 			type: 'line'
-	// 		},
-	// 		mouse:true,
-	// 		keys:true,
-	// 		scrollbar: {
-	// 			bg: '#778899'
-	// 		},
-	// 		style: {
-	// 			fg: 'grey',
-	// 			bg: 'black',
-	// 			border: {
-	// 			  fg: '#778899'
-	// 			}
-	// 		}
-	// 	});
-	    
-	//     screen.append(box);
-
-	//     box.on('click',function(data){
-	//     	if(subContent==='dead'){
-	// 			params.context.end(function(err,killit){
-	//                 if(!err&&killit==='killit'){
-	//                     process.exit(0);
-	//                 }else if(err){
-	//                     console.log(err);
-	//                     setTimeout(function(){
-	//                         process.exit(1);
-	//                     },10000);
-	//                 }
-	//             });
-	//             screen.destroy();
-	// 		}else if(subContent==='old'){
-	// 			screen.destroy();
-	// 			params.context.spin();
-	// 		}else{
-	// 			box.setContent(subContent);
-	// 			screen.render();
-	// 		}			
-	// 	});
-	//     // Focus our element.
-	//     box.focus();
-
-	//     // Render the screen.
-	//     screen.render();
-	// },
 	warn: function(message){
 		console.log(error(message));
 	},
 	help: function(){
-	    console.log(clc.bold("cbt_tunnels.js has three run modes:\n\n")+clc.underline("Internal Websites:")+"\nThis directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY'\n\n"+clc.underline("Local HTML Files:")+"\nThis allows you to test static sites that are on your computer but not currently hosted on a server.\nBasic usage:\n    'cbt_tunnels --authkey AUTHKEY --password PASSWORD --dir PATHTODIRECTORY (optional: --port OPENPORT)'\n\n"+clc.underline("Proxy Server:")+"\nThis tunnel directs the connection through a proxy of your choice.\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT'\n\n"+clc.underline("Further flags:")+"\n    '--kill KILLFILENAME'  |  Appending this flag allows you specify the\n                           |  name of a 'kill file' that if placed in \n                           |  the current directory will cause the \n                           |  program to gracefully shutdown.\n"+clc.underline("_                          |\n")+"    '--ready READYFILEPATH'|  Specifiying this flag creates an \n                           |  empty file at the path specified\n                           |  when the cbt_tunnels is fully connected.\n"+clc.underline("_                          |\n")+"    '--v'                  |  Specifiying this flag enables verbose \n                           |  mode; you'll see most of the\n                           |  traffic handling.\n"+clc.underline("_                          |\n")+"\nFor instructions on scripting, please see: https://github.com/crossbrowsertesting/cbt-tunnel-nodejs\n");
+	    console.log(clc.bold("cbt_tunnels.js has three run modes:\n\n")+clc.underline("Internal Websites:")+"\nThis directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY'\n\n"+clc.underline("Local HTML Files:")+"\nThis allows you to test static sites that are on your computer but not currently hosted on a server.\nBasic usage:\n    'cbt_tunnels --authkey AUTHKEY --password PASSWORD --dir PATHTODIRECTORY (optional: --port OPENPORT)'\n\n"+clc.underline("Proxy Server:")+"\nThis tunnel directs the connection through a proxy of your choice.\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT'\n\n"+clc.underline("Further flags:")+"\n    '--kill KILLFILENAME'  |  Appending this flag allows you specify the\n                           |  name of a 'kill file' that if placed in \n                           |  the current directory will cause the \n                           |  program to gracefully shutdown.\n"+clc.underline("_                          |\n")+"    '--ready READYFILENAME'|  Specifiying this flag creates an \n                           |  empty file at the path specified\n                           |  when the cbt_tunnels is fully connected.\n"+clc.underline("_                          |\n")+"    '--v'                  |  Specifiying this flag enables verbose \n                           |  mode; you'll see most of the\n                           |  traffic handling.\n"+clc.underline("_                          |\n")+"\nFor instructions on scripting, please see: https://github.com/crossbrowsertesting/cbt-tunnel-nodejs\n");
 	}
 	
 
