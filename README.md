@@ -44,7 +44,7 @@ There are three options provided for you to do this:
 
 		Basic usage:
 			Command line: '--ready READYFILENAME'
-			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","ready":"READYFILEPATH"},function(err){ if(!err) do stuff })'
+			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","ready":"READYFILENAME"},function(err){ if(!err) do stuff })'
 
 	Verbose mode:
 		Specifying this flag enables verbose mode; you'll see most of the traffic handling.
