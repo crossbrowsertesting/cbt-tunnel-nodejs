@@ -91,7 +91,7 @@ function cbtSocket(params) {
 
         var ping = setInterval(function(){
             conn.emit('ping');
-        },10000);
+        },1000);
 
         console.log('Started connection attempt!');
 
