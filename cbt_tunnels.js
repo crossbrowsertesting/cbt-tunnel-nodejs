@@ -89,20 +89,24 @@ function cbtSocket(params) {
 
     self.start = function(cb){
 
+        var reconnecting = false;
+
         var ping = setInterval(function(){
             conn.emit('ping');
-        },1000);
+        },10000);
 
         console.log('Started connection attempt!');
 
         conn.on('reconnect_error',function(e){
-            console.log('Reconnect error');
-            console.log(e);
+            if(params.verbose){
+                console.log(e);
+            }
         });
 
         conn.on('connect_error',function(e){
-            console.log('Connect error');
-            console.log(e);
+            if(params.verbose){
+                console.log(e);
+            }
         });
 
         conn.on("error", function(e){
@@ -113,7 +117,12 @@ function cbtSocket(params) {
 
         conn.on('connect',function(){
             console.log('Connecting as '+self.tType+'...');
-            cb(null,self);
+            if(!reconnecting){
+                cb(null,self);
+            }else{
+                reconnecting = false;
+                clearInterval(self.drawTimeout);
+            }
             if(!_.isUndefined(self.ready)&&!_.isNull(self.ready)){
                 fs.open(self.ready,'wx',function(err,fd){
                     if(err){
@@ -132,13 +141,14 @@ function cbtSocket(params) {
         });
 
         conn.on('reconnect',function(){
-            console.log('Reconnected! ...?');
+            warn('Reconnected!');
         });
 
         conn.on("disconnect", function(data){
-            console.log(data);
-            console.log("CBT server disconnected.");
-            self.endWrap();
+            reconnecting = true;
+            clearInterval(self.drawTimeout);
+            self.spin(null,'Disconnected from CBT server — if this persists, please exit this client and try again.\n');
+            connection_list = {};
         });
 
         conn.on("hello", function() {
@@ -156,7 +166,6 @@ function cbtSocket(params) {
 
         conn.on("data", function(data,fn){
             var id = data.id;
-
             if (!connection_list[id]) {
                 connection_list[id] = { id : data.id , client : null };
                 connection_list[id].established=false;
@@ -165,7 +174,7 @@ function cbtSocket(params) {
             if(socketExists(id) && data._type === 'end'){
                 if(connection_list[data.id].client){
                     if(params.verbose){
-                        console.log(id+" client ended by server.js.");
+                        console.log(id+" client ended by CBT server.");
                         console.log(data);
                     }
                     connection_list[id].established=false;
@@ -193,7 +202,7 @@ function cbtSocket(params) {
                 if(params.verbose){
                     console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
                 }
-                var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true,port: port,host: host},function(err){
+                var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port,host: host},function(err){
                     if(err){
                         console.log(err);
                     }
@@ -243,11 +252,13 @@ function cbtSocket(params) {
                     conn.emit("htmlrecv", 
                         { id : id, data : null, finished : true }
                     );
-                    connection_list[id].established=false;
                     client.write('end');
                     client.end();
                     client.destroy();
-                    connection_list[id].ended=true;
+                    if(connection_list[id]){
+                        connection_list[id].established=false;
+                        connection_list[id].ended=true;
+                    }
                 });
 
                 client.on('end', function(data,err){
@@ -309,20 +320,20 @@ function cbtSocket(params) {
         });
     }
 
-    self.spin = function(old){
+    self.spin = function(old,msg){
         inbound = 0;
         outbound = 0;
-        gfx.draw(getInbound(),getOutbound(),old,self.tType);
+        gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
         self.drawTimeout = setInterval(function(){
-            gfx.draw(getInbound(),getOutbound(),old,self.tType);
+            gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
             inbound = 0;
             outbound = 0;
         }, 1000);
         process.stdout.on('resize', function() {
             clearInterval(self.drawTimeout);
-            gfx.draw(getInbound(),getOutbound(),old,self.tType);
+            gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
             self.drawTimeout = setInterval(function(){
-                gfx.draw(getInbound(),getOutbound(),old,self.tType);
+                gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
                 inbound = 0;
                 outbound = 0;
             }, 1000);
@@ -378,6 +389,7 @@ function cbtSocket(params) {
     self.endWrap = function(){
         self.end(function(err,killit){
             if(!err&&killit==='killit'){
+                console.log('Bye!');
                 process.exit(0);
             }else if(err){
                 console.log(err);

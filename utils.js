@@ -2,7 +2,7 @@ var _ = require('lodash'),
     gfx = require('./gfx.js'),
     warn = gfx.warn,
     help = gfx.help,
-    version = '0.0.23';
+    version = '0.0.24';
 
 module.exports = {
     checkVersion: function(data,params){
@@ -27,10 +27,10 @@ module.exports = {
 
     killLever: function(cbts){
         process.on('SIGINT',function(){
-            console.log('\nAttempting a graceful shutdown...');
             if(!_.isNull(cbts)&&!_.isUndefined(cbts)){
                 cbts.endWrap();
             }
+            console.log('\nAttempting a graceful shutdown...');
         });
 
         process.on('SIGTERM',function(){

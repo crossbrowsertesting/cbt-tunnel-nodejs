@@ -14,7 +14,7 @@ var Line        = CLI.Line,
 	error	  = clc.red.bold;
 
 module.exports = {
-	draw: function(inbound,outbound,old,tType) {
+	draw: function(inbound,outbound,old,msg,tType) {
 		var typeMsg;
 		switch(tType){
 			case 'simpleproxy':
@@ -31,13 +31,24 @@ module.exports = {
 		}
 		console.log('\u001b[2J');
 		console.log('\u001b[100;0H');
+
 		var blankLine = new Line().fill().output();
+
 		if((!_.isNull(old))&&(!_.isUndefined(old))){
 			var oldLine = new Line()
 				.padding(2)
 				.column(old.msg,200,[clc.bold.red])
                 .fill()
                 .output();
+		}
+		blankLine.output();
+
+		if((!_.isNull(msg))&&!_.isUndefined(msg)){
+			var msgLine = new Line()
+				.padding(2)
+				.column(msg,200,[clc.bold.red])
+				.fill()
+				.output();
 		}
 		blankLine.output();
 
