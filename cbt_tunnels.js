@@ -146,8 +146,12 @@ function cbtSocket(params) {
 
         conn.on("disconnect", function(data){
             reconnecting = true;
-            clearInterval(self.drawTimeout);
-            self.spin(null,'Disconnected from CBT server — if this persists, please exit this client and try again.\n');
+            if(!params.verbose){
+                clearInterval(self.drawTimeout);
+                self.spin(null,'Disconnected from CBT server — if this persists, please exit this client and try again.\n');
+            }else{
+                console.log('Disconnected from CBT server — if this persists, please exit this client and try again.\n');
+            }
             connection_list = {};
         });
 

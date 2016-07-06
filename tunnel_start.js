@@ -132,7 +132,13 @@ var postTunnel = function(username,authkey,tType,cb){
             cb(null,body);
         }else{
             cb(error,null);
-            console.log(error);
+            console.log('Error on post request:');
+            if(!error.includes('null')){
+                console.log(error);
+            }else{
+                console.log(response);
+                console.log(error);
+            }
         }
     });
 }
