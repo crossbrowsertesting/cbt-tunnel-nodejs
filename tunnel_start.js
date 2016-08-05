@@ -106,7 +106,7 @@ var accountInfo = function(username,authkey,cb){
             cb(null,body);
         }else if(error){
             console.log(error)
-            cb.(error);
+            cb(error);
         }else{
             console.log(response);
             cb(response.statusCode);
