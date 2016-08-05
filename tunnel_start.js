@@ -104,7 +104,11 @@ var accountInfo = function(username,authkey,cb){
         if(!error && body && response.statusCode==200){
             body=JSON.parse(body);
             cb(null,body);
+        }else if(error){
+            console.log(error)
+            cb.(error);
         }else{
+            console.log(response);
             cb(response.statusCode);
         }
     });
