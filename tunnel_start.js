@@ -281,7 +281,7 @@ module.exports = {
             help();
             warn('You must specify a username.\n');
             process.exit(1);
-        }else if((_.isUndefined(argv.authkey)) || _.isNull(argv.authkey)){
+        }else if((_.isUndefined(params.authkey)) || _.isNull(params.authkey)){
             help();
             warn('You must specifiy an authkey.\n');
             process.exit(1);
