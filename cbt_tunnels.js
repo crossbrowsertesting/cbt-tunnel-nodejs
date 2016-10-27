@@ -92,7 +92,11 @@ function cbtSocket(params) {
         var reconnecting = false;
 
         var ping = setInterval(function(){
-            conn.emit('ping');
+            if(params.verbose){
+                console.log('Emitting ping.');
+            }
+            //socket.io is bad people            }
+            conn.emit('pingcheck');
         },10000);
 
         console.log('Started connection attempt!');
