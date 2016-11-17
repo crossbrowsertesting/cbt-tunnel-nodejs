@@ -13,7 +13,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test'];
+    valid = ['_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test','tunnelName'];
 
 
 
@@ -31,7 +31,8 @@ var cmdParse = function(cb){
                     authkey: data.auth_key, 
                     tType:tType,
                     userId:data.user_id,
-                    cb: cb
+                    cb: cb,
+                    tunnelName: argv.tunnelName
                 }
                 if(cmd){
                     params.cmd = true;
@@ -115,7 +116,7 @@ var accountInfo = function(username,authkey,cb){
 }
  
  
-var postTunnel = function(username,authkey,tType,cb){
+var postTunnel = function(username,authkey,tType,tunnelName,cb){
     console.log('POST request to CBT for a tunnel...');
     var auth = (new Buffer(username+':'+authkey)).toString('base64');
     var optionsPost = {
@@ -126,7 +127,8 @@ var postTunnel = function(username,authkey,tType,cb){
         },
         qs: {
             tunnel_source: 'nodews',
-            tunnel_type: tType
+            tunnel_type: tType,
+            tunnel_name: tunnelName
         }
     }
 
@@ -135,14 +137,10 @@ var postTunnel = function(username,authkey,tType,cb){
             body=JSON.parse(body);
             cb(null,body);
         }else{
-            cb(error,null);
+            body = JSON.parse(body);
             console.log('Error on post request:');
-            if(!error.includes('null')){
-                console.log(error);
-            }else{
-                console.log(response);
-                console.log(error);
-            }
+            console.log(body.status);
+            cb(body.message,null);    
         }
     });
 }
@@ -182,7 +180,7 @@ var putTunnel = function(username,authkey,params,data,cb){
 
 
 var startTunnel = function(params){
-    postTunnel(argv.username,argv.authkey,params.tType,function(err,data){
+    postTunnel(argv.username,argv.authkey,params.tType,params.tunnelName,function(err,data){
         if(!err&&data){
             console.log('Posted!');
             var opts = {
@@ -253,6 +251,9 @@ module.exports = {
         }
         if(params.cmd){
             cmd = true;
+        }
+        if(!params.tunnelName){
+            params.tunnelName = null;
         }
         if(params.dir){
             if((_.isNull(params.proxyIp)||_.isUndefined(params.proxyIp))&&(_.isNull(params.proxyPort)||_.isUndefined(params.proxyPort))){
