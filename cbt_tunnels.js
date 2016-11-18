@@ -85,7 +85,7 @@ function cbtSocket(params) {
         break;
         default:
     }
-    var conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true});
+    var conn = self.conn = require('socket.io-proxy')(self.cbtServer,{path: self.path, query: self.query, reconnection: true});
 
     self.start = function(cb){
 

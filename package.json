@@ -11,7 +11,8 @@
     "serve-index": "^1.7.2",
     "serve-static": "^1.10.0",
     "socket.io-client": "1.4.8",
-    "yargs": "^3.30.0"
+    "yargs": "^3.30.0",
+    "socket.io-proxy":"^1.0.3"
   },
   "devDependencies": {},
   "scripts": {
