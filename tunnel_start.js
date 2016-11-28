@@ -207,7 +207,6 @@ var startTunnel = function(params){
                         }
                     });
                 }else{
-                    console.dir(err,{colors:true});
                     params.cb(err);
                     cbts.endWrap();
                 }
