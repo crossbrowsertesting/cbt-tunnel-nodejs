@@ -9,16 +9,16 @@ var _ = require('lodash'),
     help = gfx.help,
     cbtUrls = {
         server: "crossbrowsertesting.com", 
-        node: "app.crossbrowsertesting.com"
+        node: "crossbrowsertesting.com"
     },
     tType,
     cmd = false,
-    valid = ['_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test','tunnelName'];
+    valid = ['httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test','tunnelName'];
 
 
 
 var cmdParse = function(cb){
-    cbtUrls = ((argv.test) ? {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"} : {server: "crossbrowsertesting.com", node: "app.crossbrowsertesting.com"});
+    cbtUrls = ((argv.test) ? {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"} : {server: "crossbrowsertesting.com", node: "crossbrowsertesting.com"});
     var tType = argv.tType;
     if(!_.isUndefined(tType)&& !_.isNull(tType)){
         accountInfo(argv.username,argv.authkey,function(err,data){
@@ -207,7 +207,7 @@ var startTunnel = function(params){
                         }
                     });
                 }else{
-                    console.log(err);
+                    console.dir(err,{colors:true});
                     params.cb(err);
                     cbts.endWrap();
                 }
@@ -251,6 +251,9 @@ module.exports = {
         }
         if(params.cmd){
             cmd = true;
+        }
+        if(params.httpProxy){
+            process.env.http_proxy = params.httpProxy;
         }
         if(!params.tunnelName){
             params.tunnelName = null;

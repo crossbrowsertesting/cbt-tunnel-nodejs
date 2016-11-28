@@ -85,7 +85,16 @@ function cbtSocket(params) {
         break;
         default:
     }
-    var conn = self.conn = require('socket.io-proxy')(self.cbtServer,{path: self.path, query: self.query, reconnection: true});
+
+    var conn = self.conn = null;
+    var proxy = self.proxy = null;
+
+    if(process.env.http_proxy){
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
+        conn = self.conn = require('./socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, secure:false});
+    }else{
+        conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, secure:false});
+    }
 
     self.start = function(cb){
 
@@ -95,7 +104,7 @@ function cbtSocket(params) {
             if(params.verbose){
                 console.log('Emitting ping.');
             }
-            //socket.io is bad people            }
+            //socket.io is bad people            
             conn.emit('pingcheck');
         },10000);
 
@@ -103,20 +112,16 @@ function cbtSocket(params) {
 
         conn.on('reconnect_error',function(e){
             if(params.verbose){
-                console.log(e);
+                warn('Reconnect error:');
+                warn(e);
             }
         });
 
         conn.on('connect_error',function(e){
             if(params.verbose){
-                console.log(e);
+                warn('Connection error:');
+                warn(e);
             }
-        });
-
-        conn.on("error", function(e){
-            console.log('Socket.io error!');
-            console.log(e.stack);
-            cb(e);
         });
 
         conn.on('connect',function(){
@@ -146,6 +151,11 @@ function cbtSocket(params) {
 
         conn.on('reconnect',function(){
             warn('Reconnected!');
+        });
+
+        conn.on("error", function(e){
+            console.log('Socket.io error!');
+            cb(e);
         });
 
         conn.on("disconnect", function(data){

@@ -12,7 +12,7 @@
     "serve-static": "^1.10.0",
     "socket.io-client": "1.4.8",
     "yargs": "^3.30.0",
-    "socket.io-proxy":"^1.0.3"
+    "https-proxy-agent": "^1.0.0"
   },
   "devDependencies": {},
   "scripts": {
