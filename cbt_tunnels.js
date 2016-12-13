@@ -91,7 +91,7 @@ function cbtSocket(params) {
 
     if(process.env.http_proxy){
         process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
-        conn = self.conn = require('./socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, secure:false});
+        conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, secure:false});
     }else{
         conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, secure:false});
     }

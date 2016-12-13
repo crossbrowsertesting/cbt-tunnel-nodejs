@@ -83,14 +83,8 @@ var cmdParse = function(cb){
                         process.exit(1);
                 }
             }else{
-                if(err===401){
-                    warn('Authentication error! Please check your credentials and try again.');
-                    process.exit(1);
-                }else{
-                    warn('Error connecting to the CrossBrowserTesting servers: ');
-                    warn(err);
-                    process.exit(1);
-                }
+                warn('Authentication error! Please check your credentials and try again.');
+                process.exit(1);
             }
         });
     }
@@ -112,8 +106,10 @@ var accountInfo = function(username,authkey,cb){
             body=JSON.parse(body);
             cb(null,body);
         }else if(error){
+            console.log(error)
             cb(error);
         }else{
+            console.log(response);
             cb(response.statusCode);
         }
     });

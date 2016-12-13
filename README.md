@@ -32,6 +32,14 @@ There are three options provided for you to do this:
 		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","proxyIp":"PROXYIP","proxyPort":"PROXYPORT"},function(err){ if(!err) do stuff })'
 
 #####Further options:
+
+	HTTP_PROXY:
+		If all of your traffic must filter through a proxy, this option will allow you to specify that proxy and connect to the CrossBrowserTesting servers.
+
+		Basic usage:
+			Command line: '--httpProxy HTTPPROXY'
+			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpProxy":"HTTPPROXY"},function(err){ if(!err) do stuff })'
+
 	Kill file:
 		The kill file option allows you specify the name of a 'kill file' that if placed in the current directory will cause the program to gracefully shutdown.
 
