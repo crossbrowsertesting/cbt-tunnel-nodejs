@@ -11,23 +11,26 @@
 There are three options provided for you to do this:
 
 #####Internal websites:
-	This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.
+	This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise
+	be inaccessible.
 
 	Basic usage: 
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY'
 		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY"},function(err){ if(!err) do stuff })'
 
 #####Local HTML Files:
-	This allows you to host static files on your computer that are not currently hosted on a server, as well as routing through your computer to access local or privileged sites.
+	This allows you to host static files on your computer that are not currently hosted on a server, as well as
+	routing through your computer to access local or privileged sites.
 	
 	Basic usage: 
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --dir PATHTODIRECTORY (optional: --port OPENPORT)'
 		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","dir":"PATHTODIRECTORY", (optional: "port":"PORT") },function(err){ if(!err) do stuff })'
 
 #####Proxy Server:
-	The tunnel still routes through your computer to download site data, but it further directs that connection through a proxy of your choosing.
-	By default the CBT tunnel uses your local machine to act as an HTTP proxy for web traffic from our remote browsers. Sometimes it is desirable
-	to use a remote proxy rather than your local machine. For example, if you wanted for it to appear as though your traffic were coming from
+	The tunnel still routes through your computer to download site data, but it further directs that connection
+	through a proxy of your choosing. By default the CBT tunnel uses your local machine to act as an HTTP proxy
+	for web traffic from our remote browsers. Sometimes it is desirable to use a remote proxy rather than your 
+	local machine. For example, if you wanted for it to appear as though your traffic were coming from
 	the United Kingdom, proxying through a server there would allow for that.
 
 	Basic usage: 
@@ -38,8 +41,8 @@ There are three options provided for you to do this:
 
 	HTTP_PROXY:
 		Some corporations use an HTTP proxy for all outbound web traffic. The CBT tunnel communicates via wss
-		over port 443 to CrossBrowserTesting.com server to initiate a local connection. By default, it will try
-		to connect directly to CrossBrowserTesting. If you have an HTTP proxy that it must route through, 
+		over port 443 to CrossBrowserTesting.com server to initiate a local connection. By default, it will
+		try to connect directly to CrossBrowserTesting. If you have an HTTP proxy that it must route through, 
 		use this option to do so.
 
 		Basic usage:
@@ -47,7 +50,8 @@ There are three options provided for you to do this:
 			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpProxy":"HTTPPROXY"},function(err){ if(!err) do stuff })'
 
 	Kill file:
-		The kill file option allows you specify the name of a 'kill file' that if placed in the current directory will cause the program to gracefully shutdown.
+		The kill file option allows you specify the name of a 'kill file' that if placed in the current 
+		directory will cause the program to gracefully shutdown.
 
 		Basic usage: 
 			Command line: '--kill KILLFILENAME'
