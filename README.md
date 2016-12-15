@@ -25,7 +25,10 @@ There are three options provided for you to do this:
 		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","dir":"PATHTODIRECTORY", (optional: "port":"PORT") },function(err){ if(!err) do stuff })'
 
 #####Proxy Server:
-	The tunnel still routes through your computer to download site data, but it further directs that connection through a proxy of your choosing (always be wary in choosing a proxy--free and unsecure proxies are known to steal personal data).
+	The tunnel still routes through your computer to download site data, but it further directs that connection through a proxy of your choosing.
+	By default the CBT tunnel uses your local machine to act as an HTTP proxy for web traffic from our remote browsers. Sometimes it is desirable
+	to use a remote proxy rather than your local machine. For example, if you wanted for it to appear as though your traffic were coming from
+	the United Kingdom, proxying through a server there would allow for that.
 
 	Basic usage: 
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT'
@@ -34,7 +37,10 @@ There are three options provided for you to do this:
 #####Further options:
 
 	HTTP_PROXY:
-		If all of your traffic must filter through a proxy, this option will allow you to specify that proxy and connect to the CrossBrowserTesting servers.
+		Some corporations use an HTTP proxy for all outbound web traffic. The CBT tunnel communicates via wss
+		over port 443 to CrossBrowserTesting.com server to initiate a local connection. By default, it will try
+		to connect directly to CrossBrowserTesting. If you have an HTTP proxy that it must route through, 
+		use this option to do so.
 
 		Basic usage:
 			Command line: '--httpProxy HTTPPROXY'
