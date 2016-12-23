@@ -30,7 +30,6 @@ function cbtSocket(params) {
         return outbound;
     }
 
-
     self.startStaticServer = function(attempt){
         self.localServe = require('express')();
         self.serveDir = require('serve-index');
@@ -68,6 +67,7 @@ function cbtSocket(params) {
     self.qPort = (params.bytecode ? pad((params.tcpPort-11000),3) : pad((params.tcpPort-11000), 3));
     self.wsPort = params.tcpPort+1000;
     self.cbtServer = 'https://' + params.cbtServer;
+    self.cbtApp = 'https://'+params.urls.node;
     self.path = '/wsstunnel' + self.qPort + '/socket.io';
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
     self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
@@ -88,6 +88,8 @@ function cbtSocket(params) {
 
     var conn = self.conn = null;
     var proxy = self.proxy = null;
+
+    console.log("Connecting to: "+self.cbtServer+" with path "+self.path+" and query "+self.query);
 
     if(process.env.http_proxy){
         process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
@@ -181,6 +183,27 @@ function cbtSocket(params) {
         conn.on('versions',function(data){
             utils.checkVersion(data,params);
         });
+
+        conn.on('check',function(){
+            if(params.verbose){
+                console.log('Received check request!');
+            }
+            request.get(cbtApp+'/api/v3/tunnels/checkIp',function(err,response,body){
+                if(err||response.statusCode!==200){
+                    if(params.verbose){
+                        warn('IP check error!');
+                        warn(err);
+                        var data = err ? {error:err} : {error:response.statusCode};
+                        conn.emit('checkrecv',data);
+                    }
+                }else{
+                    if(params.verbose){
+                        console.log('IP appears to CBT as: '+body.ip);
+                        conn.emit('checkrecv',{ip:body.ip});
+                    }
+                }
+            })
+        })
 
         conn.on("data", function(data,fn){
             var id = data.id;
