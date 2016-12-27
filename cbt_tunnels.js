@@ -188,18 +188,25 @@ function cbtSocket(params) {
             if(params.verbose){
                 console.log('Received check request!');
             }
-            request.get(cbtApp+'/api/v3/tunnels/checkIp',function(err,response,body){
+            request.get(self.cbtApp+'/api/v3/tunnels/checkIp',function(err,response,body){
                 if(err||response.statusCode!==200){
                     if(params.verbose){
                         warn('IP check error!');
+                        console.dir(response);
                         warn(err);
                         var data = err ? {error:err} : {error:response.statusCode};
                         conn.emit('checkrecv',data);
                     }
                 }else{
                     if(params.verbose){
-                        console.log('IP appears to CBT as: '+body.ip);
-                        conn.emit('checkrecv',{ip:body.ip});
+                        try{
+                            var body = JSON.parse(body);
+                            console.log('IP appears to CBT as: '+body.ip);
+                            conn.emit('checkrecv',{ip:body.ip});
+                        }catch(e){
+                            warn('Parsing response failed: '+e);
+                            conn.emit('checkrecv',{error:e});
+                        }
                     }
                 }
             })
