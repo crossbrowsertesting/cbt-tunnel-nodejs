@@ -13,7 +13,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test','tunnelName'];
+    valid = ['httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test','tunnelname'];
 
 
 
@@ -32,7 +32,7 @@ var cmdParse = function(cb){
                     tType:tType,
                     userId:data.user_id,
                     cb: cb,
-                    tunnelName: argv.tunnelName
+                    tunnelName: argv.tunnelname
                 }
                 if(cmd){
                     params.cmd = true;
@@ -254,7 +254,7 @@ module.exports = {
         if(params.httpProxy){
             process.env.http_proxy = params.httpProxy;
         }
-        if(!params.tunnelName){
+        if(!params.tunnelname){
             params.tunnelName = null;
         }
         if(params.dir){
