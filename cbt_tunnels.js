@@ -89,18 +89,17 @@ function cbtSocket(params) {
     var conn = self.conn = null;
     var proxy = self.proxy = null;
 
-    console.log("Connecting to: "+self.cbtServer+" with path "+self.path+" and query "+self.query);
-
     if(process.env.http_proxy){
         process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
-        conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, secure:false});
+        conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
     }else{
-        conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, secure:false});
+        conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
     }
 
     self.start = function(cb){
 
         var reconnecting = false;
+        var reconnectAttempts = 0;
 
         var ping = setInterval(function(){
             if(params.verbose){
@@ -116,6 +115,11 @@ function cbtSocket(params) {
             if(params.verbose){
                 warn('Reconnect error:');
                 warn(e);
+            }
+            reconnectAttempts++;
+            if(reconnectAttempts>=5){
+                warn('Could not reconnect to CBT server.');
+                self.endWrap();
             }
         });
 
@@ -166,7 +170,7 @@ function cbtSocket(params) {
                 clearInterval(self.drawTimeout);
                 self.spin(null,'Disconnected from CBT server — if this persists, please exit this client and try again.\n');
             }else{
-                console.log('Disconnected from CBT server — if this persists, please exit this client and try again.\n');
+                warn('Disconnected from CBT server — if this persists, please exit this client and try again.\n');
             }
             connection_list = {};
         });
@@ -422,6 +426,7 @@ function cbtSocket(params) {
                 console.log(error);
             }
         });
+
         if(self.ready){
             fs.unlink(self.ready,function(err){
                 if(err){
