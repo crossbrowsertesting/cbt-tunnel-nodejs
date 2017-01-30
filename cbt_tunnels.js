@@ -227,9 +227,9 @@ function cbtSocket(params) {
         conn.on('legitdead',function(){
             warn('User requested ending this tunnel.');
             self.endWrap();
-        })
+        });
 
-        conn.on("data", function(data,fn){
+        conn.on('data', function(data,fn){
             var id = data.id;
             if (!connection_list[id]) {
                 connection_list[id] = { id : data.id , client : null };
