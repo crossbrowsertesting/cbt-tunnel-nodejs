@@ -13,7 +13,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','v','kill','test','tunnelname'];
+    valid = ['httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
 
 
 
@@ -26,7 +26,7 @@ var cmdParse = function(cb){
                 console.log('Got user account info!');
                 var params = {
                     urls: cbtUrls,
-                    verbose: argv.v,
+                    verbose: argv.verbose,
                     username: argv.username,
                     authkey: data.auth_key, 
                     tType:tType,
