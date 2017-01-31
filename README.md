@@ -69,8 +69,8 @@ There are three options provided for you to do this:
 		Specifying this flag enables verbose mode; you'll see most of the traffic handling.
 
 		Basic usage:
-			Command line: '--v'
-			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","v":true},function(err){ if(!err) do stuff })'
+			Command line: '--verbose'
+			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","verbose":true},function(err){ if(!err) do stuff })'
 
 	Stop function:
 		This function takes no parameters and kills the tunnel gracefully.
