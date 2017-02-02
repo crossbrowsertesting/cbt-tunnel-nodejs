@@ -89,7 +89,7 @@ function cbtSocket(params) {
     var conn = self.conn = null;
     var proxy = self.proxy = null;
 
-    if(process.env.http_proxy){
+    if(process.env.http_proxy||process.env.https_proxy){
         process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
         conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
     }else{

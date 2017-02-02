@@ -13,7 +13,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
+    valid = ['httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
 
 
 
@@ -253,6 +253,11 @@ module.exports = {
         }
         if(params.httpProxy){
             process.env.http_proxy = params.httpProxy;
+            process.env.HTTP_PROXY = params.httpProxy;
+        }
+        if(params.httpsProxy){
+            process.env.https_proxy = params.httpsProxy;
+            process.env.HTTPS_PROXY = params.httpsProxy;
         }
         if(!params.tunnelname){
             params.tunnelName = null;
