@@ -48,7 +48,7 @@ var cmdParse = function(cb){
                     case 'tunnel':
                         if(!_.isUndefined(argv.proxyIp) && !_.isUndefined(argv.proxyPort) && !_.isNull(argv.proxyIp) && !_.isNull(argv.proxyPort)){
                             var opts = {
-                                host:argv.proxyIp,
+                                proxyIp:argv.proxyIp,
                                 proxyPort:argv.proxyPort,
                                 bytecode:true
                             }

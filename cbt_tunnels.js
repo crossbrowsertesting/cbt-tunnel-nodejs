@@ -80,14 +80,13 @@ function cbtSocket(params) {
         break;
         case 'tunnel':
             var tType = self.tType = 'tunnel';
-            var port = proxyPort = params.proxyPort;
-            var host = proxyHost = params.proxyIp;
+            var port = self.proxyPort = params.proxyPort;
+            var host = self.proxyHost = params.proxyIp;
         break;
         default:
     }
 
     var conn = self.conn = null;
-    var proxy = self.proxy = null;
 
     if(process.env.http_proxy||process.env.https_proxy){
         process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
@@ -97,7 +96,6 @@ function cbtSocket(params) {
     }
 
     self.start = function(cb){
-
         var reconnecting = false;
         var reconnectAttempts = 0;
 
@@ -256,8 +254,9 @@ function cbtSocket(params) {
 
             if((data._type!='end')&&(!connection_list[id].established)&&(!connection_list[id].ended)){
                 inbound += 1;
-                var port = self.port = ( tType==='tunnel' ? proxyPort : data.port );
-                var host = self.host = ( tType==='tunnel' ? proxyHost : data.host );
+                var port = self.port = ( self.tType==='tunnel' ? self.proxyPort : data.port );
+                var host = self.host = ( self.tType==='tunnel' ? self.proxyHost : data.host );
+
                 if(host==='local'&&self.tType==='webserver'){
                     host='localhost';
                     port = self.sPort;
