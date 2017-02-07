@@ -2,7 +2,7 @@ var _ = require('lodash'),
     gfx = require('./gfx.js'),
     warn = gfx.warn,
     help = gfx.help,
-    version = '0.0.31';
+    version = '0.0.32';
 
 module.exports = {
     checkVersion: function(data,params){

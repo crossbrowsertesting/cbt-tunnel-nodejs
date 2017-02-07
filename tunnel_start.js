@@ -13,7 +13,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
+    valid = ['httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
 
 
 
@@ -48,7 +48,7 @@ var cmdParse = function(cb){
                     case 'tunnel':
                         if(!_.isUndefined(argv.proxyIp) && !_.isUndefined(argv.proxyPort) && !_.isNull(argv.proxyIp) && !_.isNull(argv.proxyPort)){
                             var opts = {
-                                host:argv.proxyIp,
+                                proxyIp:argv.proxyIp,
                                 proxyPort:argv.proxyPort,
                                 bytecode:true
                             }
@@ -253,6 +253,11 @@ module.exports = {
         }
         if(params.httpProxy){
             process.env.http_proxy = params.httpProxy;
+            process.env.HTTP_PROXY = params.httpProxy;
+        }
+        if(params.httpsProxy){
+            process.env.https_proxy = params.httpsProxy;
+            process.env.HTTPS_PROXY = params.httpsProxy;
         }
         if(!params.tunnelname){
             params.tunnelName = null;

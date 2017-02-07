@@ -44,11 +44,18 @@ There are three options provided for you to do this:
 		Some corporations use an HTTP proxy for all outbound web traffic. The CBT tunnel communicates via wss
 		over port 443 to CrossBrowserTesting.com server to initiate a local connection. By default, it will
 		try to connect directly to CrossBrowserTesting. If you have an HTTP proxy that it must route through, 
-		use this option to do so.
+		use this option to do so. It works by temporarily setting the HTTP_PROXY environment variable, so may
+		be redundant in cases wherein it is already set.
 
 		Basic usage:
 			Command line: '--httpProxy HTTPPROXY'
 			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpProxy":"HTTPPROXY"},function(err){ if(!err) do stuff })'
+
+	HTTPS_PROXY:
+		Has the same functionality as HTTP_PROXY but sets the HTTPS_PROXY environment variable instead.
+		Basic usage:
+			Command line: '--httpsProxy HTTPSPROXY'
+			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"HTTPSPROXY"},function(err){ if(!err) do stuff })'
 
 	Kill file:
 		The kill file option allows you specify the name of a 'kill file' that if placed in the current 
