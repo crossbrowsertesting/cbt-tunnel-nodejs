@@ -14,7 +14,6 @@ function pad(n, width, z) {
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-
 function cbtSocket(params) {
     var inbound,
         outbound,
@@ -95,6 +94,10 @@ function cbtSocket(params) {
         conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
     }
 
+    var sendLog = self.sendLog = function(log){
+        conn.emit('clientLog','client_verbose_log: '+log);
+    }
+
     self.start = function(cb){
         var reconnecting = false;
         var reconnectAttempts = 0;
@@ -126,12 +129,14 @@ function cbtSocket(params) {
                 warn('Connection error:');
                 warn(e);
             }
+            warn('Could not connect to CBT server.');
         });
 
         conn.on('connect',function(){
             console.log('Connecting as '+self.tType+'...');
             if(!reconnecting){
                 cb(null,self);
+                sendLog('node tunnel client connected.');
             }else{
                 reconnecting = false;
                 clearInterval(self.drawTimeout);
@@ -147,6 +152,7 @@ function cbtSocket(params) {
                                 console.log(err);
                                 self.endWrap();
                             }
+                            sendLog('ready file written: '+self.ready);
                         });
                     }
                 });
@@ -162,6 +168,7 @@ function cbtSocket(params) {
                 //socket.io is bad people            
                 conn.emit('pingcheck');
             },10000);
+            sendLog('reconnected to server.js after '+reconnectAttempts+' attempts.');
         });
 
         conn.on("error", function(e){
@@ -185,18 +192,23 @@ function cbtSocket(params) {
             conn.emit('established');
         });
 
-        conn.on("progress",function(data){
+        conn.on('progress',function(data){
             console.log('progress\n');
             console.log(data);
         });
 
         conn.on('versions',function(data){
-            utils.checkVersion(data,params);
+            var checkResult = utils.checkVersion(data,params);
+            sendLog(checkResult);
+            if(checkResult.includes('dead')){
+                self.endWrap();
+            }
         });
 
         conn.on('check',function(){
             if(params.verbose){
                 console.log('Received check request!');
+                sendLog('node client received check request.');
             }
             request.get(self.cbtApp+'/api/v3/tunnels/checkIp',function(err,response,body){
                 if(err||response.statusCode!==200){
@@ -224,6 +236,7 @@ function cbtSocket(params) {
 
         conn.on('legitdead',function(){
             warn('User requested ending this tunnel.');
+            sendLog('user requested ending this tunnel via UI.');
             self.endWrap();
         });
 
@@ -238,6 +251,7 @@ function cbtSocket(params) {
                 if(connection_list[data.id].client){
                     if(params.verbose){
                         console.log(id+" client ended by CBT server.");
+                        sendLog(''+id+' tcp client ended by CBT server.');
                         console.log(data);
                     }
                     connection_list[id].established=false;
@@ -265,6 +279,7 @@ function cbtSocket(params) {
                 }
                 if(params.verbose){
                     console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
+                    sendLog('creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 }
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port,host: host},function(err){
                     if(err){
@@ -276,7 +291,8 @@ function cbtSocket(params) {
                         fn('ack ack ack');
                     }
                     if(params.verbose){
-                        console.log('Done creating TCP socket!');
+                        console.log('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
+                        sendLog('created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                     }
                 });
             
@@ -284,6 +300,7 @@ function cbtSocket(params) {
                     if(params.verbose){
                         console.log('Error on '+id+'!');
                         console.log(error.stack);
+                        sendLog('Error on TCP socket '+id+'\n'+error.stack);
                     }
                     conn.emit("htmlrecv", 
                         { id : id, data : null, finished : true }
@@ -296,13 +313,15 @@ function cbtSocket(params) {
                 client.on('data', function(data){
                     if(socketExists(id)){
                         if(params.verbose){
-                            console.log('TCP socket '+id+' received data from the internet! '+port+' '+host);
+                            console.log('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
+                            sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                         }
                         conn.emit("htmlrecv",
                             { id : id, data : data, finished : false }
                         );
                         if(params.verbose){
                             console.log('TCP socket '+id+' internet data emitted to server.js!');
+                            sendLog('TCP socket '+id+' internet data emitted to server.js!');
                         }
                     }
                 });
@@ -311,7 +330,8 @@ function cbtSocket(params) {
 
                 client.on('timeout',function(data){
                     if(params.verbose){
-                        console.log(id+" session timed out.");
+                        console.log('TCP socket '+id+' session timed out.');
+                        sendLog('TCP socket '+id+' session timed out.');
                     }
                     conn.emit("htmlrecv", 
                         { id : id, data : null, finished : true }
@@ -329,9 +349,10 @@ function cbtSocket(params) {
                     if(socketExists(id)){
                         if(params.verbose){
                             console.log(err);
-                            console.log(id+" socket ended by external site.");
+                            console.log('TCP socket '+id+' ended by external site.');
+                            sendLog('TCP socket '+id+' ended by external site.');
                         }
-                        conn.emit("htmlrecv", 
+                        conn.emit('htmlrecv', 
                             { id : id, data : data, finished : true }
                         );
                         connection_list[id].established=false;
@@ -344,12 +365,14 @@ function cbtSocket(params) {
                 client.on('close', function(err){
                     if(socketExists(id)){
                         if(params.verbose){
-                            console.log(id+" socket closed by external site.");
+                            console.log('TCP socket '+id+' closed by external site.');
+                            sendLog('TCP socket '+id+' closed by external site.');
                         }
                         if(err&&params.verbose){
-                            console.log('Error on close of '+id);
+                            console.log('Error on close of TCP socket: '+id);
+                            sendLog('Error on close of TCP socket: '+id);
                         }
-                        conn.emit("htmlrecv", 
+                        conn.emit('htmlrecv', 
                             { id : id, data : null, finished : true }
                         );
                         connection_list[id].established=false;
@@ -363,9 +386,11 @@ function cbtSocket(params) {
                 client=connection_list[id].client;
                 client.write(data.data, function(err){
                     if(err&&params.verbose){
-                        console.log("Error writing!");
-                        console.log(err);
-                        conn.emit("htmlrecv", 
+                        console.log('Error writing data to: ');
+                        console.dir(client);
+                        console.dir(err);
+                        sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
+                        conn.emit('htmlrecv', 
                             { id : id, data : null, finished : true }
                         );
                         connection_list[id].established=false;
@@ -375,7 +400,8 @@ function cbtSocket(params) {
                     }
                     outbound+=1;
                     if(params.verbose){
-                        console.log(id, 'Wrote to '+id);
+                        console.log('Wrote to TCP socket '+id);
+                        sendLog('Wrote to TCP socket '+id);
                     }
 
                 });
@@ -466,6 +492,7 @@ function cbtSocket(params) {
     }
 
     function socketExists(id){
+        //TODO this looks dumb
         if ((!_.isUndefined(connection_list[id]) && !_.isNull(connection_list[id]))&&(!_.isUndefined(connection_list[id].client) && !_.isNull(connection_list[id].client))&&(!connection_list[id].ended)&&(connection_list[id].established)&&(Object.getOwnPropertyNames(connection_list[id].client.address()).length > 0)){
             return true;
         }else{
