@@ -94,7 +94,7 @@ var accountInfo = function(username,authkey,cb){
     console.log('Getting account info...');
     var auth = (new Buffer(username+':'+authkey)).toString('base64');
     var optionsPost = {
-        url: 'http://'+cbtUrls.node+'/api/v3/account',
+        url: 'https://'+cbtUrls.node+'/api/v3/account',
         method: 'GET',
         headers: {
             authorization: 'authorized '+auth
@@ -120,7 +120,7 @@ var postTunnel = function(username,authkey,tType,tunnelName,cb){
     console.log('POST request to CBT for a tunnel...');
     var auth = (new Buffer(username+':'+authkey)).toString('base64');
     var optionsPost = {
-        url: 'http://'+cbtUrls.node+'/api/v3/tunnels',
+        url: 'https://'+cbtUrls.node+'/api/v3/tunnels',
         method: 'POST',
         headers: {
             authorization: 'authorized '+auth
@@ -149,7 +149,7 @@ var putTunnel = function(username,authkey,params,data,cb){
     console.log('PUT request to CBT finalizing tunnel...');
     var auth = (new Buffer(username+':'+authkey)).toString('base64');
     var optionsPut = {
-        url: 'http://'+cbtUrls.node+'/api/v3/tunnels',
+        url: 'https://'+cbtUrls.node+'/api/v3/tunnels',
         followRedirect:false,
         method: 'PUT',
         headers: {
