@@ -272,6 +272,19 @@ function cbtSocket(params) {
             }
 
             if((data._type!='end')&&(!connection_list[id].established)&&(!connection_list[id].ended)){
+                if(proxyAuthString!=''){
+                    var dataArr = data.data.toString().split('\r\n');
+                    dataArr = _.filter(dataArr,function(col){
+                        if(!col==''){
+                            return col;
+                        }
+                    });
+                    dataArr.push(proxyAuthString);
+                    dataArr.push('\r\n');
+                    dataStr = dataArr.join('\r\n');
+                    console.log(dataStr);
+                    data.data = Buffer.from(dataStr);
+                }
                 inbound += 1;
                 var port = self.port = ( self.tType==='tunnel' ? self.proxyPort : data.port );
                 var host = self.host = ( self.tType==='tunnel' ? self.proxyHost : data.host );
@@ -285,19 +298,6 @@ function cbtSocket(params) {
                 if(params.verbose){
                     console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
                     sendLog('creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
-                }
-                if(proxyAuthString!=''){
-                    var dataArr = data.data.toString().split('\r\n');
-                    dataArr = _.filter(dataArr,function(col){
-                        if(!col==''){
-                            return col;
-                        }
-                    });
-                    dataArr.push(proxyAuthString);
-                    dataArr.push('\r\n');
-                    dataStr = dataArr.join('\r\n');
-                    console.log(dataStr);
-                    data.data = Buffer.from(dataStr);
                 }
                 var client = self.client = connection_list[id].client = net.createConnection({port: port, host: host},function(err){
                     if(err){
@@ -411,6 +411,19 @@ function cbtSocket(params) {
                 });
             }
             if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
+                if(proxyAuthString!=''){
+                    var dataArr = data.data.toString().split('\r\n');
+                    dataArr = _.filter(dataArr,function(col){
+                        if(!col==''){
+                            return col;
+                        }
+                    });
+                    dataArr.push(proxyAuthString);
+                    dataArr.push('\r\n');
+                    dataStr = dataArr.join('\r\n');
+                    console.log(dataStr);
+                    data.data = Buffer.from(dataStr);
+                }
                 client = connection_list[id].client;
                 client.write(data.data, function(err){
                     if(err&&params.verbose){
