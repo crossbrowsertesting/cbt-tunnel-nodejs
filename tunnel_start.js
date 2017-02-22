@@ -13,7 +13,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
+    valid = ['proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
 
 
 
@@ -46,17 +46,24 @@ var cmdParse = function(cb){
                         startTunnel(params);
                     break;
                     case 'tunnel':
-                        if(!_.isUndefined(argv.proxyIp) && !_.isUndefined(argv.proxyPort) && !_.isNull(argv.proxyIp) && !_.isNull(argv.proxyPort)){
+                        if(!_.isUndefined(argv.proxyIp) && !_.isUndefined(argv.proxyPort) && !_.isNull(argv.proxyIp) && !_.isNull(argv.proxyPort) && !((!_.isUndefined(argv.proxyUser)||!_.isUndefined(argv.proxyPass))&&(_.isUndefined(argv.proxyUser)||_.isUndefined(argv.proxyPass)))){
                             var opts = {
                                 proxyIp:argv.proxyIp,
                                 proxyPort:argv.proxyPort,
                                 bytecode:true
+                            }
+                            if(!_.isUndefined(argv.proxyPass)&&!_.isUndefined(argv.proxyUser)){
+                                opts.proxyPass = argv.proxyPass;
+                                opts.proxyUser = argv.proxyUser;
                             }
                             _.merge(params,opts);
                             startTunnel(params);
                         }else if(_.isUndefined(argv.proxyIp)||_.isNull(argv.proxyIp)){
                             help();
                             warn('You must specify the proxy IP (--proxyIp) to create a tunnel.\n\n');
+                        }else if((!_.isUndefined(argv.proxyUser)||!_.isUndefined(argv.proxyPass))&&(_.isUndefined(argv.proxyUser)||_.isUndefined(argv.proxyPass))){
+                            help();
+                            warn('You must specify both a proxy user (--proxyUser) and a proxy password (--proxyPass) to use basic authentication with the proxy option.');
                         }else{
                             help();
                             warn('You must specify the proxy port (--proxyPort) to create a tunnel.\n\n');
