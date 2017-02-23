@@ -112,7 +112,10 @@ There are three options provided for you to do this:
 
 #####Building Binary From Source:
 
-	Binaries may be found [here](https://github.com/crossbrowsertesting/cbt-tunnel-nodejs/releases) and are compiled using nexe. You may compile from source as follows:
+	Binaries may be found at https://github.com/crossbrowsertesting/cbt-tunnel-nodejs/releases 
+	and are compiled using nexe. 
+
+	You may compile from source as follows:
 
 	Requirements:
 	node.js/npm
@@ -120,7 +123,7 @@ There are three options provided for you to do this:
 	Visual Studio 2010+ (for Windows)
 
 	- npm install -g nexe
-	- git clone [this repository](https://github.com/crossbrowsertesting/cbt-tunnel-nodejs)
+	- git clone https://github.com/crossbrowsertesting/cbt-tunnel-nodejs.git
 	- navigate to cloned directory
 	- type 'npm install'
 	- npm install emitter utf-8-validate bufferutil
