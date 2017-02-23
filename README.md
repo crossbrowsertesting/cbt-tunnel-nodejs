@@ -38,6 +38,10 @@ There are three options provided for you to do this:
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT'
 		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","proxyIp":"PROXYIP","proxyPort":"PROXYPORT"},function(err){ if(!err) do stuff })'
 
+	Usage with basic authentication:
+		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT --proxyUser PROXYUSER --proxyPass PROXYPASS'
+		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","proxyIp":"PROXYIP","proxyPort":"PROXYPORT","proxyUser:":"PROXYUSER","proxyPass":"PROXYPASS"},function(err){ if(!err) do stuff })'
+
 #####Further options:
 
 	HTTP_PROXY:
@@ -51,11 +55,20 @@ There are three options provided for you to do this:
 			Command line: '--httpProxy HTTPPROXY'
 			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpProxy":"HTTPPROXY"},function(err){ if(!err) do stuff })'
 
+		Usage with basic authentication:
+			Command line: '--httpProxy PROXYUSER:PROXYPASS@HTTPPROXY'
+			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpProxy":"PROXYUSER:PROXYPASS@HTTPPROXY"},function(err){ if(!err) do stuff })'
+
 	HTTPS_PROXY:
 		Has the same functionality as HTTP_PROXY but sets the HTTPS_PROXY environment variable instead.
+		
 		Basic usage:
 			Command line: '--httpsProxy HTTPSPROXY'
 			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"HTTPSPROXY"},function(err){ if(!err) do stuff })'
+
+		Usage with basic authentication:
+			Command line: '--httpsProxy PROXYUSER:PROXYPASS@HTTPSPROXY'
+			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"PROXYUSER:PROXYPASS@HTTPSPROXY"},function(err){ if(!err) do stuff })'
 
 	Kill file:
 		The kill file option allows you specify the name of a 'kill file' that if placed in the current 
