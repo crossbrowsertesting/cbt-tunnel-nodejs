@@ -108,9 +108,6 @@ function cbtSocket(params) {
         var reconnectAttempts = 0;
 
         var ping = setInterval(function(){
-            if(params.verbose){
-                console.log('Emitting ping.');
-            }
             //socket.io is bad people            
             conn.emit('pingcheck');
         },10000);
@@ -167,9 +164,6 @@ function cbtSocket(params) {
         conn.on('reconnect',function(){
             warn('Reconnected!');
             ping = setInterval(function(){
-                if(params.verbose){
-                    console.log('Emitting ping.');
-                }
                 //socket.io is bad people            
                 conn.emit('pingcheck');
             },10000);
@@ -251,7 +245,6 @@ function cbtSocket(params) {
                 connection_list[id] = { id : data.id , client : null };
                 connection_list[id].established=false;
             }
-
             if(socketExists(id) && data._type === 'end'){
                 if(connection_list[data.id].client){
                     if(params.verbose){
@@ -272,19 +265,6 @@ function cbtSocket(params) {
             }
 
             if((data._type!='end')&&(!connection_list[id].established)&&(!connection_list[id].ended)){
-                if(proxyAuthString!=''){
-                    var dataArr = data.data.toString().split('\r\n');
-                    dataArr = _.filter(dataArr,function(col){
-                        if(!col==''){
-                            return col;
-                        }
-                    });
-                    dataArr.push(proxyAuthString);
-                    dataArr.push('\r\n');
-                    dataStr = dataArr.join('\r\n');
-                    console.log(dataStr);
-                    data.data = Buffer.from(dataStr);
-                }
                 inbound += 1;
                 var port = self.port = ( self.tType==='tunnel' ? self.proxyPort : data.port );
                 var host = self.host = ( self.tType==='tunnel' ? self.proxyHost : data.host );
@@ -330,31 +310,21 @@ function cbtSocket(params) {
 
                 client.on('data', function(dataRcvd){
                     if(socketExists(id)){
-                        if(!dataRcvd.toString().includes('407 Proxy')){
-                            if(params.verbose){
-                                console.log('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
-                                sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
-                            }
-                            conn.emit("htmlrecv",
-                                { id : id, data : dataRcvd, finished : false }
-                            );
-                            if(params.verbose){
-                                console.log('TCP socket '+id+' internet data emitted to server.js!');
-                                sendLog('TCP socket '+id+' internet data emitted to server.js!');
-                            }
-                        }else{
-                            warn('Proxy Authorization Required on '+id+'!');
-                            console.dir(data);
-                            console.log(data.data.toString());
-                            client.write(data.data);
-                            conn.emit("proxyauth",
-                                { id : id, data : dataRcvd, finished : false }
-                            );
+                        if(params.verbose){
+                            console.log('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
+                            sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                         }
+                        conn.emit("htmlrecv",
+                            { id : id, data : dataRcvd, finished : false }
+                        );
+                        if(params.verbose){
+                            console.log('TCP socket '+id+' internet data emitted to server.js!');
+                            sendLog('TCP socket '+id+' internet data emitted to server.js!');
+                        }   
                     }
                 });
 
-                client.setTimeout(10000);
+                client.setTimeout(1000000);
 
                 client.on('timeout',function(data){
                     if(params.verbose){
@@ -411,20 +381,10 @@ function cbtSocket(params) {
                 });
             }
             if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
-                if(proxyAuthString!=''){
-                    var dataArr = data.data.toString().split('\r\n');
-                    dataArr = _.filter(dataArr,function(col){
-                        if(!col==''){
-                            return col;
-                        }
-                    });
-                    dataArr.push(proxyAuthString);
-                    dataArr.push('\r\n');
-                    dataStr = dataArr.join('\r\n');
-                    console.log(dataStr);
-                    data.data = Buffer.from(dataStr);
-                }
                 client = connection_list[id].client;
+                if(data._type==='bytesonly'&&proxyAuthString!==''&&data.data.toString().includes('Host')){
+                    data = self.addProxyAuth(data);
+                }
                 client.write(data.data, function(err){
                     if(err&&params.verbose){
                         console.log('Error writing data to: ');
@@ -447,7 +407,6 @@ function cbtSocket(params) {
 
                 });
             }
-            
         });
     }
 
@@ -469,6 +428,20 @@ function cbtSocket(params) {
                 outbound = 0;
             }, 1000);
         });
+    }
+
+    self.addProxyAuth = function(data){
+        var dataArr = data.data.toString().split('\r\n');
+        dataArr = _.filter(dataArr,function(col){
+            if(!col==''){
+                return col;
+            }
+        });
+        dataArr.push(proxyAuthString);
+        dataArr.push('\r\n');
+        dataStr = dataArr.join('\r\n');
+        data.data = Buffer.from(dataStr);
+        return data;
     }
 
     self.end = function(cb){
