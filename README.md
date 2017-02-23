@@ -44,6 +44,15 @@ There are three options provided for you to do this:
 
 #####Further options:
 
+	Tunnel name:
+		There are some cases where multiple tunnels might be necessary, such as when working with multiple 
+		development environments. In this case, we provide the option to name tunnels so that they may be 
+		specifically selected for use in various tests: in the advanced settings in the UI, or by specifying
+		the property "tunnel_name" in the JSON sent to the API.
+
+		Command line: '--tunnelname TUNNELNAME'
+		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","tunnelname":"TUNNELNAME"},function(err){ if(!err) do stuff })'
+
 	HTTP_PROXY:
 		Some corporations use an HTTP proxy for all outbound web traffic. The CBT tunnel communicates via wss
 		over port 443 to CrossBrowserTesting.com server to initiate a local connection. By default, it will
@@ -61,7 +70,7 @@ There are three options provided for you to do this:
 
 	HTTPS_PROXY:
 		Has the same functionality as HTTP_PROXY but sets the HTTPS_PROXY environment variable instead.
-		
+
 		Basic usage:
 			Command line: '--httpsProxy HTTPSPROXY'
 			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"HTTPSPROXY"},function(err){ if(!err) do stuff })'
