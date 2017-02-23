@@ -104,6 +104,10 @@ function cbtSocket(params) {
     }
 
     self.start = function(cb){
+        if(proxyAuthString!==''&&params.verbose){
+            console.log('Using basic authentication for proxy server mode.');
+            sendLog('Using basic authentication for proxy server mode.');
+        }
         var reconnecting = false;
         var reconnectAttempts = 0;
 
