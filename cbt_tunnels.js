@@ -1,4 +1,5 @@
 var net = require('net'),
+    util = require('util'),
     tls = require('tls'),
     fs  = require('fs'),
     connection_list = {},
@@ -70,6 +71,10 @@ function cbtSocket(params) {
     self.path = '/wsstunnel' + self.qPort + '/socket.io';
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
     self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
+    var proxyAuthString = self.proxyAuthString = '';
+    if(!_.isUndefined(params.proxyUser)&&!_.isUndefined(params.proxyPass)){
+        proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic '+(new Buffer(params.proxyUser+':'+params.proxyPass)).toString('base64');
+    }
     self.ready = params.ready;
     switch(tType){
         case 'simple':
@@ -99,13 +104,14 @@ function cbtSocket(params) {
     }
 
     self.start = function(cb){
+        if(proxyAuthString!==''&&params.verbose){
+            console.log('Using basic authentication for proxy server mode.');
+            sendLog('Using basic authentication for proxy server mode.');
+        }
         var reconnecting = false;
         var reconnectAttempts = 0;
 
         var ping = setInterval(function(){
-            if(params.verbose){
-                console.log('Emitting ping.');
-            }
             //socket.io is bad people            
             conn.emit('pingcheck');
         },10000);
@@ -162,9 +168,6 @@ function cbtSocket(params) {
         conn.on('reconnect',function(){
             warn('Reconnected!');
             ping = setInterval(function(){
-                if(params.verbose){
-                    console.log('Emitting ping.');
-                }
                 //socket.io is bad people            
                 conn.emit('pingcheck');
             },10000);
@@ -246,7 +249,6 @@ function cbtSocket(params) {
                 connection_list[id] = { id : data.id , client : null };
                 connection_list[id].established=false;
             }
-
             if(socketExists(id) && data._type === 'end'){
                 if(connection_list[data.id].client){
                     if(params.verbose){
@@ -281,7 +283,7 @@ function cbtSocket(params) {
                     console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
                     sendLog('creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 }
-                var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port,host: host},function(err){
+                var client = self.client = connection_list[id].client = net.createConnection({port: port, host: host},function(err){
                     if(err){
                         console.log(err);
                     }
@@ -310,23 +312,23 @@ function cbtSocket(params) {
                     connection_list[id].ended=true;
                 });
 
-                client.on('data', function(data){
+                client.on('data', function(dataRcvd){
                     if(socketExists(id)){
                         if(params.verbose){
                             console.log('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                             sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                         }
                         conn.emit("htmlrecv",
-                            { id : id, data : data, finished : false }
+                            { id : id, data : dataRcvd, finished : false }
                         );
                         if(params.verbose){
                             console.log('TCP socket '+id+' internet data emitted to server.js!');
                             sendLog('TCP socket '+id+' internet data emitted to server.js!');
-                        }
+                        }   
                     }
                 });
 
-                client.setTimeout(10000);
+                client.setTimeout(1000000);
 
                 client.on('timeout',function(data){
                     if(params.verbose){
@@ -383,7 +385,10 @@ function cbtSocket(params) {
                 });
             }
             if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
-                client=connection_list[id].client;
+                client = connection_list[id].client;
+                if(data._type==='bytesonly'&&proxyAuthString!==''&&data.data.toString().includes('Host')){
+                    data = self.addProxyAuth(data);
+                }
                 client.write(data.data, function(err){
                     if(err&&params.verbose){
                         console.log('Error writing data to: ');
@@ -406,7 +411,6 @@ function cbtSocket(params) {
 
                 });
             }
-            
         });
     }
 
@@ -428,6 +432,20 @@ function cbtSocket(params) {
                 outbound = 0;
             }, 1000);
         });
+    }
+
+    self.addProxyAuth = function(data){
+        var dataArr = data.data.toString().split('\r\n');
+        dataArr = _.filter(dataArr,function(col){
+            if(!col==''){
+                return col;
+            }
+        });
+        dataArr.push(proxyAuthString);
+        dataArr.push('\r\n');
+        dataStr = dataArr.join('\r\n');
+        data.data = Buffer.from(dataStr);
+        return data;
     }
 
     self.end = function(cb){
