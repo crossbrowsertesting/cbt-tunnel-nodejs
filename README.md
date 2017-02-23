@@ -42,7 +42,7 @@ There are three options provided for you to do this:
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT --proxyUser PROXYUSER --proxyPass PROXYPASS'
 		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","proxyIp":"PROXYIP","proxyPort":"PROXYPORT","proxyUser:":"PROXYUSER","proxyPass":"PROXYPASS"},function(err){ if(!err) do stuff })'
 
-#####Further options:
+#####Further Options:
 
 	Tunnel name:
 		There are some cases where multiple tunnels might be necessary, such as when working with multiple 
@@ -110,3 +110,18 @@ There are three options provided for you to do this:
 		Basic usage:
 			Scripted: 'cbt.status()'
 
+#####Building Binary From Source:
+
+	Binaries may be found [here](https://github.com/crossbrowsertesting/cbt-tunnel-nodejs/releases) and are compiled using nexe. You may compile from source as follows:
+
+	Requirements:
+	node.js/npm
+	Python 2.6/2.7
+	Visual Studio 2010+ (for Windows)
+
+	- npm install -g nexe
+	- git clone [this repository](https://github.com/crossbrowsertesting/cbt-tunnel-nodejs)
+	- navigate to cloned directory
+	- type 'npm install'
+	- npm install emitter utf-8-validate bufferutil
+	- nexe -f true -i ./cmd_start.js -o OUTPUTBINARYPATH
