@@ -452,7 +452,7 @@ function cbtSocket(params) {
         clearInterval(self.drawTimeout);
         clearInterval(self.ping);
         var optionsDelete = {
-            url: 'http://'+self.tunnelapi,
+            url: 'https://'+self.tunnelapi,
             method: 'DELETE',
             headers: {
                 authorization: 'authorized '+self.auth_header
