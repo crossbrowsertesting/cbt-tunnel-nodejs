@@ -1,7 +1,9 @@
 var _ = require('lodash'),
     request = require('request'),
     cbtSocket = (require('./cbt_tunnels')),
-    argv = require('yargs').argv,
+    argv = require('yargs')
+        .env('CBT_TUNNELS')
+        .argv,
     fs = require('fs'),
     gfx = require('./gfx.js'),
     cbts = null,
@@ -107,7 +109,7 @@ var accountInfo = function(username,authkey,cb){
             authorization: 'authorized '+auth
         }
     }
-
+    
     request(optionsPost,function(error,response,body){
         if(!error && body && response.statusCode==200){
             body=JSON.parse(body);
@@ -116,7 +118,7 @@ var accountInfo = function(username,authkey,cb){
             console.log(error)
             cb(error);
         }else{
-            console.log(response);
+            console.log(response.statusCode);
             cb(response.statusCode);
         }
     });
