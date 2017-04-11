@@ -1,6 +1,6 @@
-## cbt_tunnels.js 
+## Local Connection with NodeJs 
 
-Creates a local connection to CrossBrowserTesting.com which allows you to test sites behind your firewall or to access web pages that are saved locally on your machine. 
+Creates a local connection (tunnel) to CrossBrowserTesting.com which allows you to test sites behind your firewall or to access web pages that are saved locally on your machine. 
 
 In just a few seconds, you can establish a connection which allows you to do live testing, screenshots, or run Selenium scripts against any of the internal sites you have access to.  
 
