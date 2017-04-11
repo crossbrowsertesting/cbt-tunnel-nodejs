@@ -1,16 +1,16 @@
-##cbt_tunnels.js 
+## cbt_tunnels.js 
 
-#####Creates a local connection to CrossBrowserTesting.com which allows you to test sites behind your firewall or to access web pages that are saved locally on your machine. In just a few seconds, you can establish a connection which allows you to do live testing, screenshots, or run Selenium scripts against any of the internal sites you have access to.  This command line version uses WSS (secure websockets over https, port 443) to create the local connection.  It can be scripted, so it is useful if you want to initiate a local connection programmatically before running automated javascript, screenshots, or selenium tests.
+##### Creates a local connection to CrossBrowserTesting.com which allows you to test sites behind your firewall or to access web pages that are saved locally on your machine. In just a few seconds, you can establish a connection which allows you to do live testing, screenshots, or run Selenium scripts against any of the internal sites you have access to.  This command line version uses WSS (secure websockets over https, port 443) to create the local connection.  It can be scripted, so it is useful if you want to initiate a local connection programmatically before running automated javascript, screenshots, or selenium tests.
 
-#####Install:	
+##### Install:	
 	npm install -g cbt_tunnels
 
-#####Scripted usage:	
+##### Scripted usage:	
 	var cbt = require('cbt_tunnels');
 
 There are three options provided for you to do this:
 
-#####Internal websites:
+##### Internal websites:
 	This directs requests from CBT browsers to your computer to test sites behind your firewall
 	that would otherwise be inaccessible.
 
@@ -18,7 +18,7 @@ There are three options provided for you to do this:
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY'
 		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY"},function(err){ if(!err) do stuff })'
 
-#####Local HTML Files:
+##### Local HTML Files:
 	This allows you to host static files on your computer that are not currently hosted on a server, 
 	as well as routing through your computer to access local or privileged sites.
 	
@@ -26,7 +26,7 @@ There are three options provided for you to do this:
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --dir PATHTODIRECTORY (optional: --port OPENPORT)'
 		Scripted:	'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","dir":"PATHTODIRECTORY", (optional: "port":"PORT") },function(err){ if(!err) do stuff })'
 
-#####Proxy Server:
+##### Proxy Server:
 	The tunnel still routes through your computer to download site data, but it further directs that 
 	connection through a proxy of your choosing. By default the CBT tunnel uses your local machine
 	to act as an HTTP proxy for web traffic from our remote browsers. Sometimes it is desirable
@@ -42,7 +42,7 @@ There are three options provided for you to do this:
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT --proxyUser PROXYUSER --proxyPass PROXYPASS'
 		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","proxyIp":"PROXYIP","proxyPort":"PROXYPORT","proxyUser:":"PROXYUSER","proxyPass":"PROXYPASS"},function(err){ if(!err) do stuff })'
 
-#####Further Options:
+##### Further Options:
 
 	Tunnel name:
 		There are some cases where multiple tunnels might be necessary, such as when working with multiple 
@@ -110,7 +110,7 @@ There are three options provided for you to do this:
 		Basic usage:
 			Scripted: 'cbt.status()'
 
-#####Building Binary From Source:
+##### Building Binary From Source:
 
 	Binaries may be found at https://github.com/crossbrowsertesting/cbt-tunnel-nodejs/releases 
 	and are compiled using nexe. 
