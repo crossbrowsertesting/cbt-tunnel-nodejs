@@ -15,7 +15,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
+    valid = ['proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','quiet', 'kill','test','tunnelname'];
 
 
 
@@ -189,6 +189,9 @@ var putTunnel = function(username,authkey,params,data,cb){
 
 
 var startTunnel = function(params){
+    if(params.quiet){
+        process.env.CBT_TUNNELS_QUIET_MODE = true;
+    }
     postTunnel(argv.username,argv.authkey,params.tType,params.tunnelName,function(err,data){
         if(!err&&data){
             console.log('Posted!');
@@ -254,8 +257,11 @@ module.exports = {
         var v = _.isEqual(u.sort(),valid.sort());
         if(!v){
             help();
-            warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),valid.sort())+"\n");
+            // warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),valid.sort())+"\n");
             process.exit(1);
+        }
+        if(params.quiet){
+            process.env.CBT_TUNNELS_QUIET_MODE = true;
         }
         if(params.cmd){
             cmd = true;
