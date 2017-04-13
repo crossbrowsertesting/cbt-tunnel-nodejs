@@ -254,7 +254,7 @@ module.exports = {
         var v = _.isEqual(u.sort(),valid.sort());
         if(!v){
             help();
-            // warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),valid.sort())+"\n");
+            warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),valid.sort())+"\n");
             process.exit(1);
         }
         if(params.quiet){
