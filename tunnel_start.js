@@ -189,9 +189,6 @@ var putTunnel = function(username,authkey,params,data,cb){
 
 
 var startTunnel = function(params){
-    if(params.quiet){
-        process.env.CBT_TUNNELS_QUIET_MODE = true;
-    }
     postTunnel(argv.username,argv.authkey,params.tType,params.tunnelName,function(err,data){
         if(!err&&data){
             console.log('Posted!');
