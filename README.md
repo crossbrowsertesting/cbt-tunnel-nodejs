@@ -46,6 +46,11 @@ There are three options provided for you to do this:
 		Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT --proxyUser PROXYUSER --proxyPass PROXYPASS'
 		Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","proxyIp":"PROXYIP","proxyPort":"PROXYPORT","proxyUser:":"PROXYUSER","proxyPass":"PROXYPASS"},function(err){ if(!err) do stuff })'
 
+##### Note:
+	All flags may also be set as environment variables beginning with CBT_TUNNELS.
+	e.g. Instead of typing --username, you may instead set the environment variable
+	CBT_TUNNELS_USERNAME to the desired username.
+
 ##### Further Options:
 
 	Tunnel name:
