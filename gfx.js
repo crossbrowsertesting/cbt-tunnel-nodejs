@@ -13,8 +13,16 @@ var Line        = CLI.Line,
 	outSeries = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	error	  = clc.red.bold;
 
+function notQuietMode(fn) {
+	return function() {
+		if (!process.env.CBT_TUNNELS_QUIET_MODE) {
+			fn.apply(null, arguments);
+		}
+	};
+}
+
 module.exports = {
-	draw: function(inbound,outbound,old,msg,tType) {
+	draw: notQuietMode(function(inbound,outbound,old,msg,tType) {
 		var typeMsg;
 		switch(tType){
 			case 'simpleproxy':
@@ -88,14 +96,41 @@ module.exports = {
 			.output();
 
 		blankLine.output();
-	},
-	warn: function(message){
+	}),
+	warn: notQuietMode(function(message){
 		console.log(error(message));
-	},
-	help: function(){
-	    console.log(clc.bold("cbt_tunnels.js has three run modes:\n\n")+clc.underline("Internal Websites:")+"\nThis directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY'\n\n"+clc.underline("Local HTML Files:")+"\nThis allows you to test static sites that are on your computer but not currently hosted on a server.\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY --dir PATHTODIRECTORY (optional: --port OPENPORT)'\n\n"+clc.underline("Proxy Server:")+"\nThis tunnel directs the connection through a proxy of your choice.\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT'\n\n"+clc.underline("Further flags:")+"\n    '--kill KILLFILENAME'  |  Appending this flag allows you specify the\n                           |  name of a 'kill file' that if placed in \n                           |  the current directory will cause the \n                           |  program to gracefully shutdown.\n"+clc.underline("_                          |\n")+"    '--ready READYFILENAME'|  Specifiying this flag creates an \n                           |  empty file at the path specified\n                           |  when the cbt_tunnels is fully connected.\n"+clc.underline("_                          |\n")+"    '--verbose'            |  Specifiying this flag enables verbose \n                           |  mode; you'll see most of the\n                           |  traffic handling.\n"+clc.underline("_                          |\n")+"\nFor instructions on scripting, please see: https://github.com/crossbrowsertesting/cbt-tunnel-nodejs\n");
-	}
-	
-
-
+	}),
+	help: notQuietMode(function(){
+	    console.log(
+			clc.bold("cbt_tunnels.js has three run modes:\n\n")+
+			clc.underline("Internal Websites:")+
+			"\nThis directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible."+ 
+			"\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY'\n\n"+
+			clc.underline("Local HTML Files:")+
+			"\nThis allows you to test static sites that are on your computer but not currently hosted on a server."+
+				"\nBasic usage:"+
+				"\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY --dir PATHTODIRECTORY (optional: --port OPENPORT)'\n\n"+
+			clc.underline("Proxy Server:")+
+				"\nThis tunnel directs the connection through a proxy of your choice."+
+				"\nBasic usage:\n    'cbt_tunnels --username USERNAME --authkey AUTHKEY --proxyIp PROXYIP --proxyPort PROXYPORT'\n\n"+
+			clc.underline("Further flags:")+
+				"\n    '--kill KILLFILENAME'  |  Appending this flag allows you specify the"+
+				"\n                           |  name of a 'kill file' that if placed in"+
+				"\n                           |  the current directory will cause the "+
+				"\n                           |  program to gracefully shutdown.\n"+
+				clc.underline("_                          |\n")+
+				"    '--ready READYFILENAME'|  Specifiying this flag creates an "+
+				"\n                           |  empty file at the path specified"+
+				"\n                           |  when the cbt_tunnels is fully connected.\n"+
+				clc.underline("_                          |\n")+
+				"    '--verbose'            |  Specifiying this flag enables verbose "+
+				"\n                           |  mode; you'll see most of the"+
+				"\n                           |  traffic handling.\n"+
+				clc.underline("_                          |\n")+
+				"    '--quiet'              |  Specifiying this flag enables mode "+
+				"\n                           |  mode; you wont't see most "+
+				"\n                           |  traffic handling.\n"
+				+clc.underline("_                          |\n")+
+				"\nFor instructions on scripting, please see: https://github.com/crossbrowsertesting/cbt-tunnel-nodejs\n");
+	})
 }
