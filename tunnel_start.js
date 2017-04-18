@@ -15,7 +15,7 @@ var _ = require('lodash'),
     },
     tType,
     cmd = false,
-    valid = ['proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
+    valid = ['quiet','proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
 
 
 
@@ -30,6 +30,7 @@ var cmdParse = function(cb){
                     urls: cbtUrls,
                     verbose: argv.verbose,
                     username: argv.username,
+                    quiet: argv.quiet,
                     authkey: data.auth_key, 
                     tType:tType,
                     userId:data.user_id,

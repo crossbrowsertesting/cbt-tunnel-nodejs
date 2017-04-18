@@ -13,7 +13,7 @@ module.exports = {
         data=JSON.parse(data);
         if(data.current!==version){
             if(_.indexOf(data.old,version)>-1){
-                if(!params.verbose&&params.cmd){
+                if(!params.verbose&&params.cmd&&!params.quiet){
                     params.context.spin({msg: data.msgs.old.replace('nnnn','\n\n\t')});
                 }else{
                     warn(data.msgs.old.replace('nnnn','\n\n\t'));
@@ -25,7 +25,7 @@ module.exports = {
                 params.context.endWrap();
             } 
         }else{
-            if(!params.verbose&&params.cmd){
+            if(!params.verbose&&params.cmd&&!params.quiet){
                 params.context.spin();
             }
             return('client_verbose_log: using current version of node tunnel');
