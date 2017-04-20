@@ -182,7 +182,7 @@ function cbtSocket(params) {
         conn.on("disconnect", function(data){
             reconnecting = true;
             clearInterval(ping);
-            if(!params.verbose&&!params.quiet){
+            if(!params.verbose&&!params.quiet&&params.cmd){
                 clearInterval(self.drawTimeout);
                 self.spin(null,'Disconnected from CBT server.\n');
             }else{
