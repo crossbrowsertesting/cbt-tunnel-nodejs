@@ -283,7 +283,7 @@ function cbtSocket(params) {
                     console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
                     sendLog('creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 }
-                var client = self.client = connection_list[id].client = net.createConnection({port: port, host: host},function(err){
+                var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
                         console.log(err);
                     }
