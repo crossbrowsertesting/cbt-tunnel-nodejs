@@ -34,7 +34,6 @@ var cmdParse = function(cb){
                     authkey: data.auth_key, 
                     tType:tType,
                     userId:data.user_id,
-                    highSpeed: data.high_speed_network ? data.high_speed_network : false,
                     cb: cb,
                     tunnelName: argv.tunnelname
                 }
@@ -194,9 +193,10 @@ var startTunnel = function(params){
     postTunnel(argv.username,argv.authkey,params.tType,params.tunnelName,function(err,data){
         if(!err&&data){
             console.log('Posted!');
+            console.log(data.remote_server);
             var opts = {
                 tcpPort:data.remote_port,
-                cbtServer: params.highSpeed ? 'livetest.crossbrowsertesting.com' : data.remote_server,
+                cbtServer:data.remote_server,
                 tp:data.tunnel_authkey,
                 tid:data.tunnel_id,
                 tu:data.tunnel_user
