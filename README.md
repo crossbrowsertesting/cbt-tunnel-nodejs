@@ -110,6 +110,13 @@ There are three options provided for you to do this:
 			Command line: '--verbose'
 			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","verbose":true},function(err){ if(!err) do stuff })'
 
+	Quiet mode:
+		Specifying this flag disables most output.
+
+		Basic usage:
+			Command line: '--quiet'
+			Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","quiet":true},function(err){ if(!err) do stuff })'
+
 	Stop function:
 		This function takes no parameters and kills the tunnel gracefully.
 		Basic usage:
