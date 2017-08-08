@@ -1,35 +1,52 @@
 var CLI = require('clui'),
-    clc = require('cli-color'),
-    os  = require('os'),
+	clc = require('cli-color'),
+	os  = require('os'),
 	_ = require('lodash'),
 	utils = require('./utils.js');
 
 var Line        = CLI.Line,
-	LineBuffer	= CLI.LineBuffer,
+	LineBuffer  = CLI.LineBuffer,
 	Gauge       = CLI.Gauge,
 	Sparkline   = CLI.Sparkline,
 	drawTimeout,
-	inSeries = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	inSeries  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	outSeries = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	error	  = clc.red.bold;
+	error     = clc.red.bold;
 
 module.exports = {
 	draw: function(inbound,outbound,old,msg,tType) {
 		var typeMsg;
 		switch(tType){
 			case 'simpleproxy':
-				typeMsg = '\nConnected for internal websites:\n\nThis tunnel allows live, screenshots, or selenium tests to be run through your local network. For sites hosted on your computer, use the domain "local" as opposed to "localhost":\n\n\te.g. http://local';
+				typeMsg = '\nConnected for internal websites:\n\n'
+						+ 'This tunnel allows live, screenshots, or selenium tests to '
+						+ 'be run through your local network. For sites hosted on your '
+						+ 'computer, use the domain "local" as opposed to "localhost":\n\n'
+						+ '    e.g. http://local';
 				break;
 			case 'webserver':
-				typeMsg = '\nConnected for local HTML files:\n\nThis tunnel allows access to files in a specified directory and its subdirectory. By default, the server listens on the first open port from 8080-8089, but you may specify a custom port with the "--port" flag. To access the statically hosted directory, use "local". To specify a locally hosted static webpage for screenshots or otherwise, use local and the filename of the webpage:\n\n\te.g.\thttp://local\n\t\thttp://local/FILENAME';
+				typeMsg = '\nConnected for local HTML files:\n\n'
+						+ 'This tunnel allows access to files in a specified directory '
+						+ 'and its subdirectory. By default, the server listens on the '
+						+ 'first open port from 8080-8089, but you may specify a custom '
+						+ 'port with the "--port" flag. To access the statically hosted '
+						+ 'directory, use "local". To specify a locally hosted static '
+						+ 'webpage for screenshots or otherwise, use local and the '
+						+ 'filename of the webpage:\n\n'
+						+ '    e.g. http://local\n\t'
+						+ '    http://local/FILENAME';
 				break;
 			case 'tunnel':
-				typeMsg = '\nConnected for proxy server:\n\nThis mode allows you to run live tests and snapshot tests through a proxy, specified by IP and port. For locally hosted sites, use the domain "local" as opposed to "localhost":\n\n\te.g. http://local';
+				typeMsg = '\nConnected for proxy server:\n\n'
+						+ 'This mode allows you to run live tests and snapshot tests '
+						+ ' through a proxy, specified by IP and port. For locally hosted '
+						+ ' sites, use the domain "local" as opposed to '
+						+ ' "localhost":\n\n\te.g. http://local';
 				break;
 			default:
 				typeMsg = 'How did you get here...';
 		}
-		console.log('\u001b[2J');
+		console.log('\u001b[2J'); // character code to clear the terminal screen
 		console.log('\u001b[100;0H');
 
 		var blankLine = new Line().fill().output();
@@ -38,8 +55,8 @@ module.exports = {
 			var oldLine = new Line()
 				.padding(2)
 				.column(old.msg,200,[clc.bold.red])
-                .fill()
-                .output();
+				.fill()
+				.output();
 		}
 		blankLine.output();
 
@@ -93,7 +110,7 @@ module.exports = {
 		console.log(error(message));
 	},
 	help: function(){
-	    console.log(
+		console.log(
 			clc.bold("cbt_tunnels.js has three run modes:\n\n")
 			+ clc.underline("Internal Websites:\n")
 			+ "This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.\n"
@@ -110,7 +127,7 @@ module.exports = {
 			+ "                           |  the current directory will cause the\n"
 			+ "                           | program to gracefully shutdown.\n"
 			+ clc.underline("_                          |\n")
-			+ "    '--ready READYFILENAME'|  Specifiying this flag creates an\n" 
+			+ "    '--ready READYFILENAME'|  Specifiying this flag creates an\n"
 			+ "                           |  empty file at the path specified\n"
 			+ "                           |  when the cbt_tunnels is fully connected.\n"
 			+ clc.underline("_                          |\n")
@@ -120,7 +137,7 @@ module.exports = {
 			+ clc.underline("_                          |\n")
 			+ "\nFor instructions on scripting, please see: https://github.com/crossbrowsertesting/cbt-tunnel-nodejs\n");
 	}
-	
+
 
 
 }
