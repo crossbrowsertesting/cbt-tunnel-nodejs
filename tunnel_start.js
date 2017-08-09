@@ -1,9 +1,7 @@
 var _ = require('lodash'),
 	request = require('request'),
 	cbtSocket = (require('./cbt_tunnels')),
-	argv = require('yargs')
-	.env('CBT_TUNNELS')
-	.argv,
+	argv = require('yargs').env('CBT_TUNNELS').argv,
 	fs = require('fs'),
 	gfx = require('./gfx.js'),
 	cbts = null,
@@ -15,16 +13,29 @@ var _ = require('lodash'),
 	},
 	tType,
 	cmd = false,
-	valid = ['quiet','proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
+	validParameters = ['quiet','proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
 
 
+var getCbtUrls = function(isTest){
+	if ( isTest ){
+		return {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"}
+	} else {
+		return {server: "crossbrowsertesting.com", node: "crossbrowsertesting.com"}
+	}
+}
 
-var cmdParse = function(cb){
-	cbtUrls = ((argv.test) ? {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"} : {server: "crossbrowsertesting.com", node: "crossbrowsertesting.com"});
+
+var cmdParse = function(api, cb){
+	console.log('in cmdParse');
+	cbtUrls = getCbtUrls(argv.test);
 	var tType = argv.tType;
-	if(!_.isUndefined(tType)&& !_.isNull(tType)){
-		accountInfo(argv.username,argv.authkey,function(err,data){
-			if(!err&&data){
+	if(!_.isUndefined(tType) && !_.isNull(tType)){
+		api.getAccountInfo(function(err, data){
+			if (err || !data){
+				warn('Authentication error! Please check your credentials and try again.');
+				cb
+			}
+			if(!err && data){
 				console.log('Got user account info!');
 				var params = {
 					urls: cbtUrls,
@@ -46,7 +57,7 @@ var cmdParse = function(cb){
 				}
 				switch(tType){
 					case 'simpleproxy':
-						startTunnel(params);
+						startTunnel(api, params);
 						break;
 					case 'tunnel':
 						if(!_.isUndefined(argv.proxyIp) && !_.isUndefined(argv.proxyPort) && !_.isNull(argv.proxyIp) && !_.isNull(argv.proxyPort) && (!(_.isUndefined(argv.proxyUser)!=_.isUndefined(argv.proxyPass)))){
@@ -60,7 +71,7 @@ var cmdParse = function(cb){
 								opts.proxyUser = argv.proxyUser;
 							}
 							_.merge(params,opts);
-							startTunnel(params);
+							startTunnel(api, params);
 						}else if(_.isUndefined(argv.proxyIp)||_.isNull(argv.proxyIp)){
 							help();
 							warn('You must specify the proxy IP (--proxyIp) to create a tunnel.\n\n');
@@ -82,7 +93,7 @@ var cmdParse = function(cb){
 								port:argv.port
 							}
 							_.merge(params,opts);
-							startTunnel(params);
+							startTunnel(api, params);
 						}else{
 							help();
 							warn('You must specifiy a directory (--dir) to create a webserver.\n\n');
@@ -92,105 +103,13 @@ var cmdParse = function(cb){
 						console.log('How did you get here?');
 						process.exit(1);
 				}
-			}else{
-				warn('Authentication error! Please check your credentials and try again.');
-				process.exit(1);
 			}
 		});
 	}
 }
 
-var accountInfo = function(username,authkey,cb){
-	console.log('Getting account info...');
-	var auth = (new Buffer(username+':'+authkey)).toString('base64');
-	var optionsPost = {
-		url: 'https://'+cbtUrls.node+'/api/v3/account',
-		method: 'GET',
-		headers: {
-			authorization: 'authorized '+auth
-		}
-	}
-
-	request(optionsPost,function(error,response,body){
-		if(!error && body && response.statusCode==200){
-			body=JSON.parse(body);
-			cb(null,body);
-		}else if(error){
-			console.log(error)
-			cb(error);
-		}else{
-			console.log(response.statusCode);
-			cb(response.statusCode);
-		}
-	});
-}
-
-
-var postTunnel = function(username,authkey,tType,tunnelName,cb){
-	console.log('POST request to CBT for a tunnel...');
-	var auth = (new Buffer(username+':'+authkey)).toString('base64');
-	var optionsPost = {
-		url: 'https://'+cbtUrls.node+'/api/v3/tunnels',
-		method: 'POST',
-		headers: {
-			authorization: 'authorized '+auth
-		},
-		qs: {
-			tunnel_source: 'nodews',
-			tunnel_type: tType,
-			tunnel_name: tunnelName
-		}
-	}
-
-	request(optionsPost,function(error,response,body){
-		if(!error && response.statusCode==200){
-			body=JSON.parse(body);
-			cb(null,body);
-		}else{
-			body = JSON.parse(body);
-			console.log('Error on post request:');
-			console.log(body.status);
-			cb(body.message,null);    
-		}
-	});
-}
-
-var putTunnel = function(username,authkey,params,data,cb){
-	console.log('PUT request to CBT finalizing tunnel...');
-	var auth = (new Buffer(username+':'+authkey)).toString('base64');
-	var optionsPut = {
-		url: 'https://'+cbtUrls.node+'/api/v3/tunnels',
-		followRedirect:false,
-		method: 'PUT',
-		headers: {
-			authorization: 'authorized '+auth
-		},
-		qs: {
-			local_directory: (_.isUndefined(params.directory) ? '' : params.directory),
-			local_ip:'localhost',
-			local_port: (_.isUndefined(params.port) ? '' : params.port),
-			message:'SUCCESS',
-			state:'1',
-			tunnel_source: 'nodews',
-			tunnel_type: params.tType
-		}
-	}
-
-	optionsPut.url=optionsPut.url+'/'+data.tunnel_id;
-
-	request(optionsPut,function(error,response,body){
-		if(!error&&response.statusCode==200){
-			body=JSON.parse(body);
-			cb(null,body);
-		}else{
-			console.log(error);
-		}
-	});
-}
-
-
-var startTunnel = function(params){
-	postTunnel(argv.username,argv.authkey,params.tType,params.tunnelName,function(err,data){
+var startTunnel = function(api, params){
+	api.postTunnel(params.tType,params.tunnelName,function(err,data){
 		if(!err&&data){
 			console.log('Posted!');
 			console.log(data.remote_server);
@@ -205,7 +124,7 @@ var startTunnel = function(params){
 			cbts = new cbtSocket(params);
 			cbts.start(function(err,socket){
 				if(!err&&socket){
-					putTunnel(argv.username,argv.authkey,params,data,function(err,data){
+					api.putTunnel(data.tunnel_id, params.tType, data.local, data.port, function(err,data){
 						if(!err&&data){
 							console.log('PUT request successful!');
 							console.log('Completely connected!');
@@ -252,11 +171,12 @@ var startTunnel = function(params){
 
 module.exports = {
 	start: function(params,cb){
-		var u = _.union(_.keys(params),valid);
-		var v = _.isEqual(u.sort(),valid.sort());
+		var api = require('./api')(argv.username, argv.authkey, argv.test);
+		var u = _.union(_.keys(params),validParameters);
+		var v = _.isEqual(u.sort(),validParameters.sort());
 		if(!v){
 			help();
-			warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),valid.sort())+"\n");
+			warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),validParameters.sort())+"\n");
 			process.exit(1);
 		}
 		if(params.cmd){
@@ -306,7 +226,7 @@ module.exports = {
 			process.exit(1);
 		}
 		_.merge(argv,params);
-		cmdParse(function(err){
+		cmdParse(api, function(err){
 			if(!err){
 				cb(null);
 			}else{
