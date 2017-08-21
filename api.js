@@ -3,6 +3,10 @@ var request = require('request');
 var util = require('util');
 
 /* 
+ * Important notes:
+ * - requests obeys environment variables HTTP_PROXY and HTTPS_PROXY
+ * - if cbt_node returns non JSON (like on a bad error) this module will return an error
+ *
  * example module use:
  *
  * get account info from prod:
@@ -20,9 +24,10 @@ var encodeAuth = function(username, authkey){
 }
 
 var makeApiCall = function(server, method, path, qs, username, authkey, callback){
+	// this is a generic function to make different api calls to cbt
 	console.log(`about to make a ${method} request to ${server} at ${path} for ${username}:${authkey}`)
 	var options = {
-		url: 'https://' + server + '/api/v3/' + path,
+		url: server + '/api/v3/' + path,
 		method: method,
 		headers: {
 			authorization: 'authorized '+ encodeAuth(username, authkey)
@@ -33,14 +38,14 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
 	}
 	console.log("options: " + util.inspect(options));
 	request(options, (err, resp, body) => {
-		console.log(`got resp for getAccountInfo`);
+		console.log(`got resp: ` + body);
 		// parse resp body, or set it to parse error string
 		// note: invalid json in response body WILL NOT cause an error to be thrown
 		try {
 			body = JSON.parse(body);
 		} catch (ex) {
-			console.log("error parsing cbt_node response")
-			body = `< error parsing response: ${ex} raw response => ${body} >`;
+			console.error("error parsing cbt_node response")
+			var err = new Error("error parsing cbt_node response");
 		} 
 
 		// non 200 statusCodes should return an error
@@ -56,11 +61,21 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
 	})
 }
 
-module.exports = function(username, authkey, isTest){
-	if (!!isTest){
-		var server = 'testapp.crossbrowsertesting.com'
-	} else {
-		var server = 'crossbrowsertesting.com'
+module.exports = function(username, authkey, env){
+	// api can be called with env == argv.test
+	// these first two ifs account for when env/argv.test is true/false
+	if(env === true){ env = 'test'};
+	if(!env){ env = 'prod' };
+	switch (env.toLowerCase()) {
+		case 'prod':
+			var server = 'https://crossbrowsertesting.com'
+			break;
+		case 'test':
+			var server = 'https://testapp.crossbrowsertesting.com'
+			break;
+		case 'local':
+			var server = 'http://localhost:3000'
+			break;
 	}
 
 //////////////////////////////////////////////////
@@ -84,12 +99,12 @@ module.exports = function(username, authkey, isTest){
 				return callback(err, body);
 			})
 		},
-		putTunnel: function(tunnelId, tunnelType, directory, port, callback){
+		putTunnel: function(tunnelId, tunnelType, directory, proxyHost, proxyPort, callback){
 			console.log(`got resp for putTunnel`);
 			makeApiCall(server, 'PUT', 'tunnels/' + tunnelId, {
 				local_directory: directory || '',
-				local_ip:'localhost',
-				local_port: port || '',
+				local_ip: proxyHost || 'localhost',
+				local_port: proxyPort || '',
 				message:'SUCCESS',
 				state:'1',
 				tunnel_source: 'nodews',
@@ -98,6 +113,24 @@ module.exports = function(username, authkey, isTest){
 				console.log(`got resp for putTunnel`);
 				return callback(err, body);
 			});
+		},
+		deleteTunnel: function(tunnelId, callback){
+			makeApiCall(server, 'DELETE', 'tunnels/' + tunnelId, {state: 10}, username, authkey, (err, resp) => {
+				console.log('got resp for deleteTunnel');
+				return callback(err, resp);
+			})
+		},
+		getConManager: function(callback){
+			makeApiCall(server, 'GET', 'tunnelserver', null, username, authkey, (err, resp) => {
+				console.log('got resp for getConManager');
+				return callback(err, resp);
+			})
+		},
+		startConManagerTunnel: function(tunnelParams, callback){
+			makeApiCall(server, 'POST', 'tunnelserver', tunnelParams, username, authkey, (err, resp) => {
+				console.log('got resp for startConManagerTunnel');
+				return callback(err, resp);
+			})
 		}
 	}
 }

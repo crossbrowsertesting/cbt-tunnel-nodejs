@@ -2,6 +2,7 @@ var net = require('net'),
 	util = require('util'),
 	tls = require('tls'),
 	fs  = require('fs'),
+	api = require('./api'),
 	connection_list = {},
 	request = require('request'),
 	_ = require('lodash'),
@@ -15,12 +16,15 @@ function pad(n, width, z) {
 	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-function cbtSocket(params) {
+function cbtSocket(api, params) {
 	var inbound,
 		outbound,
 		self = this;
 	params.context = self,
 		killLever = utils.killLever(self);
+
+	self.api = api;
+	self.tunnelId = params.tid;
 
 	function getInbound(){
 		return inbound;
@@ -104,7 +108,8 @@ function cbtSocket(params) {
 	}
 
 	self.start = function(cb){
-		if(proxyAuthString!==''&&params.verbose){
+
+		if(proxyAuthString !== '' && params.verbose){
 			console.log('Using basic authentication for proxy server mode.');
 			sendLog('Using basic authentication for proxy server mode.');
 		}
@@ -143,11 +148,12 @@ function cbtSocket(params) {
 			if(!reconnecting){
 				cb(null,self);
 				sendLog('node tunnel client connected.');
-			}else{
+			} else {
 				reconnecting = false;
 				clearInterval(self.drawTimeout);
 			}
-			if(!_.isUndefined(self.ready)&&!_.isNull(self.ready)){
+			if(!!self.ready){
+				console.log("SETTING READY FILE!");
 				fs.open(self.ready,'wx',function(err,fd){
 					if(err){
 						warn('The path specified for the "ready" file already exists or cannot be created (likely for permissions issues).');
@@ -270,14 +276,19 @@ function cbtSocket(params) {
 
 			if((data._type!='end')&&(!connection_list[id].established)&&(!connection_list[id].ended)){
 				inbound += 1;
-				var port = self.port = ( self.tType==='tunnel' ? self.proxyPort : data.port );
-				var host = self.host = ( self.tType==='tunnel' ? self.proxyHost : data.host );
+				if ( self.tType === 'tunnel'){
+					var host = self.host = self.proxyHost;
+					var port = self.port = self.proxyPort;
+				} else {
+					var host = self.host = data.host;
+					var port = self.port = data.port;
+				}
 
-				if(host==='local'&&self.tType==='webserver'){
-					host='localhost';
+				if(host === 'local' && self.tType === 'webserver'){
+					host = 'localhost';
 					port = self.sPort;
-				}else if(host==='local'){
-					host='localhost';
+				}else if(host === 'local'){
+					host = 'localhost';
 				}
 				if(params.verbose){
 					console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
@@ -386,7 +397,7 @@ function cbtSocket(params) {
 			}
 			if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
 				client = connection_list[id].client;
-				if(data._type==='bytesonly'&&proxyAuthString!==''&&data.data.toString().includes('Host')){
+				if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
 					data = self.addProxyAuth(data);
 				}
 				client.write(data.data, function(err){
@@ -451,35 +462,21 @@ function cbtSocket(params) {
 	self.end = function(cb){
 		clearInterval(self.drawTimeout);
 		clearInterval(self.ping);
-		var optionsDelete = {
-			url: 'https://'+self.tunnelapi,
-			method: 'DELETE',
-			headers: {
-				authorization: 'authorized '+self.auth_header
-			},
-			qs: {
-				state:10
-			}
-		}
 
-		request(optionsDelete,function(error,response,body){
-			if(!error && response.statusCode==200){
-				if(!_.isUndefined(self.server)&&!_.isNull(self.server)){
-					self.server.close();
+		self.api.deleteTunnel(self.tunnelId, (err, deleteResp) => {
+			if (!!self.server){
+				self.server.close();
+			};
+			for(connection in connection_list){
+				if(socketExists(connection.id)){
+					connection.client.end();
 				}
-				for(connection in connection_list){
-					if(socketExists(connection.id)){
-						connection.client.end();
-					}
-				}
-				body=JSON.parse(body);
-				if(self.conn){
-					self.conn.disconnect();
-				}
-				cb(null,'killit');
-			}else{
-				cb(error,null);
-				console.log(error);
+			};
+			if (err){
+				console.log(err);
+				return cb(err);
+			} else {
+				return cb(null,'killit');
 			}
 		});
 
@@ -497,7 +494,7 @@ function cbtSocket(params) {
 
 	self.endWrap = function(){
 		self.end(function(err,killit){
-			if(!err&&killit==='killit'){
+			if(!err && killit === 'killit'){
 				console.log('Bye!');
 				process.exit(0);
 			}else if(err){
@@ -510,12 +507,13 @@ function cbtSocket(params) {
 	}
 
 	function socketExists(id){
-		//TODO this looks dumb
-		if ((!_.isUndefined(connection_list[id]) && !_.isNull(connection_list[id]))&&(!_.isUndefined(connection_list[id].client) && !_.isNull(connection_list[id].client))&&(!connection_list[id].ended)&&(connection_list[id].established)&&(Object.getOwnPropertyNames(connection_list[id].client.address()).length > 0)){
-			return true;
-		}else{
-			return false;
-		}
+		return (
+			(!!connection_list[id])              // connection list has property `id`
+			&& (!!connection_list[id].client)    // id has property client
+			&& (!connection_list[id].ended)      // id property ended is false
+			&& (connection_list[id].established) // id property established is true
+			&& (Object.getOwnPropertyNames(connection_list[id].client.address()).length > 0)
+		)
 	}
 }
 

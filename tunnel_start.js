@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+	util = require('util'),
 	request = require('request'),
 	cbtSocket = (require('./cbt_tunnels')),
 	argv = require('yargs').env('CBT_TUNNELS').argv,
@@ -8,7 +9,7 @@ var _ = require('lodash'),
 	warn = gfx.warn,
 	help = gfx.help,
 	cbtUrls = {
-		server: "crossbrowsertesting.com", 
+		server: "crossbrowsertesting.com",
 		node: "crossbrowsertesting.com"
 	},
 	tType,
@@ -24,127 +25,130 @@ var getCbtUrls = function(isTest){
 	}
 }
 
+var parseArgs = function(args, accountInfo){
+	console.log('in parseArgs');
+	cbtUrls = getCbtUrls(args.test);
+
+	var tType = args.tType;
+	var params = {
+		urls: cbtUrls,
+		verbose: args.verbose,
+		username: args.username,
+		quiet: args.quiet,
+		authkey: accountInfo.auth_key,
+		tType:tType,
+		userId: accountInfo.user_id,
+		tunnelName: args.tunnelname,
+		cmd: !!cmd,
+		ready: !!args.ready
+	}
+	switch(tType){
+		case 'simpleproxy':
+			// no special parsing needed
+			return params
+			break;
+		case 'tunnel':
+			if(!!args.proxyIp && !!args.proxyPort && !(!!args.proxyUser != !!args.proxyPass)){
+				params.proxyIp = args.proxyIp;
+				params.proxyPort = args.proxyPort;
+				params.bytecode = true;
+
+				if(!!args.proxyPass && !!args.proxyUser){
+					params.proxyPass = args.proxyPass;
+					params.proxyUser = args.proxyUser;
+				}
+				return params;
+			}else if( !args.proxyIp || !args.proxyIp ){
+				return new Error('You must specify the proxy IP (--proxyIp) to create a tunnel.');
+			}else if(!args.proxyUser || !args.proxyPass){
+				return new Error('You must specify both a proxy user (--proxyUser) and a proxy password (--proxyPass) to use basic authentication with the proxy option.');
+			}else{
+				return new Error('You must specify the proxy port (--proxyPort) to create a tunnel.\n\n');
+			}
+			break;
+		case 'webserver':
+			if(!!args.dir){
+				if(!args.port){
+					var port = null;
+				}
+				params.directory = args.dir;
+				params.port = args.port;
+				return params;
+			}else{
+				return new Error('You must specifiy a directory (--dir) to create a webserver.\n\n');
+			}
+			break;
+		default:
+			return new Error('This should not happen.');
+	}
+}
+
+
 
 var cmdParse = function(api, cb){
 	console.log('in cmdParse');
 	cbtUrls = getCbtUrls(argv.test);
-	var tType = argv.tType;
-	if(!_.isUndefined(tType) && !_.isNull(tType)){
-		api.getAccountInfo(function(err, data){
-			if (err || !data){
-				warn('Authentication error! Please check your credentials and try again.');
-				cb
-			}
-			if(!err && data){
-				console.log('Got user account info!');
-				var params = {
-					urls: cbtUrls,
-					verbose: argv.verbose,
-					username: argv.username,
-					quiet: argv.quiet,
-					authkey: data.auth_key, 
-					tType:tType,
-					userId:data.user_id,
-					cb: cb,
-					tunnelName: argv.tunnelname
-				}
-				if(cmd){
-					params.cmd = true;
-				}
-				if(!_.isUndefined(argv.ready)&&!_.isNull(argv.ready)){
 
-					params.ready = argv.ready;
-				}
-				switch(tType){
-					case 'simpleproxy':
-						startTunnel(api, params);
-						break;
-					case 'tunnel':
-						if(!_.isUndefined(argv.proxyIp) && !_.isUndefined(argv.proxyPort) && !_.isNull(argv.proxyIp) && !_.isNull(argv.proxyPort) && (!(_.isUndefined(argv.proxyUser)!=_.isUndefined(argv.proxyPass)))){
-							var opts = {
-								proxyIp:argv.proxyIp,
-								proxyPort:argv.proxyPort,
-								bytecode:true
-							}
-							if(!_.isUndefined(argv.proxyPass)&&!_.isUndefined(argv.proxyUser)){
-								opts.proxyPass = argv.proxyPass;
-								opts.proxyUser = argv.proxyUser;
-							}
-							_.merge(params,opts);
-							startTunnel(api, params);
-						}else if(_.isUndefined(argv.proxyIp)||_.isNull(argv.proxyIp)){
-							help();
-							warn('You must specify the proxy IP (--proxyIp) to create a tunnel.\n\n');
-						}else if((_.isUndefined(argv.proxyUser)!=_.isUndefined(argv.proxyPass))){
-							help();
-							warn('You must specify both a proxy user (--proxyUser) and a proxy password (--proxyPass) to use basic authentication with the proxy option.');
-						}else{
-							help();
-							warn('You must specify the proxy port (--proxyPort) to create a tunnel.\n\n');
-						}
-						break;
-					case 'webserver':
-						if(!_.isUndefined(argv.dir) && !_.isNull(argv.dir)){
-							if(_.isUndefined(argv.port)||_.isNull(argv.port)){
-								port = null;
-							}
-							var opts = {
-								directory:argv.dir,
-								port:argv.port
-							}
-							_.merge(params,opts);
-							startTunnel(api, params);
-						}else{
-							help();
-							warn('You must specifiy a directory (--dir) to create a webserver.\n\n');
-						}
-						break;
-					default:
-						console.log('How did you get here?');
-						process.exit(1);
+	var tType = argv.tType;
+	if(!!tType){
+		api.getAccountInfo(function(err, accountInfo){
+			if (err || !accountInfo){
+				warn('Authentication error! Please check your credentials and try again.');
+				cb(err)
+			}
+			if(!err && accountInfo){
+				console.log('Got user account info!');
+				params = parseArgs(argv, accountInfo);
+				console.log('got params: ' + util.inspect(params));
+				if (params instanceof Error){
+					warn(params.message);
+					help()
+				} else {
+					startTunnel(api, params, cb);
 				}
 			}
 		});
 	}
 }
 
-var startTunnel = function(api, params){
-	api.postTunnel(params.tType,params.tunnelName,function(err,data){
-		if(!err&&data){
+var startTunnel = function(api, params, cb){
+	api.postTunnel(params.tType, params.tunnelName, function(err, postResult){
+		if(!err && postResult){
 			console.log('Posted!');
-			console.log(data.remote_server);
+			console.log(postResult.remote_server);
 			var opts = {
-				tcpPort:data.remote_port,
-				cbtServer:data.remote_server,
-				tp:data.tunnel_authkey,
-				tid:data.tunnel_id,
-				tu:data.tunnel_user
+				tcpPort: postResult.remote_port,
+				cbtServer: postResult.remote_server,
+				tp: postResult.tunnel_authkey,
+				tid: postResult.tunnel_id,
+				tu: postResult.tunnel_user
 			}
 			_.merge(params,opts);
-			cbts = new cbtSocket(params);
+			console.log("ABOUT TO MAKE A SOCKET. PARAMS: " + util.inspect(params));
+			cbts = new cbtSocket(api, params);
 			cbts.start(function(err,socket){
-				if(!err&&socket){
-					api.putTunnel(data.tunnel_id, params.tType, data.local, data.port, function(err,data){
-						if(!err&&data){
+				if(!err && socket){
+					api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
+						if(!err && putResult){
 							console.log('PUT request successful!');
 							console.log('Completely connected!');
-							params.cb(null);
+							cb(null);
 
 						}else{
 							console.log(err);
-							params.cb(err);
+							cb(err);
 							cbts.endWrap();
 						}
 					});
 				}else{
-					params.cb(err);
+					cb(err);
 					cbts.endWrap();
 				}
 			});
 		}else{
 			console.log(err);
 			setTimeout(function(){
-				params.cb(err);
+				cb(err);
 				process.exit(1);
 			},10000);
 		}
@@ -161,7 +165,7 @@ var startTunnel = function(api, params){
 							setTimeout(function(){
 								process.exit(1);
 							},10000);
-						} 
+						}
 					})
 				}
 			})
@@ -171,6 +175,8 @@ var startTunnel = function(api, params){
 
 module.exports = {
 	start: function(params,cb){
+
+		// parse arguments
 		var api = require('./api')(argv.username, argv.authkey, argv.test);
 		var u = _.union(_.keys(params),validParameters);
 		var v = _.isEqual(u.sort(),validParameters.sort());
@@ -227,11 +233,7 @@ module.exports = {
 		}
 		_.merge(argv,params);
 		cmdParse(api, function(err){
-			if(!err){
-				cb(null);
-			}else{
-				cb(err);
-			}
+			cb(err);
 		});
 	},
 	stop: function(){
