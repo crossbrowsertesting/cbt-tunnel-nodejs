@@ -63,8 +63,8 @@ function Tunnel(username, authkey, params){
 			if (err){
 				console.log("error starting static server: " + err)
 			}
-			console.log("done starting static server)
-		}
+			console.log("done starting static server");
+		})
 	}
 
 	this.startStaticServer = function(attempt){
