@@ -25,7 +25,7 @@ var encodeAuth = function(username, authkey){
 
 var makeApiCall = function(server, method, path, qs, username, authkey, callback){
 	// this is a generic function to make different api calls to cbt
-	console.log(`about to make a ${method} request to ${server} at ${path} for ${username}:${authkey}`)
+	// console.log(`about to make a ${method} request to ${server} at ${path} for ${username}`)
 	var options = {
 		url: server + '/api/v3/' + path,
 		method: method,
@@ -36,9 +36,9 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
 	if (!!qs){
 		options.qs = qs;
 	}
-	console.log("options: " + util.inspect(options));
+	// console.log("options: " + util.inspect(options));
 	request(options, (err, resp, body) => {
-		console.log(`got resp: ` + body);
+		// console.log(`got resp: ` + body);
 		// parse resp body, or set it to parse error string
 		// note: invalid json in response body WILL NOT cause an error to be thrown
 		try {
@@ -85,7 +85,7 @@ module.exports = function(username, authkey, env){
 	return {
 		getAccountInfo: function(callback){
 			makeApiCall(server, 'GET', 'account', null, username, authkey, (err, body) => {
-				console.log(`got resp for getAccountInfo`);
+				// console.log(`got resp for getAccountInfo`);
 				return callback(err, body);
 			})
 		},
@@ -95,12 +95,12 @@ module.exports = function(username, authkey, env){
 				tunnel_type: tunnelType,
 				tunnel_name: tunnelName
 			} , username, authkey, (err, body) => {
-				console.log(JSON.stringify(body));
+				// console.log(JSON.stringify(body));
 				return callback(err, body);
 			})
 		},
 		putTunnel: function(tunnelId, tunnelType, directory, proxyHost, proxyPort, callback){
-			console.log(`got resp for putTunnel`);
+			// console.log(`got resp for putTunnel`);
 			makeApiCall(server, 'PUT', 'tunnels/' + tunnelId, {
 				local_directory: directory || '',
 				local_ip: proxyHost || 'localhost',
@@ -110,25 +110,26 @@ module.exports = function(username, authkey, env){
 				tunnel_source: 'nodews',
 				tunnel_type: tunnelType
 			}, username, authkey, (err, body) => {
-				console.log(`got resp for putTunnel`);
+				// console.log(`got resp for putTunnel`);
 				return callback(err, body);
 			});
 		},
 		deleteTunnel: function(tunnelId, callback){
 			makeApiCall(server, 'DELETE', 'tunnels/' + tunnelId, {state: 10}, username, authkey, (err, resp) => {
-				console.log('got resp for deleteTunnel');
+				// console.log('got resp for deleteTunnel');
 				return callback(err, resp);
 			})
 		},
 		getConManager: function(callback){
-			makeApiCall(server, 'GET', 'tunnelserver', null, username, authkey, (err, resp) => {
-				console.log('got resp for getConManager');
+			makeApiCall(server, 'GET', 'localconman', null, username, authkey, (err, resp) => {
+				// console.log('got resp for getConManager: ');
+				// console.log(util.inspect(resp));
 				return callback(err, resp);
 			})
 		},
 		startConManagerTunnel: function(tunnelParams, callback){
-			makeApiCall(server, 'POST', 'tunnelserver', tunnelParams, username, authkey, (err, resp) => {
-				console.log('got resp for startConManagerTunnel');
+			makeApiCall(server, 'POST', 'localconman', tunnelParams, username, authkey, (err, resp) => {
+				// console.log('got resp for startConManagerTunnel');
 				return callback(err, resp);
 			})
 		}

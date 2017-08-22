@@ -2,7 +2,6 @@ var net = require('net'),
 	util = require('util'),
 	tls = require('tls'),
 	fs  = require('fs'),
-	api = require('./api'),
 	connection_list = {},
 	request = require('request'),
 	_ = require('lodash'),
@@ -17,14 +16,14 @@ function pad(n, width, z) {
 }
 
 function cbtSocket(api, params) {
-	var inbound,
-		outbound,
-		self = this;
-	params.context = self,
-		killLever = utils.killLever(self);
+	var inbound;
+	var outbound;
+	var self = this;
+	var killLever = utils.killLever(self);
+	params.context = self;
 
-	self.api = api;
 	self.tunnelId = params.tid;
+	self.api = api;
 
 	function getInbound(){
 		return inbound;
@@ -35,6 +34,7 @@ function cbtSocket(api, params) {
 	}
 
 	self.startStaticServer = function(attempt){
+		if (!attempt){ attempt = 0 };
 		self.localServe = require('express')();
 		self.serveDir = require('serve-index');
 		self.serveStatic = require('serve-static');
@@ -76,15 +76,15 @@ function cbtSocket(api, params) {
 	self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
 	self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
 	var proxyAuthString = self.proxyAuthString = '';
-	if(!_.isUndefined(params.proxyUser)&&!_.isUndefined(params.proxyPass)){
-		proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic '+(new Buffer(params.proxyUser+':'+params.proxyPass)).toString('base64');
+	if(!!params.proxyUser && !!params.proxyPass){
+		proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic ' + (new Buffer(params.proxyUser + ':' + params.proxyPass)).toString('base64');
 	}
 	self.ready = params.ready;
 	switch(tType){
 		case 'simple':
 			break;
 		case 'webserver':
-			self.startStaticServer(0);
+			self.startStaticServer();
 			break;
 		case 'tunnel':
 			var tType = self.tType = 'tunnel';
@@ -96,7 +96,7 @@ function cbtSocket(api, params) {
 
 	var conn = self.conn = null;
 
-	if(process.env.http_proxy||process.env.https_proxy){
+	if (process.env.http_proxy || process.env.https_proxy){
 		process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
 		conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
 	}else{
@@ -188,7 +188,7 @@ function cbtSocket(api, params) {
 		conn.on("disconnect", function(data){
 			reconnecting = true;
 			clearInterval(ping);
-			if(!params.verbose&&!params.quiet&&params.cmd){
+			if(!params.verbose &&! params.quiet && params.cmd){
 				clearInterval(self.drawTimeout);
 				self.spin(null,'Disconnected from CBT server.\n');
 			}else{
@@ -231,16 +231,15 @@ function cbtSocket(api, params) {
 				}else{
 					if(params.verbose){
 						try{
-							var body = JSON.parse(body);
-							console.log('IP appears to CBT as: '+body.ip);
-							conn.emit('checkrecv',{ip:body.ip});
+							console.log('IP appears to CBT as: '+resp.ip);
+							conn.emit('checkrecv',{ip:resp.ip});
 						}catch(e){
 							warn('Parsing response failed: '+e);
 							conn.emit('checkrecv',{error:e});
 						}
 					}
 				}
-			})
+			});
 		})
 
 		conn.on('legitdead',function(){
@@ -274,7 +273,7 @@ function cbtSocket(api, params) {
 				var client = connection_list[id].client;
 			}
 
-			if((data._type!='end')&&(!connection_list[id].established)&&(!connection_list[id].ended)){
+			if( (data._type != 'end') && (!connection_list[id].established) && (!connection_list[id].ended) ){
 				inbound += 1;
 				if ( self.tType === 'tunnel'){
 					var host = self.host = self.proxyHost;
@@ -423,22 +422,22 @@ function cbtSocket(api, params) {
 				});
 			}
 		});
-	}
+	};
 
 	self.spin = function(old,msg){
 		inbound = 0;
 		outbound = 0;
-		gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
+		gfx.draw(getInbound(), getOutbound(), old, msg, self.tType);
 		self.drawTimeout = setInterval(function(){
-			gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
+			gfx.draw(getInbound(), getOutbound(), old, msg, self.tType);
 			inbound = 0;
 			outbound = 0;
 		}, 1000);
 		process.stdout.on('resize', function() {
 			clearInterval(self.drawTimeout);
-			gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
+			gfx.draw(getInbound(), getOutbound(), old, msg, self.tType);
 			self.drawTimeout = setInterval(function(){
-				gfx.draw(getInbound(),getOutbound(),old,msg,self.tType);
+				gfx.draw(getInbound(), getOutbound(), old, msg, self.tType);
 				inbound = 0;
 				outbound = 0;
 			}, 1000);
@@ -447,7 +446,7 @@ function cbtSocket(api, params) {
 
 	self.addProxyAuth = function(data){
 		var dataArr = data.data.toString().split('\r\n');
-		dataArr = _.filter(dataArr,function(col){
+		dataArr = _.filter(dataArr, function(col){
 			if(!col==''){
 				return col;
 			}
@@ -476,12 +475,12 @@ function cbtSocket(api, params) {
 				console.log(err);
 				return cb(err);
 			} else {
-				return cb(null,'killit');
+				return cb(null, 'killit');
 			}
 		});
 
 		if(self.ready){
-			fs.unlink(self.ready,function(err){
+			fs.unlink(self.ready, function(err){
 				if(err){
 					console.log(err);
 					setTimeout(function(){
@@ -493,7 +492,7 @@ function cbtSocket(api, params) {
 	}
 
 	self.endWrap = function(){
-		self.end(function(err,killit){
+		self.end(function(err, killit){
 			if(!err && killit === 'killit'){
 				console.log('Bye!');
 				process.exit(0);
@@ -501,7 +500,7 @@ function cbtSocket(api, params) {
 				console.log(err);
 				setTimeout(function(){
 					process.exit(1);
-				},10000);
+				}, 10000);
 			}
 		});
 	}

@@ -26,7 +26,7 @@ var getCbtUrls = function(isTest){
 }
 
 var parseArgs = function(args, accountInfo){
-	console.log('in parseArgs');
+	// console.log('in parseArgs');
 	cbtUrls = getCbtUrls(args.test);
 
 	var tType = args.tType;
@@ -39,7 +39,7 @@ var parseArgs = function(args, accountInfo){
 		tType:tType,
 		userId: accountInfo.user_id,
 		tunnelName: args.tunnelname,
-		cmd: !!cmd,
+		cmd: !!args.cmd,
 		ready: !!args.ready
 	}
 	switch(tType){
@@ -86,7 +86,7 @@ var parseArgs = function(args, accountInfo){
 
 
 var cmdParse = function(api, cb){
-	console.log('in cmdParse');
+	// console.log('in cmdParse');
 	cbtUrls = getCbtUrls(argv.test);
 
 	var tType = argv.tType;
@@ -97,9 +97,9 @@ var cmdParse = function(api, cb){
 				cb(err)
 			}
 			if(!err && accountInfo){
-				console.log('Got user account info!');
+				// console.log('Got user account info!');
 				params = parseArgs(argv, accountInfo);
-				console.log('got params: ' + util.inspect(params));
+				// console.log('got params: ' + util.inspect(params));
 				if (params instanceof Error){
 					warn(params.message);
 					help()
