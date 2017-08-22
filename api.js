@@ -120,6 +120,12 @@ module.exports = function(username, authkey, env){
 				return callback(err, resp);
 			})
 		},
+		checkTunnelIp: function(callback){
+			makeApiCall(server, 'GET', 'tunnels/checkIp', null, username, authkey, (err, resp) => {
+				// console.log('got resp for checkTunnelIp');
+				return callback(err, resp);
+			});
+		},
 		getConManager: function(callback){
 			makeApiCall(server, 'GET', 'localconman', null, username, authkey, (err, resp) => {
 				// console.log('got resp for getConManager: ');

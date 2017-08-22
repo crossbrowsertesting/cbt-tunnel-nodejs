@@ -3,7 +3,6 @@ var net = require('net'),
 	tls = require('tls'),
 	fs  = require('fs'),
 	connection_list = {},
-	request = require('request'),
 	_ = require('lodash'),
 	gfx = require('./gfx.js'),
 	warn = gfx.warn,
@@ -219,17 +218,15 @@ function cbtSocket(api, params) {
 				console.log('Received check request!');
 				sendLog('node client received check request.');
 			}
-			request.get(self.cbtApp+'/api/v3/tunnels/checkIp',function(err,response,body){
-				if(err||response.statusCode!==200){
-					if(params.verbose){
-						warn('IP check error!');
-						console.dir(response);
-						warn(err);
-						var data = err ? {error:err} : {error:response.statusCode};
-						conn.emit('checkrecv',data);
-					}
-				}else{
-					if(params.verbose){
+			self.api.checkTunnelIp((err, resp) => {
+				if(err && params.verbose){
+					warn('IP check error!');
+					console.dir(response);
+					warn(err);
+					var data = err;
+					conn.emit('checkrecv', data);
+				} else {
+					if (params.verbose){
 						try{
 							console.log('IP appears to CBT as: '+resp.ip);
 							conn.emit('checkrecv',{ip:resp.ip});

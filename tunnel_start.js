@@ -1,10 +1,10 @@
 var _ = require('lodash'),
 	util = require('util'),
-	request = require('request'),
 	cbtSocket = (require('./cbt_tunnels')),
 	argv = require('yargs').env('CBT_TUNNELS').argv,
 	fs = require('fs'),
 	gfx = require('./gfx.js'),
+	api = require('./api'),
 	cbts = null,
 	warn = gfx.warn,
 	help = gfx.help,
@@ -112,67 +112,122 @@ var cmdParse = function(api, cb){
 }
 
 var startTunnel = function(api, params, cb){
-	api.postTunnel(params.tType, params.tunnelName, function(err, postResult){
-		if(!err && postResult){
-			console.log('Posted!');
-			console.log(postResult.remote_server);
-			var opts = {
-				tcpPort: postResult.remote_port,
-				cbtServer: postResult.remote_server,
-				tp: postResult.tunnel_authkey,
-				tid: postResult.tunnel_id,
-				tu: postResult.tunnel_user
+	api.getConManager( (err, getConManResult) => {
+		if ( err) { return cb(err) };
+		if ( getConManResult.localConnectionManagerEnabled ) {
+			if ( getConManResult.localConnectionManagerRunning ) {
+				return self.api.startConManagerTunnel(params, cb);
+			} else {
+				err = new Error( 'Connection Manager is required for this account to start a tunnel, but it is not running. '
+					+ 'Please contact your primary account holder or support@crossbrowsertesting.com' );
+				warn(err)
+				return cb(err);
 			}
-			_.merge(params,opts);
-			console.log("ABOUT TO MAKE A SOCKET. PARAMS: " + util.inspect(params));
-			cbts = new cbtSocket(api, params);
-			cbts.start(function(err,socket){
-				if(!err && socket){
-					api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
-						if(!err && putResult){
-							console.log('PUT request successful!');
-							console.log('Completely connected!');
-							cb(null);
+			api.postTunnel(params.tType, params.tunnelName, function(err, postResult){
+				if(!err && postResult){
+					// console.log('Posted!');
+					// console.log(postResult.remote_server);
+					var opts = {
+						tcpPort: postResult.remote_port,
+						cbtServer: postResult.remote_server,
+						tp: postResult.tunnel_authkey,
+						tid: postResult.tunnel_id,
+						tu: postResult.tunnel_user
+					}
+					_.merge(params,opts);
+					// console.log("ABOUT TO MAKE A SOCKET. PARAMS: " + util.inspect(params));
+					cbts = new cbtSocket(api, params);
+					cbts.start(function(err,socket){
+						if(!err && socket){
+							api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
+								if(!err && putResult){
+									// console.log('PUT request successful!');
+									// console.log('Completely connected!');
+									cb(null);
 
+								}else{
+									console.log(err);
+									cb(err);
+									cbts.endWrap();
+								}
+							});
 						}else{
-							console.log(err);
 							cb(err);
 							cbts.endWrap();
 						}
 					});
 				}else{
-					cb(err);
-					cbts.endWrap();
+					console.log(err);
+					setTimeout(function(){
+						cb(err);
+						process.exit(1);
+					},10000);
 				}
 			});
-		}else{
-			console.log(err);
-			setTimeout(function(){
-				cb(err);
-				process.exit(1);
-			},10000);
-		}
-	});
-	if(argv.kill){
-		setInterval(function(){
-			fs.stat('./'+argv.kill,function(error,stat){
-				if(error==null){
-					fs.unlink('./'+argv.kill,function(err){
-						if(err==null){
-							cbts.endWrap();
-						}else{
-							console.log(err);
-							setTimeout(function(){
-								process.exit(1);
-							},10000);
+			if(argv.kill){
+				setInterval(function(){
+					fs.stat('./'+argv.kill,function(error,stat){
+						if(error==null){
+							fs.unlink('./'+argv.kill,function(err){
+								if(err==null){
+									cbts.endWrap();
+								}else{
+									console.log(err);
+									setTimeout(function(){
+										process.exit(1);
+									},10000);
+								}
+							})
 						}
 					})
-				}
-			})
-		},1000);
-	}
+				},1000);
+			}
+		}
+	})
 }
 
+var validateArgs = function(cmdArgs){
+	newArgs = JSON.parse(JSON.stringify(cmdArgs));
+	var u = _.union(_.keys(cmdArgs),validParameters);
+	var v = _.isEqual(u.sort(),validParameters.sort());
+	if(!v){
+		return new Error("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),validParameters.sort())+"\n")
+	}
+	if(newArgs.httpProxy){
+		process.env.http_proxy = newArgs.httpProxy;
+		process.env.HTTP_PROXY = newArgs.httpProxy;
+	}
+	if(newArgs.httpsProxy){
+		process.env.https_proxy = newArgs.httpsProxy;
+		process.env.HTTPS_PROXY = newArgs.httpsProxy;
+	}
+	if(!newArgs.tunnelname){
+		newArgs.tunnelName = null;
+	}
+	if(newArgs.dir){
+		if(!newArgs.proxyIp && !newArgs.proxyPort){
+			newArgs.tType = 'webserver';
+		}else{
+			return new Error("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
+		}
+	} else if(!!newArgs.proxyIp && !!newArgs.proxyPort ){
+		if(!newArgs.dir && !newArgs.port){
+			newArgs.tType = 'tunnel';
+		}else{
+			return new Error("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
+		}
+	}else if(!!newArgs.proxyIp || !!newArgs.proxyPort || !!newArgs.proxyUser || !!newArgs.proxyPass){
+		return new Error("Starting a proxy server tunnel requires both a proxyIp and a proxyPort");
+	}else{
+		newArgs.tType = 'simpleproxy';
+	}
+	if(!newArgs.username){
+		return new Error('You must specify a username.\n');
+	}else if(!newArgs.authkey){
+		return new Error('You must specifiy an authkey.\n');
+	}
+	return newArgs;
+}
 module.exports = {
 	start: function(params,cb){
 
@@ -220,19 +275,31 @@ module.exports = {
 			warn("Starting a proxy server tunnel requires both a proxyIp and a proxyPort");
 			process.exit(1);
 		}else{
-			argv.tType = 'simpleproxy';
+			return new Error("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
 		}
-		if((_.isUndefined(params.username)) || (_.isNull(params.username))){
-			help();
-			warn('You must specify a username.\n');
-			process.exit(1);
-		}else if((_.isUndefined(params.authkey)) || _.isNull(params.authkey)){
-			help();
-			warn('You must specifiy an authkey.\n');
-			process.exit(1);
+	}else if(!!newArgs.proxyIp || !!newArgs.proxyPort || !!newArgs.proxyUser || !!newArgs.proxyPass){
+		return new Error("Starting a proxy server tunnel requires both a proxyIp and a proxyPort");
+	}else{
+		newArgs.tType = 'simpleproxy';
+	}
+	if(!newArgs.username){
+		return new Error('You must specify a username.\n');
+	}else if(!newArgs.authkey){
+		return new Error('You must specifiy an authkey.\n');
+	}
+	return newArgs;
+}
+
+module.exports = {
+	start: function(cmdArgs,cb){
+		params = validateArgs(cmdArgs)
+		if (params instanceof Error){
+			return cb(params);
 		}
-		_.merge(argv,params);
-		cmdParse(api, function(err){
+
+		_.merge(argv, params);
+		var cbtApi = api(params.username, params.authkey, params.test);
+		cmdParse(cbtApi, function(err){
 			cb(err);
 		});
 	},
