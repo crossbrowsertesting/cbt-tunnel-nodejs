@@ -228,67 +228,6 @@ var validateArgs = function(cmdArgs){
 	}
 	return newArgs;
 }
-module.exports = {
-	start: function(params,cb){
-
-		// parse arguments
-		var api = require('./api')(argv.username, argv.authkey, argv.test);
-		var u = _.union(_.keys(params),validParameters);
-		var v = _.isEqual(u.sort(),validParameters.sort());
-		if(!v){
-			help();
-			warn("I can't make sense of some of the flags you've provided, like: \n    "+_.difference(u.sort(),validParameters.sort())+"\n");
-			process.exit(1);
-		}
-		if(params.cmd){
-			cmd = true;
-		}
-		if(params.httpProxy){
-			process.env.http_proxy = params.httpProxy;
-			process.env.HTTP_PROXY = params.httpProxy;
-		}
-		if(params.httpsProxy){
-			process.env.https_proxy = params.httpsProxy;
-			process.env.HTTPS_PROXY = params.httpsProxy;
-		}
-		if(!params.tunnelname){
-			params.tunnelName = null;
-		}
-		if(params.dir){
-			if((_.isNull(params.proxyIp)||_.isUndefined(params.proxyIp))&&(_.isNull(params.proxyPort)||_.isUndefined(params.proxyPort))){
-				argv.tType = 'webserver';
-			}else{
-				help();
-				warn("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
-				process.exit(1);
-			}
-		}else if(!_.isUndefined(params.proxyIp)&&!_.isNull(params.proxyIp)&&!_.isUndefined(params.proxyPort)&&!_.isNull(params.proxyPort)){
-			if(!params.dir&&!params.port){
-				argv.tType = 'tunnel';
-			}else{
-				help();
-				warn("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
-				process.exit(1);
-			}
-		}else if((!_.isUndefined(params.proxyIp)&&!_.isNull(params.proxyIp))||(!_.isUndefined(params.proxyPort)&&!_.isNull(params.proxyPort))||(!_.isUndefined(params.proxyUser))||(!_.isUndefined(params.proxyPass))){
-			help();
-			warn("Starting a proxy server tunnel requires both a proxyIp and a proxyPort");
-			process.exit(1);
-		}else{
-			return new Error("Arguments for both hosting local files and acting as a proxy server are provided; only one tunnel type may be specified.");
-		}
-	}else if(!!newArgs.proxyIp || !!newArgs.proxyPort || !!newArgs.proxyUser || !!newArgs.proxyPass){
-		return new Error("Starting a proxy server tunnel requires both a proxyIp and a proxyPort");
-	}else{
-		newArgs.tType = 'simpleproxy';
-	}
-	if(!newArgs.username){
-		return new Error('You must specify a username.\n');
-	}else if(!newArgs.authkey){
-		return new Error('You must specifiy an authkey.\n');
-	}
-	return newArgs;
-}
 
 module.exports = {
 	start: function(cmdArgs,cb){
