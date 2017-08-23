@@ -89,11 +89,12 @@ module.exports = function(username, authkey, env){
 				return callback(err, body);
 			})
 		},
-		postTunnel: function(tunnelType, tunnelName, callback){
+		postTunnel: function(tunnelType, tunnelName, secret, callback){
 			makeApiCall(server, 'POST', 'tunnels', {
 				tunnel_source: 'nodews',
 				tunnel_type: tunnelType,
-				tunnel_name: tunnelName
+				tunnel_name: tunnelName,
+				secret: secret
 			} , username, authkey, (err, body) => {
 				// console.log(JSON.stringify(body));
 				return callback(err, body);
@@ -134,7 +135,11 @@ module.exports = function(username, authkey, env){
 			})
 		},
 		startConManagerTunnel: function(tunnelParams, callback){
-			makeApiCall(server, 'POST', 'localconman', tunnelParams, username, authkey, (err, resp) => {
+			makeApiCall(server, 'POST', 'localconman', {
+				local_ip: proxyHost || 'localhost',
+				local_port: proxyPort || '',
+				tunnel_type: tunnelType
+			}, username, authkey, (err, resp) => {
 				// console.log('got resp for startConManagerTunnel');
 				return callback(err, resp);
 			})

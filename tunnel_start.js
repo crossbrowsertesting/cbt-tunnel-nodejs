@@ -40,7 +40,8 @@ var parseArgs = function(args, accountInfo){
 		userId: accountInfo.user_id,
 		tunnelName: args.tunnelname,
 		cmd: !!args.cmd,
-		ready: !!args.ready
+		ready: !!args.ready,
+		secret: args.secret
 	}
 	switch(tType){
 		case 'simpleproxy':
@@ -113,17 +114,20 @@ var cmdParse = function(api, cb){
 
 var startTunnel = function(api, params, cb){
 	api.getConManager( (err, getConManResult) => {
-		if ( err) { return cb(err) };
-		if ( getConManResult.localConnectionManagerEnabled ) {
-			if ( getConManResult.localConnectionManagerRunning ) {
-				return self.api.startConManagerTunnel(params, cb);
-			} else {
+		if ( err ){ return cb(err) };
+		if ( getConManResult.localConnectionManagerEnabled && !getConManResult.localConnectionManagerRunning ){
 				err = new Error( 'Connection Manager is required for this account to start a tunnel, but it is not running. '
 					+ 'Please contact your primary account holder or support@crossbrowsertesting.com' );
 				warn(err)
 				return cb(err);
-			}
-			api.postTunnel(params.tType, params.tunnelName, function(err, postResult){
+		} else if ( getConManResult.localConnectionManagerEnabled && getConManResult.localConnectionManagerRunning && !params.secret){
+			// this account has a connection manager running 
+			// and was not started by the connection manager (no secret provided)
+			// so ask the api to start a tunnel
+			return self.api.startConManagerTunnel(params, cb);
+		} else {
+			console.log('about to post a tunnel with the secret: ' + params.secret);
+			api.postTunnel(params.tType, params.tunnelName, params.secret, function(err, postResult){
 				if(!err && postResult){
 					// console.log('Posted!');
 					// console.log(postResult.remote_server);
