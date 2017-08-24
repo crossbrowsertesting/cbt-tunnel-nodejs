@@ -14,7 +14,7 @@ var _ = require('lodash'),
 	},
 	tType,
 	cmd = false,
-	validParameters = ['quiet','proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname'];
+	validParameters = ['quiet','proxyUser','proxyPass','httpsProxy','httpProxy','_','ready','username','authkey','$0','simpleproxy','tunnel','webserver','cmd','proxyIp','proxyPort','port','dir','verbose','kill','test','tunnelname','secret'];
 
 
 var getCbtUrls = function(isTest){
