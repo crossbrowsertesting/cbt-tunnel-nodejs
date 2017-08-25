@@ -140,6 +140,7 @@ function cbtSocket(api, params) {
 				warn(e);
 			}
 			warn('Could not connect to CBT server.');
+			warn(e);
 		});
 
 		conn.on('connect',function(){

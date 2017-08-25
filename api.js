@@ -36,27 +36,26 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
 	if (!!qs){
 		options.qs = qs;
 	}
-	// console.log("options: " + util.inspect(options));
 	request(options, (err, resp, body) => {
+		if( err ){
+			return callback(err);
+		}
+		// debugger;
 		// console.log(`got resp: ` + body);
 		// parse resp body, or set it to parse error string
 		// note: invalid json in response body WILL NOT cause an error to be thrown
 		try {
 			body = JSON.parse(body);
 		} catch (ex) {
-			console.error("error parsing cbt_node response")
 			var err = new Error("error parsing cbt_node response");
 		} 
 
 		// non 200 statusCodes should return an error
-		if ( resp.statusCode !== 200 ) {
-			err = new Error(`statusCode from cbt_node !== 200. Got ${JSON.stringify(body)} `)
-		};
-		if (err) {
-			callback(err) 
+		if ( !err && resp.statusCode !== 200 ) {
+			return callback(Error(`statusCode from cbt_node !== 200. Got ${JSON.stringify(body)} `));
 		} else {
 			// all good! return parsed body
-			callback(null, body);
+			return callback(null, body);
 		}
 	})
 }
@@ -136,11 +135,12 @@ module.exports = function(username, authkey, env){
 		},
 		startConManagerTunnel: function(tunnelParams, callback){
 			makeApiCall(server, 'POST', 'localconman', {
-				local_ip: proxyHost || 'localhost',
-				local_port: proxyPort || '',
-				tunnel_type: tunnelType
+				local_ip: tunnelParams.proxyHost || 'localhost',
+				local_port: tunnelParams.proxyPort || '',
+				tunnel_type: tunnelParams.tType
 			}, username, authkey, (err, resp) => {
-				// console.log('got resp for startConManagerTunnel');
+				console.log('Started tunnel remotely via Local Connection Manager');
+				// wait forever
 				return callback(err, resp);
 			})
 		}
