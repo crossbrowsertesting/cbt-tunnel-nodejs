@@ -47,7 +47,7 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
 		try {
 			body = JSON.parse(body);
 		} catch (ex) {
-			var err = new Error("error parsing cbt_node response");
+			return callback(new Error("error parsing cbt_node response: " + ex));
 		} 
 
 		// non 200 statusCodes should return an error
