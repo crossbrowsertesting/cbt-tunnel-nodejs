@@ -137,7 +137,8 @@ module.exports = function(username, authkey, env){
 			makeApiCall(server, 'POST', 'localconman', {
 				local_ip: tunnelParams.proxyHost || 'localhost',
 				local_port: tunnelParams.proxyPort || '',
-				tunnel_type: tunnelParams.tType
+				tunnel_type: tunnelParams.tType,
+				tunnel_name: tunnelParams.tunnelName || undefined,
 			}, username, authkey, (err, resp) => {
 				console.log('Started tunnel remotely via Local Connection Manager');
 				// wait forever

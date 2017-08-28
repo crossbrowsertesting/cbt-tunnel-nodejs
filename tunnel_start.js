@@ -185,6 +185,8 @@ module.exports = {
 				verbose: cmdArgs.verbose,
 				username: cmdArgs.username,
 				authkey: cmdArgs.authkey,
+				proxyIp: cmdArgs.proxyIp,
+				proxyPort: cmdArgs.proxyPort,
 				quiet: cmdArgs.quiet,
 				tType: cmdArgs.tType,
 				tunnelName: cmdArgs.tunnelname,
@@ -196,18 +198,17 @@ module.exports = {
 			// This api call just to make sure the credentials are valid.
 			// We might could remove this and rely on the connection 
 			// manager check to validate credentials.
-			// var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test);
-			var api = Api(cmdArgs.username, cmdArgs.authkey, 'local');
+			var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test);
 			// debugger;
 			api.getAccountInfo(function(err, accountInfo){
-				// NEED TO PUT USERID IN PARAMS!!
-				params.userId = accountInfo.user_id;
 				// console.log("account info: " + util.inspect(accountInfo));
 				if (err){
 					// console.log('Authentication error! Please check your credentials and try again.');
 					warn('Authentication error! Please check your credentials and try again.');
 					return cb(err)
 				}
+				// NEED TO PUT USERID IN PARAMS!!
+				params.userId = accountInfo.user_id;
 				// LCM users can only use cbt_tunnels to start tunnel if secret is provided
 				if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
 					startConManTunnelViaApi(api, params, ( err ) => { return cb(err) });
