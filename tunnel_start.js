@@ -46,11 +46,11 @@ var determineTunnelType = function(cmdArgs){
 			+ "provided; only one tunnel type may be specified.");
 		} else if( !cmdArgs.proxyIp || !cmdArgs.proxyPort ){
 			// make sure the user specified proxyIp AND proxyPort
-			return new Error("You must specify the proxy IP (--proxyIp) AND proxy port (--proxyPort) "
+			throw new Error("You must specify the proxy IP (--proxyIp) AND proxy port (--proxyPort) "
 			+ "to create a tunnel.");
-		} else if( !(!!cmdArgs.proxyUser != !!cmdArgs.proxyPass) ){
+		} else if( !!cmdArgs.proxyUser != !!cmdArgs.proxyPass ){
 			// make sure user specifies both or neither of proxyUser and proxyPass
-			return new Error("You must specify both a proxy user (--proxyUser) and a proxy password "
+			throw new Error("You must specify both a proxy user (--proxyUser) and a proxy password "
 			+ "(--proxyPass) to use basic authentication with the proxy option.");
 		} else {
 			tunnelType = 'tunnel';
