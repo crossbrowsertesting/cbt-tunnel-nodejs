@@ -58,7 +58,6 @@ var determineTunnelType = function(cmdArgs){
 	} else {
 		tunnelType = 'simpleproxy';
 	}
-	console.log('determined tunneltype is ' + tunnelType);
 	return tunnelType;
 }
 
@@ -83,9 +82,6 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-	if( params.secret ){
-		console.log("Shhh...we're about to post a tunnel with the secret: " + params.secret);
-	}
 	api.postTunnel(params.tType, params.tunnelName, params.secret, function(err, postResult){
 		if( err || !postResult){
 			err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
@@ -98,7 +94,6 @@ var startTunnel = function(api, params, cb){
 			tid: postResult.tunnel_id,
 			tu: postResult.tunnel_user
 		}
-		console.log("over here params is " + util.inspect(params));
 		_.merge(params,opts);
 		// console.log("ABOUT TO MAKE A SOCKET. PARAMS: " + util.inspect(params));
 		cbts = new cbtSocket(api, params);
