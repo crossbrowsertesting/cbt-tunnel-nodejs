@@ -10,7 +10,7 @@ var _ = require('lodash'),
 	help = gfx.help,
 	validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
 		'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
-		'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret'];
+		'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'proxyPac'];
 
 var validateArgs = function(cmdArgs){
 	// make sure that user has provided username/authkey and no extraneous options
@@ -95,13 +95,11 @@ var startTunnel = function(api, params, cb){
 			tu: postResult.tunnel_user
 		}
 		_.merge(params,opts);
-		// console.log("ABOUT TO MAKE A SOCKET. PARAMS: " + util.inspect(params));
 		cbts = new cbtSocket(api, params);
 		cbts.start(function(err,socket){
 			if(!err && socket){
 				api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
 					if(!err && putResult){
-						// console.log('PUT request successful!');
 						console.log('Completely connected!');
 						cb(null);
 
@@ -187,7 +185,8 @@ module.exports = {
 				tunnelName: cmdArgs.tunnelname,
 				cmd: !!cmdArgs.cmd,
 				ready: !!cmdArgs.ready,
-				secret: cmdArgs.secret
+				secret: cmdArgs.secret,
+				proxyPac: cmdArgs.proxyPac
 			}
 
 			// This api call just to make sure the credentials are valid.
