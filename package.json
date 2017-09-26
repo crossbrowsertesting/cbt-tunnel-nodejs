@@ -34,7 +34,7 @@
   "bin": {
     "cbt_tunnels": "cmd_start.js"
   },
-  "main":"tunnel_start.js",
+  "main": "tunnel_start.js",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/crossbrowsertesting/cbt_tunnels/issues"

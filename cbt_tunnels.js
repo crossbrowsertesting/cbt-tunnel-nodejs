@@ -283,7 +283,7 @@ function cbtSocket(api, params) {
 				// 	var host = self.host = data.host;
 				// 	var port = self.port = data.port;
 				// }
-				determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},function(err,hostInfo){
+				self.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},function(err,hostInfo){
 					var host = hostInfo.host;
 					var port = hostInfo.port;
 					if(host === 'local' && self.tType === 'webserver'){

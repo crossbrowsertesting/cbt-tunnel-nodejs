@@ -203,6 +203,7 @@ module.exports = {
 				}
 				// NEED TO PUT USERID IN PARAMS!!
 				params.userId = accountInfo.user_id;
+				params.authkey = accountInfo.auth_key;
 				// LCM users can only use cbt_tunnels to start tunnel if secret is provided
 				if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
 					startConManTunnelViaApi(api, params, ( err ) => { return cb(err) });
