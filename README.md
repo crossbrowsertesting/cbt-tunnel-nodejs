@@ -47,7 +47,7 @@ There are three options provided for you to do this:
         Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","proxyIp":"PROXYIP","proxyPort":"PROXYPORT","proxyUser:":"PROXYUSER","proxyPass":"PROXYPASS"},function(err){ if(!err) do stuff })'
 
 ##### PAC File:
-    In lieu of specifying a specific proxy server, you may provide a proxy auto-config (PAC) file. 
+    In lieu of specifying a single proxy server, you may provide a proxy auto-config (PAC) file. 
     Each request made through your local machine will follow the routing directives listed in 
     the PAC. If the HTTP_PROXY or HTTPS_PROXY options listed below are employed, they will take
     precedence in routing the connection from your local machine to CrossBrowserTesting. It does
