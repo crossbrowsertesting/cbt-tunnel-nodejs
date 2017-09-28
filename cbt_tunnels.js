@@ -6,8 +6,7 @@ var net = require('net'),
 	_ = require('lodash'),
 	gfx = require('./gfx.js'),
 	warn = gfx.warn,
-	utils  = require('./utils.js'),
-	pac = require('pac-resolver');
+	utils  = require('./utils.js');
 
 function pad(n, width, z) {
 	z = z || '0';
@@ -21,8 +20,6 @@ function cbtSocket(api, params) {
 	var self = this;
 	var killLever = utils.killLever(self);
 	params.context = self;
-
-	self.pacResolve = params.proxyPac ? pac(fs.readFileSync(params.proxyPac)) : null;
 
 	self.tunnelId = params.tid;
 	self.api = api;
@@ -99,7 +96,6 @@ function cbtSocket(api, params) {
 	var conn = self.conn = null;
 
 	if (process.env.http_proxy || process.env.https_proxy){
-		process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
 		conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
 	}else{
 		conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
@@ -147,7 +143,11 @@ function cbtSocket(api, params) {
 		});
 
 		conn.on('connect',function(){
-			console.log('Connecting as '+self.tType+'...');
+			if(params.proxyPac){
+				console.log('Connecting using PAC file...');
+			}else{
+				console.log('Connecting as '+self.tType+'...');
+			}
 			if(!reconnecting){
 				cb(null,self);
 				sendLog('node tunnel client connected.');
@@ -253,7 +253,7 @@ function cbtSocket(api, params) {
 			var id = data.id;
 			if (!connection_list[id]) {
 				connection_list[id] = { id : data.id , client : null };
-				connection_list[id].established=false;
+				connection_list[id].established = false;
 			}
 			if(socketExists(id) && data._type === 'end'){
 				if(connection_list[data.id].client){
@@ -270,10 +270,6 @@ function cbtSocket(api, params) {
 				return;
 			}
 
-			if(connection_list[id].established){
-				var client = connection_list[id].client;
-			}
-
 			if( (data._type != 'end') && (!connection_list[id].established) && (!connection_list[id].ended) ){
 				inbound += 1;
 				// if (self.tType === 'tunnel'){
@@ -283,9 +279,9 @@ function cbtSocket(api, params) {
 				// 	var host = self.host = data.host;
 				// 	var port = self.port = data.port;
 				// }
-				self.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},function(err,hostInfo){
-					var host = hostInfo.host;
-					var port = hostInfo.port;
+				utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.proxyPac,function(err,hostInfo){
+					var host = self.host = hostInfo.host;
+					var port = self.port = hostInfo.port;
 					if(host === 'local' && self.tType === 'webserver'){
 						host = 'localhost';
 						port = self.sPort;
@@ -398,34 +394,34 @@ function cbtSocket(api, params) {
 						}
 					});
 				});
+			}
 
-				if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
-					client = connection_list[id].client;
-					if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
-						data = self.addProxyAuth(data);
-					}
-					client.write(data.data, function(err){
-						if(err&&params.verbose){
-							console.log('Error writing data to: ');
-							console.dir(client);
-							console.dir(err);
-							sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
-							conn.emit('htmlrecv', 
-								{ id : id, data : null, finished : true }
-							);
-							connection_list[id].established=false;
-							client.end();
-							client.destroy();
-							connection_list[id].ended=true;
-						}
-						outbound+=1;
-						if(params.verbose){
-							console.log('Wrote to TCP socket '+id);
-							sendLog('Wrote to TCP socket '+id);
-						}
-
-					});
+			if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
+				var client = connection_list[id].client;
+				if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
+					data = self.addProxyAuth(data);
 				}
+				client.write(data.data, function(err){
+					if(err&&params.verbose){
+						console.log('Error writing data to: ');
+						console.dir(client);
+						console.dir(err);
+						sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
+						conn.emit('htmlrecv', 
+							{ id : id, data : null, finished : true }
+						);
+						connection_list[id].established=false;
+						client.end();
+						client.destroy();
+						connection_list[id].ended=true;
+					}
+					outbound+=1;
+					if(params.verbose){
+						console.log('Wrote to TCP socket '+id);
+						sendLog('Wrote to TCP socket '+id);
+					}
+
+				});
 			}
 		});
 	};
@@ -462,29 +458,6 @@ function cbtSocket(api, params) {
 		dataStr = dataArr.join('\r\n');
 		data.data = Buffer.from(dataStr);
 		return data;
-	}
-
-	self.determineHost = function(data,cb){
-		if(self.pacResolve){
-			self.pacResolve(data.host+':'+data.port).then(function(res){
-				if(res==='DIRECT'){
-					cb(null,{host:data.host,port:data.port});
-					return;
-				}else{
-					res = res.split(' ')[1];
-					var resArr = res.replace(';','').split(':');
-					cb(null,{host:resArr[0],port:resArr[1]});
-					return;
-
-				}
-			})
-		}else if(tType==='tunnel'){
-			cb(null,{host:data.proxyHost,port:data.proxyPort});
-			return;
-		}else{
-			cb(null,{host:data.host,port:data.port});
-			return;
-		}
 	}
 
 	self.end = function(cb){

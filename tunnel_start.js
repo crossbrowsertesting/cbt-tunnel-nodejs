@@ -1,5 +1,5 @@
 var _ = require('lodash'),
-	util = require('util'),
+	utils = require('./utils.js'),
 	cbtSocket = (require('./cbt_tunnels')),
 	argv = require('yargs').env('CBT_TUNNELS').argv,
 	fs = require('fs'),
@@ -59,6 +59,33 @@ var determineTunnelType = function(cmdArgs){
 		tunnelType = 'simpleproxy';
 	}
 	return tunnelType;
+}
+
+var pacInit = function(cbtUrls,cmdArgs,cb){
+	if(cmdArgs.proxyPac){
+		utils.getPac(cmdArgs.proxyPac,function(err,pac){
+			if(err){
+				cb(err);	
+			}
+			if(!cmdArgs.httpProxy){
+				utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
+					if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
+						utils.setProxies(true,'https://'+hostInfo.host+':'+hostInfo.port);
+					}
+				});
+			}
+			if(!cmdArgs.httpsProxy){
+				utils.determineHost({host:'http://'+cbtUrls.node,port:80},pac,function(err,hostInfo){
+					if(hostInfo.host+':'+hostInfo.port!=='http://'+cbtUrls.node+':'+80){
+						utils.setProxies(true,'http://'+hostInfo.host+':'+hostInfo.port);
+					}
+				});
+			}
+			cb(null,pac);
+		});
+	}else{
+		cb(null,null);
+	}
 }
 
 var startConManTunnelViaApi = function(api, params, cb){
@@ -143,14 +170,10 @@ module.exports = {
 			validateArgs(cmdArgs);
 
 			// throws error if args conflict or no valid tunnelType can be determined
-			cmdArgs.tType = determineTunnelType(cmdArgs);
+			cmdArgs.tType = determineTunnelType(cmdArgs); 
+
 			if( cmdArgs.tType == 'tunnel' ){
 				cmdArgs.bytecode = true;
-			}
-			// set proxy environment variables for socket.io and cbt_tunnels.js
-			if(!!cmdArgs.httpProxy){
-				process.env.http_proxy = cmdArgs.httpProxy;
-				process.env.HTTP_PROXY = cmdArgs.httpProxy;
 			}
 			// default tunnelName to null
 			if(!cmdArgs.tunnelname){
@@ -169,47 +192,61 @@ module.exports = {
 			} else {
 				var cbtUrls = {server: "crossbrowsertesting.com", node: "crossbrowsertesting.com"}
 			}
-			// if ( cmdArgs.test === 'local' ){
-			// 	cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
-			// }
 
-			var params = {
-				urls: cbtUrls,
-				verbose: cmdArgs.verbose,
-				username: cmdArgs.username,
-				authkey: cmdArgs.authkey,
-				proxyIp: cmdArgs.proxyIp,
-				proxyPort: cmdArgs.proxyPort,
-				quiet: cmdArgs.quiet,
-				tType: cmdArgs.tType,
-				tunnelName: cmdArgs.tunnelname,
-				cmd: !!cmdArgs.cmd,
-				ready: !!cmdArgs.ready,
-				secret: cmdArgs.secret,
-				proxyPac: cmdArgs.proxyPac
-			}
+			pacInit(cbtUrls,cmdArgs,function(err,pac){
+				if(err){
+					return cb(err);
+				}
+				cmdArgs.proxyPac = pac;
+		        if(cmdArgs.httpProxy){
+		        	utils.setProxies(false,cmdArgs.httpProxy);
+		        }
+		        if(cmdArgs.httpsProxy){
+		            utils.setProxies(true,cmdArgs.httpsProxy);
+		        }
 
-			// This api call just to make sure the credentials are valid.
-			// We might could remove this and rely on the connection 
-			// manager check to validate credentials.
-			var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test);
-			// debugger;
-			api.getAccountInfo(function(err, accountInfo){
-				// console.log("account info: " + util.inspect(accountInfo));
-				if (err){
-					// console.log('Authentication error! Please check your credentials and try again.');
-					warn('Authentication error! Please check your credentials and try again.');
-					return cb(err)
+				// if ( cmdArgs.test === 'local' ){
+				// 	cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
+				// }
+
+				var params = {
+					urls: cbtUrls,
+					verbose: cmdArgs.verbose,
+					username: cmdArgs.username,
+					authkey: cmdArgs.authkey,
+					proxyIp: cmdArgs.proxyIp,
+					proxyPort: cmdArgs.proxyPort,
+					quiet: cmdArgs.quiet,
+					tType: cmdArgs.tType,
+					tunnelName: cmdArgs.tunnelname,
+					cmd: !!cmdArgs.cmd,
+					ready: !!cmdArgs.ready,
+					secret: cmdArgs.secret,
+					proxyPac: cmdArgs.proxyPac
 				}
-				// NEED TO PUT USERID IN PARAMS!!
-				params.userId = accountInfo.user_id;
-				params.authkey = accountInfo.auth_key;
-				// LCM users can only use cbt_tunnels to start tunnel if secret is provided
-				if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
-					startConManTunnelViaApi(api, params, ( err ) => { return cb(err) });
-				} else {
-					startTunnel(api, params, ( err ) => { return cb(err) });
-				}
+
+				// This api call just to make sure the credentials are valid.
+				// We might could remove this and rely on the connection 
+				// manager check to validate credentials.
+				var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test);
+				// debugger;
+				api.getAccountInfo(function(err, accountInfo){
+					// console.log("account info: " + util.inspect(accountInfo));
+					if (err){
+						// console.log('Authentication error! Please check your credentials and try again.');
+						warn('Authentication error! Please check your credentials and try again.');
+						return cb(err)
+					}
+					// NEED TO PUT USERID IN PARAMS!!
+					params.userId = accountInfo.user_id;
+					params.authkey = accountInfo.auth_key;
+					// LCM users can only use cbt_tunnels to start tunnel if secret is provided
+					if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
+						startConManTunnelViaApi(api, params, ( err ) => { return cb(err) });
+					} else {
+						startTunnel(api, params, ( err ) => { return cb(err) });
+					}
+				})
 			})
 		} catch (err) {
 			return cb(err)
