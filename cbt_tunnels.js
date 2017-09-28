@@ -143,7 +143,7 @@ function cbtSocket(api, params) {
         });
 
         conn.on('connect',function(){
-            if(params.proxyPac){
+            if(params.pac){
                 console.log('Connecting using PAC file...');
             }else{
                 console.log('Connecting as '+self.tType+'...');
@@ -279,7 +279,7 @@ function cbtSocket(api, params) {
                 //  var host = self.host = data.host;
                 //  var port = self.port = data.port;
                 // }
-                utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.proxyPac,function(err,hostInfo){
+                utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.pac,function(err,hostInfo){
                     var host = self.host = hostInfo.host;
                     var port = self.port = hostInfo.port;
                     if(host === 'local' && self.tType === 'webserver'){

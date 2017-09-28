@@ -10,7 +10,7 @@ var _ = require('lodash'),
     help = gfx.help,
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
-        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'proxyPac'];
+        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac'];
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
@@ -62,15 +62,16 @@ var determineTunnelType = function(cmdArgs){
 }
 
 var pacInit = function(cbtUrls,cmdArgs,cb){
-    if(cmdArgs.proxyPac){
-        utils.getPac(cmdArgs.proxyPac,function(err,pac){
+    if(cmdArgs.pac){
+        console.log(cmdArgs.pac);
+        utils.getPac(cmdArgs.pac,function(err,pac){
             if(err){
                 cb(err);    
             }
             if(!cmdArgs.httpProxy){
                 utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
                     if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
-                        utils.setProxies(true,'https://'+hostInfo.host+':'+hostInfo.port);
+                        utils.setProxies(false,'https://'+hostInfo.host+':'+hostInfo.port);
                     }
                 });
             }
@@ -195,9 +196,10 @@ module.exports = {
 
             pacInit(cbtUrls,cmdArgs,function(err,pac){
                 if(err){
+                    warn("Failed to initialize PAC");
                     return cb(err);
                 }
-                cmdArgs.proxyPac = pac;
+                cmdArgs.pac = pac;
                 if(cmdArgs.httpProxy){
                     utils.setProxies(false,cmdArgs.httpProxy);
                 }
@@ -222,7 +224,7 @@ module.exports = {
                     cmd: !!cmdArgs.cmd,
                     ready: !!cmdArgs.ready,
                     secret: cmdArgs.secret,
-                    proxyPac: cmdArgs.proxyPac
+                    pac: cmdArgs.pac
                 }
 
                 // This api call just to make sure the credentials are valid.

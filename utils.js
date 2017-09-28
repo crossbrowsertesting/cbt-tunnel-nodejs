@@ -27,7 +27,6 @@ module.exports = {
     },
 
     setProxies: function(secure,proxy){
-        console.log("Setting proxies...");
         if(secure){
             console.log('HTTPS proxy set to '+proxy);
             process.env.https_proxy = proxy;
