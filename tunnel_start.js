@@ -68,17 +68,17 @@ var pacInit = function(cbtUrls,cmdArgs,cb){
             if(err){
                 cb(err);    
             }
-            if(!cmdArgs.httpProxy){
+            if(!cmdArgs.httpsProxy){
                 utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
                     if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
-                        utils.setProxies(false,'https://'+hostInfo.host+':'+hostInfo.port);
+                        utils.setProxies(true,'https://'+hostInfo.host+':'+hostInfo.port);
                     }
                 });
             }
-            if(!cmdArgs.httpsProxy){
+            if(!cmdArgs.httpProxy){
                 utils.determineHost({host:'http://'+cbtUrls.node,port:80},pac,function(err,hostInfo){
                     if(hostInfo.host+':'+hostInfo.port!=='http://'+cbtUrls.node+':'+80){
-                        utils.setProxies(true,'http://'+hostInfo.host+':'+hostInfo.port);
+                        utils.setProxies(false,'http://'+hostInfo.host+':'+hostInfo.port);
                     }
                 });
             }
