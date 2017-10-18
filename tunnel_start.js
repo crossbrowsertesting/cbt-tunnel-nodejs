@@ -68,21 +68,18 @@ var pacInit = function(cbtUrls,cmdArgs,cb){
             if(err){
                 cb(err);    
             }
-            if(!cmdArgs.httpsProxy){
-                utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
-                    if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
-                        utils.setProxies(true,'https://'+hostInfo.host+':'+hostInfo.port);
-                    }
-                });
-            }
-            if(!cmdArgs.httpProxy){
+            utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
+                if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
+                    utils.setProxies(true,'https://'+hostInfo.host+':'+hostInfo.port);
+                }
                 utils.determineHost({host:'http://'+cbtUrls.node,port:80},pac,function(err,hostInfo){
                     if(hostInfo.host+':'+hostInfo.port!=='http://'+cbtUrls.node+':'+80){
                         utils.setProxies(false,'http://'+hostInfo.host+':'+hostInfo.port);
                     }
+                    cb(null,pac);
+
                 });
-            }
-            cb(null,pac);
+            });
         });
     }else{
         cb(null,null);
