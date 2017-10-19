@@ -144,9 +144,9 @@ function cbtSocket(api, params) {
 
         conn.on('connect',function(){
             if(params.pac){
-                console.log('Connecting using PAC file...');
+                console.log('Connecting using PAC file.');
             }else{
-                console.log('Connecting as '+self.tType+'...');
+                console.log('Connecting as '+self.tType+'.');
             }
             if(!reconnecting){
                 cb(null,self);
