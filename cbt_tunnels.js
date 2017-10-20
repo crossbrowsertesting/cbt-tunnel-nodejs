@@ -96,9 +96,9 @@ function cbtSocket(api, params) {
     var conn = self.conn = null;
 
     if (process.env.http_proxy || process.env.https_proxy){
-        conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
+        conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false, transports:['websocket','polling']});
     }else{
-        conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false});
+        conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000, secure:false, transports:['websocket','polling']});
     }
 
     var sendLog = self.sendLog = function(log){
