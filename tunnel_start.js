@@ -10,7 +10,7 @@ var _ = require('lodash'),
     help = gfx.help,
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
-        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac'];
+        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 'rejectUnauthorized'];
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
@@ -167,6 +167,10 @@ module.exports = {
             // throws error if there's an invalid arg
             validateArgs(cmdArgs);
 
+            // option to not reject unauthorized
+            if(!cmdArgs.rejectUnauthorized||cmdArgs.rejectUnauthorized==='false'){
+                process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+            }
             // throws error if args conflict or no valid tunnelType can be determined
             cmdArgs.tType = determineTunnelType(cmdArgs); 
 
