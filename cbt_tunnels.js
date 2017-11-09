@@ -280,6 +280,10 @@ function cbtSocket(api, params) {
                 //  var port = self.port = data.port;
                 // }
                 utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.pac,function(err,hostInfo){
+                    if(err){
+                        warn('Error determining host!');
+                        return cb(err);
+                    }
                     var host = self.host = hostInfo.host;
                     var port = self.port = hostInfo.port;
                     if(host === 'local' && self.tType === 'webserver'){

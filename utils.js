@@ -10,8 +10,10 @@ var _ = require('lodash'),
 module.exports = {
 
     getPac: function(pac,cb){
+        console.log('Initializing PAC: '+pac);
         try{
             var pac = pacResolver(fs.readFileSync(pac));
+            console.log('PAC acquired...');
             cb(null,pac);
         }catch(e){
             request(pac,function(err,response,body){
@@ -21,6 +23,7 @@ module.exports = {
                     return;
                 }
                 var pac = pacResolver(body);
+                console.log('PAC acquired...');
                 cb(null,pac);
             });
         }
@@ -83,19 +86,40 @@ module.exports = {
 
     determineHost: function(data,pac,cb){
         if(pac){
-            pac(data.host+':'+data.port).then(function(res){
-                if(res==='DIRECT'){
-                    return cb(null,{host:data.host,port:data.port});
-                }else{
-                    res = res.split(' ')[1];
-                    var resArr = res.replace(';','').split(':');
-                    return cb(null,{host:resArr[0],port:resArr[1]});
+            console.log('In determineHost with:');
+            console.dir(data);
+            var host = !(data.host.startsWith('http://') || data.host.startsWith('https://')) ? 'http://'+data.host : data.host;
+            pac(host)
+                .then(function(res){
+                    console.log('Determining host for:');
+                    console.dir(data); 
+                    if(res==='DIRECT'){
+                        console.log('PAC returns DIRECT. Directing to:');
+                        console.dir({host:data.host,port:data.port});
+                        return cb(null,{host:data.host,port:data.port});
+                    }else{
+                        res = res.split(' ')[1];
+                        var resArr = res.replace(';','').split(':');
+                        console.log('PAC does not return DIRECT. Directing to:');
+                        console.log({host:resArr[0],port:resArr[1]});
+                        return cb(null,{host:resArr[0],port:resArr[1]});
 
-                }
-            })
+                    }
+                })
+                .catch(function(err){
+                    cb(err);
+                })
         }else if(data.tType==='tunnel'){
+            console.log('Deteremining host for:');
+            console.dir(data); 
+            console.log('No PAC found. Type is tunnel. Proxy specified is:');
+            console.dir({host:data.proxyHost,port:data.proxyPort})
             return cb(null,{host:data.proxyHost,port:data.proxyPort});
         }else{
+            console.log('Deteremining host for:');
+            console.dir(data); 
+            console.log('No PAC file. Type is not tunnel. Directing to:');
+            console.dir({host:data.host,port:data.port});
             return cb(null,{host:data.host,port:data.port});
         }
     }

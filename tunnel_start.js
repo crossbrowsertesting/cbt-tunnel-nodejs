@@ -10,10 +10,16 @@ var _ = require('lodash'),
     help = gfx.help,
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
-        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 'rejectUnauthorized'];
+        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 'rejectUnauthorized', 'help'];
+
+require('console-stamp')(console, {});
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
+    if(cmdArgs.help){
+        help();
+        process.exit(0);
+    }
     if(!cmdArgs.username){
         throw new Error('You must specify a username.\n');
     }else if(!cmdArgs.authkey){
@@ -63,16 +69,27 @@ var determineTunnelType = function(cmdArgs){
 
 var pacInit = function(cbtUrls,cmdArgs,cb){
     if(cmdArgs.pac){
+        console.log('Using PAC:');
         console.log(cmdArgs.pac);
         utils.getPac(cmdArgs.pac,function(err,pac){
             if(err){
+                warn('PAC initialization error:');
+                warn(err);
                 cb(err);    
             }
+            console.log('Determining route for http CBT connection...');
             utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
+                if(err){
+                    cb(err);
+                }
                 if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
                     utils.setProxies(true,'http://'+hostInfo.host+':'+hostInfo.port);
                 }
+                console.log('Determining route for https CBT connection...');
                 utils.determineHost({host:'http://'+cbtUrls.node,port:80},pac,function(err,hostInfo){
+                    if(err){
+                        cb(err);
+                    }
                     if(hostInfo.host+':'+hostInfo.port!=='http://'+cbtUrls.node+':'+80){
                         utils.setProxies(false,'http://'+hostInfo.host+':'+hostInfo.port);
                     }
@@ -167,12 +184,13 @@ module.exports = {
             // throws error if there's an invalid arg
             validateArgs(cmdArgs);
 
+            warn('Custom ADP version for debugging');
             // option to not reject unauthorized
             if(!cmdArgs.rejectUnauthorized||cmdArgs.rejectUnauthorized==='false'){
                 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
             }
             // throws error if args conflict or no valid tunnelType can be determined
-            cmdArgs.tType = determineTunnelType(cmdArgs); 
+            cmdArgs.tType = determineTunnelType(cmdArgs);
 
             if( cmdArgs.tType == 'tunnel' ){
                 cmdArgs.bytecode = true;
@@ -197,7 +215,7 @@ module.exports = {
 
             pacInit(cbtUrls,cmdArgs,function(err,pac){
                 if(err){
-                    warn("Failed to initialize PAC");
+                    warn("Failed to initialize PAC:");
                     return cb(err);
                 }
                 cmdArgs.pac = pac;
@@ -227,7 +245,7 @@ module.exports = {
                     secret: cmdArgs.secret,
                     pac: cmdArgs.pac
                 }
-
+                params.verbose = true;
                 // This api call just to make sure the credentials are valid.
                 // We might could remove this and rely on the connection 
                 // manager check to validate credentials.
