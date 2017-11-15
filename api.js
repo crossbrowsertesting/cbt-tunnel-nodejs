@@ -1,7 +1,6 @@
 'use-strict';
 var request = require('request');
 var util = require('util');
-var warn = require('./gfx.js').warn;
 
 /* 
  * Important notes:
@@ -86,35 +85,24 @@ module.exports = function(username, authkey, env){
 //////////////////////////////////////////////////
     return {
         getAccountInfo: function(callback){
-            console.log('Getting acount info...');
             makeApiCall(server, 'GET', 'account', null, username, authkey, (err, body) => {
-                if(err){
-                    warn('Error getting account info:');
-                    warn(err.stack);
-                }
                 // console.log(`got resp for getAccountInfo`);
                 return callback(err, body);
             })
         },
         postTunnel: function(tunnelType, tunnelName, secret, callback){
-            console.log('POST request to create tunnel...');
             makeApiCall(server, 'POST', 'tunnels', {
                 tunnel_source: 'nodews',
                 tunnel_type: tunnelType,
                 tunnel_name: tunnelName,
                 secret: secret
             } , username, authkey, (err, body) => {
-                if(err){
-                    warn('Error in POST request:');
-                    warn(err.stack);
-                }
                 // console.log(JSON.stringify(body));
                 return callback(err, body);
             })
         },
         putTunnel: function(tunnelId, tunnelType, directory, proxyHost, proxyPort, callback){
             // console.log(`got resp for putTunnel`);
-            console.log('PUT request to confirm tunnel...');
             makeApiCall(server, 'PUT', 'tunnels/' + tunnelId, {
                 local_directory: directory || '',
                 local_ip: proxyHost || 'localhost',
@@ -124,22 +112,13 @@ module.exports = function(username, authkey, env){
                 tunnel_source: 'nodews',
                 tunnel_type: tunnelType
             }, username, authkey, (err, body) => {
-                if(err){
-                    warn('Error in PUT request:');
-                    warn(err.stack);
-                }
                 // console.log(`got resp for putTunnel`);
                 return callback(err, body);
             });
         },
         deleteTunnel: function(tunnelId, callback){
-            console.log('DELETE request to end tunnel...');
             makeApiCall(server, 'DELETE', 'tunnels/' + tunnelId, {state: 10}, username, authkey, (err, resp) => {
                 // console.log('got resp for deleteTunnel');
-                if(err){
-                    warn('Error in DELETE request:');
-                    warn(err.stack);
-                }
                 return callback(err, resp);
             })
         },
