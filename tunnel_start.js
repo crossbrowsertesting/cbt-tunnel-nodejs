@@ -10,7 +10,8 @@ var _ = require('lodash'),
     help = gfx.help,
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
-        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 'rejectUnauthorized'];
+        'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 
+        'rejectUnauthorized', 'directResolution'];
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
@@ -107,7 +108,7 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-    api.postTunnel(params.tType, params.tunnelName, params.secret, function(err, postResult){
+    api.postTunnel(params.tType, params.tunnelName, params.directResolution, params.secret, function(err, postResult){
         if( err || !postResult){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);
@@ -225,7 +226,8 @@ module.exports = {
                     cmd: !!cmdArgs.cmd,
                     ready: !!cmdArgs.ready,
                     secret: cmdArgs.secret,
-                    pac: cmdArgs.pac
+                    pac: cmdArgs.pac,
+                    directResolution: !!cmdArgs.directResolution
                 }
 
                 // This api call just to make sure the credentials are valid.
