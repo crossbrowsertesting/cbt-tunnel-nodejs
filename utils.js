@@ -83,6 +83,7 @@ module.exports = {
 
     determineHost: function(data,pac,cb){
         if(pac){
+            var host = !(data.host.startsWith('http://') || data.host.startsWith('https://')) ? 'http://'+data.host : data.host;
             pac(data.host+':'+data.port).then(function(res){
                 if(res==='DIRECT'){
                     return cb(null,{host:data.host,port:data.port});
