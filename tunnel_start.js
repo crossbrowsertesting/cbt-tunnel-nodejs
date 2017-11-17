@@ -208,7 +208,10 @@ module.exports = {
                 if(cmdArgs.httpsProxy){
                     utils.setProxies(true,cmdArgs.httpsProxy);
                 }
-
+                var directResolution = null;
+                if(!_.isUndefined(cmdArgs.directResolution)){
+                    directResolution = ((cmdArgs.directResolution.toLowerCase()) === 'false' || (parseInt(cmdArgs.direct_resolution) === 0)) ? false : true;
+                }
                 // if ( cmdArgs.test === 'local' ){
                 //  cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
                 // }
@@ -227,7 +230,7 @@ module.exports = {
                     ready: !!cmdArgs.ready,
                     secret: cmdArgs.secret,
                     pac: cmdArgs.pac,
-                    directResolution: !!cmdArgs.directResolution
+                    directResolution: directResolution
                 }
 
                 // This api call just to make sure the credentials are valid.
