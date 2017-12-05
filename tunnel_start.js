@@ -215,6 +215,8 @@ module.exports = {
                 // if ( cmdArgs.test === 'local' ){
                 //  cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
                 // }
+                //remove all null or undefined args and ensure boolean strings turn out booleans
+                cmdArgs =  _(cmdArgs).omit(_.isUndefined).omit(_.isNull).mapValues((property)=>{ return property === 'true' ? true : ( property === 'false' ? false : property ) }).value()
 
                 var params = {
                     urls: cbtUrls,
@@ -232,8 +234,6 @@ module.exports = {
                     pac: cmdArgs.pac,
                     bypass: bypass
                 }
-                //remove all null or undefined params and ensure boolean strings turn out booleans
-                params =  _(params).omit(_.isUndefined).omit(_.isNull).mapValues((property)=>{ return property === 'true' ? true : ( property === 'false' ? false : property ) }).value()
                 // This api call just to make sure the credentials are valid.
                 // We might could remove this and rely on the connection 
                 // manager check to validate credentials.
