@@ -14,6 +14,8 @@ var _ = require('lodash'),
         'rejectUnauthorized', 'bypass'];
 
 var validateArgs = function(cmdArgs){
+    //remove all null or undefined args
+    cmdArgs = _(cmdArgs).omit(_.isUndefined).omit(_.isNull).value()
     // make sure that user has provided username/authkey and no extraneous options
     if(!cmdArgs.username){
         throw new Error('You must specify a username.\n');
