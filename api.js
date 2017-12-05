@@ -90,12 +90,12 @@ module.exports = function(username, authkey, env){
                 return callback(err, body);
             })
         },
-        postTunnel: function(tunnelType, tunnelName, directResolution, secret, callback){
+        postTunnel: function(tunnelType, tunnelName, bypass, secret, callback){
             makeApiCall(server, 'POST', 'tunnels', {
                 tunnel_source: 'nodews',
                 tunnel_type: tunnelType,
                 tunnel_name: tunnelName,
-                direct_resolution: directResolution,
+                bypass: bypass,
                 secret: secret
             } , username, authkey, (err, body) => {
                 // console.log(JSON.stringify(body));

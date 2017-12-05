@@ -11,7 +11,7 @@ var _ = require('lodash'),
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
         'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 
-        'rejectUnauthorized', 'directResolution'];
+        'rejectUnauthorized', 'bypass'];
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
@@ -108,7 +108,7 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-    api.postTunnel(params.tType, params.tunnelName, params.directResolution, params.secret, function(err, postResult){
+    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, function(err, postResult){
         if( err || !postResult){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);
@@ -208,9 +208,9 @@ module.exports = {
                 if(cmdArgs.httpsProxy){
                     utils.setProxies(true,cmdArgs.httpsProxy);
                 }
-                var directResolution = null;
-                if(!_.isUndefined(cmdArgs.directResolution)){
-                    directResolution = ((cmdArgs.directResolution.toLowerCase()) === 'false' || (parseInt(cmdArgs.direct_resolution) === 0)) ? false : true;
+                var bypass = null;
+                if(!_.isUndefined(cmdArgs.bypass)){
+                    bypass = ((cmdArgs.bypass.toLowerCase()) === 'false' || (parseInt(cmdArgs.bypass) === 0)) ? false : true;
                 }
                 // if ( cmdArgs.test === 'local' ){
                 //  cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
@@ -230,7 +230,7 @@ module.exports = {
                     ready: !!cmdArgs.ready,
                     secret: cmdArgs.secret,
                     pac: cmdArgs.pac,
-                    directResolution: directResolution
+                    bypass: bypass
                 }
 
                 // This api call just to make sure the credentials are valid.
