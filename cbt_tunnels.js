@@ -75,6 +75,7 @@ function cbtSocket(api, params) {
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
     self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
     var proxyAuthString = self.proxyAuthString = '';
+    self.nokill = params.nokill;
     if(!!params.proxyUser && !!params.proxyPass){
         proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic ' + (new Buffer(params.proxyUser + ':' + params.proxyPass)).toString('base64');
     }
@@ -496,8 +497,11 @@ function cbtSocket(api, params) {
     self.endWrap = function(){
         self.end(function(err, killit){
             if(!err && killit === 'killit'){
-                console.log('Bye!');
-                process.exit(0);
+                console.log('Local connection disconnected.');
+                if(!self.nokill){
+                    console.log('Bye!');
+                    process.exit(0);
+                }
             }else if(err){
                 console.log(err);
                 setTimeout(function(){

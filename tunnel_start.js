@@ -11,7 +11,7 @@ var _ = require('lodash'),
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
         'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 
-        'rejectUnauthorized', 'bypass'];
+        'rejectUnauthorized', 'bypass', 'nokill'];
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
@@ -232,7 +232,8 @@ module.exports = {
                     ready: !!cmdArgs.ready,
                     secret: cmdArgs.secret,
                     pac: cmdArgs.pac,
-                    bypass: bypass
+                    bypass: bypass,
+                    nokill: cmdArgs.nokill
                 }
                 // This api call just to make sure the credentials are valid.
                 // We might could remove this and rely on the connection 
