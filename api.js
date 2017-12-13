@@ -95,7 +95,7 @@ module.exports = function(username, authkey, env){
                 tunnel_source: 'nodews',
                 tunnel_type: tunnelType,
                 tunnel_name: tunnelName,
-                bypass: bypass,
+                direct_resolution: bypass,
                 secret: secret
             } , username, authkey, (err, body) => {
                 // console.log(JSON.stringify(body));
