@@ -224,6 +224,8 @@ module.exports = {
                     verbose: cmdArgs.verbose,
                     username: cmdArgs.username,
                     authkey: cmdArgs.authkey,
+                    directory: cmdArgs.dir,
+                    port: cmdArgs.port,
                     proxyIp: cmdArgs.proxyIp,
                     proxyPort: cmdArgs.proxyPort,
                     quiet: cmdArgs.quiet,

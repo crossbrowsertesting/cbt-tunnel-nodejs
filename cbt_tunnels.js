@@ -58,7 +58,7 @@ function cbtSocket(api, params) {
             }
         });
         self.server.on('listening',function(){
-            console.log('Server listening on port '+sPort);
+            console.log('Server listening on port '+sPort+', serving '+self.directory+'.');
         })
     }
 
