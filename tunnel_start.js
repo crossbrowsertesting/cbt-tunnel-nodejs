@@ -11,7 +11,7 @@ var _ = require('lodash'),
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
         'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 
-        'rejectUnauthorized', 'bypass', 'nokill'];
+        'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts'];
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
@@ -111,7 +111,7 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, function(err, postResult){
+    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, function(err, postResult){
         if( err || !postResult){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);
@@ -237,7 +237,8 @@ module.exports = {
                     secret: cmdArgs.secret,
                     pac: cmdArgs.pac,
                     bypass: bypass,
-                    nokill: cmdArgs.nokill
+                    nokill: cmdArgs.nokill,
+                    acceptAllCerts: !!cmdArgs.acceptAllCerts
                 }
                 // This api call just to make sure the credentials are valid.
                 // We might could remove this and rely on the connection 
