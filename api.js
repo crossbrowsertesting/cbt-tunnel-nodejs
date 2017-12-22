@@ -97,7 +97,7 @@ module.exports = function(username, authkey, env){
                 tunnel_name: tunnelName,
                 direct_resolution: bypass,
                 secret: secret,
-                accept_all_certs: acceptAllCerts
+                accept_all_certs: acceptAllCerts | 0
             } , username, authkey, (err, body) => {
                 // console.log(JSON.stringify(body));
                 return callback(err, body);
