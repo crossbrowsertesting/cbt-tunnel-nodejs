@@ -43,7 +43,6 @@ module.exports = {
             warn = gfx.warn,
             help = gfx.help;
 
-        data=JSON.parse(data);
         if(data.current!==version){
             if(_.indexOf(data.old,version)>-1){
                 if(!params.verbose&&params.cmd&&!params.quiet){

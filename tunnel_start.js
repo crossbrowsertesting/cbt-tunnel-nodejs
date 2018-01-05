@@ -1,6 +1,6 @@
 var _ = require('lodash'),
     utils = require('./utils.js'),
-    cbtSocket = (require('./cbt_tunnels')),
+    cbtSocket = require('./cbt_tunnels'),
     argv = require('yargs').env('CBT_TUNNELS').argv,
     fs = require('fs'),
     gfx = require('./gfx.js'),
@@ -16,13 +16,16 @@ var _ = require('lodash'),
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
     if(!cmdArgs.username){
+        help()
         throw new Error('You must specify a username.\n');
     }else if(!cmdArgs.authkey){
+        help()
         throw new Error('You must specifiy an authkey.\n');
     }
     var u = _.union(_.keys(cmdArgs),validParameters);
     var v = _.isEqual(u.sort(),validParameters.sort());
     if(!v){
+        help()
         throw new Error("I can't make sense of some of the flags you've provided, like: \n    " 
             + _.difference( u.sort(), validParameters.sort() ) + "\n")
     }
@@ -127,8 +130,25 @@ var startTunnel = function(api, params, cb){
                 api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
                     if(!err && putResult){
                         console.log('Completely connected!');
+                        if(params.kill){
+                            setInterval(function(){
+                                fs.stat(params.kill,function(error,stat){
+                                    if(error==null){
+                                        fs.unlink(params.kill,function(err){
+                                            if(err==null){
+                                                cbts.endWrap();
+                                            }else{
+                                                console.log(err);
+                                                setTimeout(function(){
+                                                    process.exit(1);
+                                                },10000);
+                                            }
+                                        })
+                                    }
+                                })
+                            },1000);
+                        }
                         cb(null);
-
                     }else{
                         // console.log(err);
                         cb(err);
@@ -141,25 +161,6 @@ var startTunnel = function(api, params, cb){
             }
         });
     });
-    // poll for kill file and exit
-    if(params.kill){
-        setInterval(function(){
-            fs.stat('./'+params.kill,function(error,stat){
-                if(error==null){
-                    fs.unlink('./'+params.kill,function(err){
-                        if(err==null){
-                            cbts.endWrap();
-                        }else{
-                            // console.log(err);
-                            setTimeout(function(){
-                                process.exit(1);
-                            },10000);
-                        }
-                    })
-                }
-            })
-        },1000);
-    }
 }
 
 module.exports = {
@@ -223,13 +224,16 @@ module.exports = {
                     verbose: cmdArgs.verbose,
                     username: cmdArgs.username,
                     authkey: cmdArgs.authkey,
+                    directory: cmdArgs.dir,
+                    port: cmdArgs.port,
                     proxyIp: cmdArgs.proxyIp,
                     proxyPort: cmdArgs.proxyPort,
                     quiet: cmdArgs.quiet,
                     tType: cmdArgs.tType,
                     tunnelName: cmdArgs.tunnelname,
                     cmd: !!cmdArgs.cmd,
-                    ready: !!cmdArgs.ready,
+                    ready: cmdArgs.ready,
+                    kill: cmdArgs.kill,
                     secret: cmdArgs.secret,
                     pac: cmdArgs.pac,
                     bypass: bypass,
@@ -259,7 +263,7 @@ module.exports = {
                 })
             })
         } catch (err) {
-            return cb(err)
+            return cb(err.message)
         }
     },
     stop: function(){
@@ -277,4 +281,3 @@ module.exports = {
         }
     }
 }
-

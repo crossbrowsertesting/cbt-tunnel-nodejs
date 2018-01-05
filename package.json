@@ -1,19 +1,20 @@
 {
   "name": "cbt_tunnels",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "description": "Creates a local connection to CrossBrowserTesting.com which allows you to test sites behind your firewall or to access web pages that are saved locally on your machine. In just a few seconds, you can establish a connection which allows you to do live testing, screenshots, or run Selenium scripts against any of the internal sites you have access to.  This command line version uses WSS (secure websockets over https, port 443) to create the local connection.  It can be scripted, so it is useful if you want to initiate a local connection programmatically before running automated javascript, screenshots, or selenium tests.",
   "dependencies": {
     "cli-color": "^1.1.0",
     "clui": "^0.3.1",
     "express": "^4.13.3",
+    "https-proxy-agent": "^1.0.0",
     "lodash": "^3.10.1",
+    "pac-resolver": "3.0.0",
     "request": "^2.67.0",
     "serve-index": "^1.7.2",
     "serve-static": "^1.10.0",
     "socket.io-client": "1.4.8",
-    "yargs": "^3.30.0",
-    "https-proxy-agent": "^1.0.0",
-    "pac-resolver": "3.0.0"
+    "ws": "^3.3.2",
+    "yargs": "^3.30.0"
   },
   "devDependencies": {},
   "scripts": {

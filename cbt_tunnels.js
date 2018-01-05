@@ -6,7 +6,9 @@ var net = require('net'),
     _ = require('lodash'),
     gfx = require('./gfx.js'),
     warn = gfx.warn,
-    utils  = require('./utils.js');
+    utils  = require('./utils.js'),
+    WebSocket = require('ws'),
+    proxyAgent = require('https-proxy-agent');
 
 function pad(n, width, z) {
     z = z || '0';
@@ -69,10 +71,12 @@ function cbtSocket(api, params) {
     self.authkey = params.authkey;
     self.qPort = (params.bytecode ? pad((params.tcpPort-11000),3) : pad((params.tcpPort-11000), 3));
     self.wsPort = params.tcpPort+1000;
-    self.cbtServer = 'https://' + params.cbtServer;
+    self.cbtServer = 'https://'+params.cbtServer;
     self.cbtApp = 'https://'+params.urls.node;
     self.path = '/wsstunnel' + self.qPort + '/socket.io';
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
+    self.wsPath = self.cbtServer+self.path+'?'+self.query;
+    //self.wsPath = 'ws://localhost:12050/wsstunnel050/socket.io?userid=34759&authkey=ua82e08647376a67';
     self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
     var proxyAuthString = self.proxyAuthString = '';
     self.nokill = params.nokill;
@@ -93,17 +97,24 @@ function cbtSocket(api, params) {
             break;
         default:
     }
-
     var conn = self.conn = null;
 
     if (process.env.http_proxy || process.env.https_proxy){
-        conn = self.conn = require('./lib/socket.io-proxy').connect(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000});
+        var agent = process.env.http_proxy ? process.env.http_proxy : process.env.https_proxy;
+        conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
     }else{
-        conn = self.conn = require('socket.io-client')(self.cbtServer,{path: self.path, query: self.query, reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000});
+        conn = self.conn = new WebSocket(self.wsPath,{});
+    }
+    if(!params.rejectUnauthorized){
+        conn.rejectUnauthorized = false;
     }
 
     var sendLog = self.sendLog = function(log){
-        conn.emit('clientLog','client_verbose_log: '+log);
+        var dataToServer = {
+            event:'clientLog',
+            client_verbose_log: log
+        }
+        conn.send(JSON.stringify(dataToServer));
     }
 
     self.start = function(cb){
@@ -115,35 +126,41 @@ function cbtSocket(api, params) {
         var reconnecting = false;
         var reconnectAttempts = 0;
 
-        var ping = setInterval(function(){
-            //socket.io is bad people            
-            conn.emit('pingcheck');
+        var ping = setInterval(function(){          
+            conn.ping();
         },10000);
 
         console.log('Started connection attempt!');
+        conn.on('message',function(message){
+            var msg = null;
+            try{
+                msg = JSON.parse(message);
+                self.handleMessage(msg);
+            }catch(e){
+                warn(e.message);
+                warn('Could not parse websocket message:');
+                console.dir(message);
+            }
+        })
 
-        conn.on('reconnect_error',function(e){
-            if(params.verbose){
-                warn('Reconnect error:');
-                warn(e);
+        conn.on('close',function(data){
+            reconnecting = true;
+            clearInterval(ping);
+            if(!params.verbose &&! params.quiet && params.cmd){
+                clearInterval(self.drawTimeout);
+                self.spin(null,'Disconnected from CBT server.\n');
+            }else{
+                warn('Disconnected from CBT server.\n');
             }
-            reconnectAttempts++;
-            if(reconnectAttempts>=5){
-                warn('Could not reconnect to CBT server.');
-                self.endWrap();
-            }
+            connection_list = {};
         });
 
-        conn.on('connect_error',function(e){
-            if(params.verbose){
-                warn('Connection error:');
-                warn(e);
-            }
-            warn('Could not connect to CBT server.');
-            warn(e);
+        conn.on('error',function(e){
+            console.log('WebSocket error!');
+            cb(e);
         });
 
-        conn.on('connect',function(){
+        conn.on('open',function(){
             if(params.pac){
                 console.log('Connecting using PAC file.');
             }else{
@@ -157,7 +174,7 @@ function cbtSocket(api, params) {
                 clearInterval(self.drawTimeout);
             }
             if(!!self.ready){
-                console.log("SETTING READY FILE!");
+                console.log('Setting ready file: '+self.ready);
                 fs.open(self.ready,'wx',function(err,fd){
                     if(err){
                         warn('The path specified for the "ready" file already exists or cannot be created (likely for permissions issues).');
@@ -174,258 +191,273 @@ function cbtSocket(api, params) {
                 });
             }
         });
+    }
 
-        conn.on('reconnect',function(){
-            warn('Reconnected!');
-            ping = setInterval(function(){
-                //socket.io is bad people            
-                conn.emit('pingcheck');
-            },10000);
-            sendLog('reconnected to server.js after '+reconnectAttempts+' attempts.');
-        });
+    self.handleMessage = function(msg){
+        var data = null,
+            id = null;
+        if(!!msg.data){
+            data = msg.data;
+            id = data.id;
+        }
+        var wsid = msg.wsid;
 
-        conn.on("error", function(e){
-            console.log('Socket.io error!');
-            cb(e);
-        });
-
-        conn.on("disconnect", function(data){
-            reconnecting = true;
-            clearInterval(ping);
-            if(!params.verbose &&! params.quiet && params.cmd){
-                clearInterval(self.drawTimeout);
-                self.spin(null,'Disconnected from CBT server.\n');
-            }else{
-                warn('Disconnected from CBT server.\n');
-            }
-            connection_list = {};
-        });
-
-        conn.on("hello", function() {
-            conn.emit('established');
-        });
-
-        conn.on('progress',function(data){
-            console.log('progress\n');
-            console.log(data); 
-        });
-
-        conn.on('versions',function(data){
-            var checkResult = utils.checkVersion(data,params);
-            sendLog(checkResult);
-            if(checkResult.includes('dead')){
-                self.endWrap();
-            }
-        });
-
-        conn.on('check',function(){
-            if(params.verbose){
-                console.log('Received check request!');
-                sendLog('node client received check request.');
-            }
-            self.api.checkTunnelIp((err, resp) => {
-                if(err && params.verbose){
-                    warn('IP check error!');
-                    console.dir(response);
-                    warn(err);
-                    var data = err;
-                    conn.emit('checkrecv', data);
-                } else {
-                    if (params.verbose){
-                        try{
-                            console.log('IP appears to CBT as: '+resp.ip);
-                            conn.emit('checkrecv',{ip:resp.ip});
-                        }catch(e){
-                            warn('Parsing response failed: '+e);
-                            conn.emit('checkrecv',{error:e});
-                        }
-                    }
+        switch(msg.event){
+            case 'hello':
+                var dataToServer = {
+                    event: 'established',
+                    wsid: wsid
                 }
-            });
-        })
-
-        conn.on('legitdead',function(){
-            warn('User requested ending this tunnel.');
-            sendLog('User requested ending this tunnel via UI.');
-            self.endWrap();
-        });
-
-        conn.on('data', function(data,fn){
-            var id = data.id;
-            if (!connection_list[id]) {
-                connection_list[id] = { id : data.id , client : null };
-                connection_list[id].established = false;
-            }
-            if(socketExists(id) && data._type === 'end'){
-                if(connection_list[data.id].client){
-                    if(params.verbose){
-                        console.log(id+" client ended by CBT server.");
-                        sendLog(''+id+' tcp client ended by CBT server.');
-                        console.log(data);
-                    }
-                    connection_list[id].established=false;
-                    connection_list[id].client.end();
-                    connection_list[id].client.destroy();
-                    connection_list[id].ended=true;
+                conn.send(JSON.stringify(dataToServer));
+                break;
+            case 'versions':
+                var checkResult = utils.checkVersion(msg,params);
+                sendLog(checkResult);
+                if(checkResult.includes('dead')){
+                    self.endWrap();
                 }
-                return;
-            }
-
-            if( (data._type != 'end') && (!connection_list[id].established) && (!connection_list[id].ended) ){
-                inbound += 1;
-                // if (self.tType === 'tunnel'){
-                //  var host = self.host = self.proxyHost;
-                //  var port = self.port = self.proxyPort;
-                // } else {
-                //  var host = self.host = data.host;
-                //  var port = self.port = data.port;
-                // }
-                utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.pac,function(err,hostInfo){
-                    var host = self.host = hostInfo.host;
-                    var port = self.port = hostInfo.port;
-                    if(host === 'local' && self.tType === 'webserver'){
-                        host = 'localhost';
-                        port = self.sPort;
-                    }else if(host === 'local'){
-                        host = 'localhost';
-                    }
-                    if(params.verbose){
-                        console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
-                        sendLog('Creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
-                    }
-
-                    var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
-                        if(err){
-                            console.log(err);
+                break;
+            case 'check':
+                if(params.verbose){
+                    console.log('Received check request!');
+                    sendLog('node client received check request.');
+                }
+                self.api.checkTunnelIp((err, resp) => {
+                    if(err && params.verbose){
+                        warn('IP check error!');
+                        console.dir(response);
+                        warn(err);
+                        var data = err;
+                        var dataToServer = {
+                            event: 'checkrecv',
+                            data: data,
+                            wsid: wsid
                         }
-                        connection_list[id].established = true;
-                        connection_list[id].ended = false;
-                        if(fn){
-                            fn('ack ack ack');
-                        }
-                        if(params.verbose){
-                            console.log('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
-                            sendLog('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
-                        }
-                    });
-
-                    client.on('error',function(error){
-                        if(params.verbose){
-                            console.log('Error on '+id+'!');
-                            console.log(error.stack);
-                            sendLog('Error on TCP socket '+id+'\n'+error.stack);
-                        }
-                        conn.emit("htmlrecv", 
-                            { id : id, data : null, finished : true }
-                        );
-                        connection_list[id].established=false;
-                        client.end();
-                        connection_list[id].ended=true;
-                    });
-
-                    client.on('data', function(dataRcvd){
-                        if(socketExists(id)){
-                            if(params.verbose){
-                                console.log('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
-                                sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
+                        conn.send(JSON.stringify(dataToServer));
+                    } else {
+                        if (params.verbose){
+                            try{
+                                console.log('IP appears to CBT as: '+resp.ip);
+                                var dataToServer = {
+                                    event: 'checkrecv',
+                                    ip: resp.ip,
+                                    wsid: wsid
+                                }
+                                conn.send(JSON.stringify(dataToServer));
+                            }catch(e){
+                                warn('Parsing response failed: '+e);
+                                var dataToServer = {
+                                    event: 'checkrecv',
+                                    error: e,
+                                    wsid: wsid
+                                }
+                                conn.send(JSON.stringify(dataToServer));
                             }
-                            conn.emit("htmlrecv",
-                                { id : id, data : dataRcvd, finished : false }
-                            );
-                            if(params.verbose){
-                                console.log('TCP socket '+id+' internet data emitted to server.js!');
-                                sendLog('TCP socket '+id+' internet data emitted to server.js!');
-                            }   
                         }
-                    });
+                    }
+                });
+                break;
+            case 'legitdead':
+                warn('User requested ending this tunnel.');
+                sendLog('User requested ending this tunnel via UI. Theoretically. Server.js got a SIGINT.');
+                self.endWrap();
+                break;
+            case 'data':
+                self.handleData(msg);
+                break;
+            default:
+                warn('Unknown message type:');
+                console.dir(msg);
+                throw new Error('Unknown message type: '+msg);
+        }
+    }
 
-                    client.setTimeout(1000000);
+    self.handleData = function(msg){
+        var data = msg;
+        var id = data.id;
+        var wsid = data.wsid;
+        if (!connection_list[id]) {
+            connection_list[id] = { id : data.id , client : null };
+            connection_list[id].established = false;
+        }
 
-                    client.on('timeout',function(data){
+        if(socketExists(id) && data._type === 'end'){
+            if(connection_list[data.id].client){
+                if(params.verbose){
+                    console.log(id+" client ended by CBT server.");
+                    sendLog(''+id+' tcp client ended by CBT server.');
+                    console.log(data);
+                }
+                connection_list[id].established=false;
+                connection_list[id].client.end();
+                connection_list[id].client.destroy();
+                connection_list[id].ended=true;
+            }
+            return;
+        }
+
+        if( (data._type != 'end') && (!connection_list[id].established) && (!connection_list[id].ended) ){
+            inbound += 1;
+            utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.pac,function(err,hostInfo){
+                var host = self.host = hostInfo.host;
+                var port = self.port = hostInfo.port;
+                if(host === 'local' && self.tType === 'webserver'){
+                    host = 'localhost';
+                    port = self.sPort;
+                }else if(host === 'local'){
+                    host = 'localhost';
+                }
+                if(params.verbose){
+                    console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
+                    sendLog('Creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
+                }
+
+                var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
+                    if(err){
+                        console.log(err);
+                    }
+                    connection_list[id].established = true;
+                    connection_list[id].ended = false;
+                    if(fn){
+                        fn('ack ack ack');
+                    }
+                    if(params.verbose){
+                        console.log('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
+                        sendLog('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
+                    }
+                });
+
+                client.on('error',function(error){
+                    if(params.verbose){
+                        console.log('Error on '+id+'!');
+                        console.log(error.stack);
+                        sendLog('Error on TCP socket '+id+'\n'+error.stack);
+                    }
+                    var dataToServer = {
+                        event: 'htmlrecv',
+                        data: { id : id, data : null, finished : true },
+                        wsid: wsid
+                    }
+                    conn.send(JSON.stringify(dataToServer));
+                    connection_list[id].established=false;
+                    client.end();
+                    connection_list[id].ended=true;
+                });
+
+                client.on('data', function(dataRcvd){
+                    if(socketExists(id)){
                         if(params.verbose){
-                            console.log('TCP socket '+id+' session timed out.');
-                            sendLog('TCP socket '+id+' session timed out.');
+                            console.log('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
+                            sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                         }
-                        conn.emit("htmlrecv", 
-                            { id : id, data : null, finished : true }
-                        );
+                        var dataToServer = {
+                            event: 'htmlrecv',
+                            data: { id : id, data : dataRcvd, finished : true },
+                            wsid: wsid
+                        }
+                        conn.send(JSON.stringify(dataToServer));
+                        if(params.verbose){
+                            console.log('TCP socket '+id+' internet data emitted to server.js!');
+                            sendLog('TCP socket '+id+' internet data emitted to server.js!');
+                        }   
+                    }
+                });
+
+                client.setTimeout(1000000);
+
+                client.on('timeout',function(data){
+                    if(params.verbose){
+                        console.log('TCP socket '+id+' session timed out.');
+                        sendLog('TCP socket '+id+' session timed out.');
+                    }
+                    var dataToServer = {
+                        event: 'htmlrecv',
+                        data: { id : id, data : null, finished : true },
+                        wsid: wsid
+                    }
+                    conn.send(JSON.stringify(dataToServer));
+                    client.write('end');
+                    client.end();
+                    client.destroy();
+                    if(connection_list[id]){
+                        connection_list[id].established=false;
+                        connection_list[id].ended=true;
+                    }
+                });
+
+                client.on('end', function(data,err){
+                    if(socketExists(id)){
+                        if(params.verbose){
+                            console.log(err);
+                            console.log('TCP socket '+id+' ended by external site.');
+                            sendLog('TCP socket '+id+' ended by external site.');
+                        }
+                        var dataToServer = {
+                            event: 'htmlrecv',
+                            data: { id : id, data : null, finished : true },
+                            wsid: wsid
+                        }
+                        conn.send(JSON.stringify(dataToServer));
+                        connection_list[id].established=false;
                         client.write('end');
                         client.end();
-                        client.destroy();
-                        if(connection_list[id]){
-                            connection_list[id].established=false;
-                            connection_list[id].ended=true;
-                        }
-                    });
-
-                    client.on('end', function(data,err){
-                        if(socketExists(id)){
-                            if(params.verbose){
-                                console.log(err);
-                                console.log('TCP socket '+id+' ended by external site.');
-                                sendLog('TCP socket '+id+' ended by external site.');
-                            }
-                            conn.emit('htmlrecv', 
-                                { id : id, data : data, finished : true }
-                            );
-                            connection_list[id].established=false;
-                            client.write('end');
-                            client.end();
-                            connection_list[id].ended=true;
-                        }
-                    });
-
-                    client.on('close', function(err){
-                        if(socketExists(id)){
-                            if(params.verbose){
-                                console.log('TCP socket '+id+' closed by external site.');
-                                sendLog('TCP socket '+id+' closed by external site.');
-                            }
-                            if(err&&params.verbose){
-                                console.log('Error on close of TCP socket: '+id);
-                                sendLog('Error on close of TCP socket: '+id);
-                            }
-                            conn.emit('htmlrecv', 
-                                { id : id, data : null, finished : true }
-                            );
-                            connection_list[id].established=false;
-                            client.write('end');
-                            client.end();
-                            connection_list[id].ended=true;
-                        }
-                    });
-                });
-            }
-
-            if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
-                var client = connection_list[id].client;
-                if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
-                    data = self.addProxyAuth(data);
-                }
-                client.write(data.data, function(err){
-                    if(err&&params.verbose){
-                        console.log('Error writing data to: ');
-                        console.dir(client);
-                        console.dir(err);
-                        sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
-                        conn.emit('htmlrecv', 
-                            { id : id, data : null, finished : true }
-                        );
-                        connection_list[id].established=false;
-                        client.end();
-                        client.destroy();
                         connection_list[id].ended=true;
                     }
-                    outbound+=1;
-                    if(params.verbose){
-                        console.log('Wrote to TCP socket '+id);
-                        sendLog('Wrote to TCP socket '+id);
-                    }
-
                 });
+
+                client.on('close', function(err){
+                    if(socketExists(id)){
+                        if(params.verbose){
+                            console.log('TCP socket '+id+' closed by external site.');
+                            sendLog('TCP socket '+id+' closed by external site.');
+                        }
+                        if(err&&params.verbose){
+                            console.log('Error on close of TCP socket: '+id);
+                            sendLog('Error on close of TCP socket: '+id);
+                        }
+                        var dataToServer = {
+                            event: 'htmlrecv',
+                            data: { id : id, data : null, finished : true },
+                            wsid: wsid
+                        }
+                        conn.send(JSON.stringify(dataToServer));
+                        connection_list[id].established=false;
+                        client.write('end');
+                        client.end();
+                        connection_list[id].ended=true;
+                    }
+                });
+            });
+        }
+
+        if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
+            var client = connection_list[id].client;
+            if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
+                data = self.addProxyAuth(data);
             }
-        });
-    };
+            client.write(data.data, function(err){
+                if(err&&params.verbose){
+                    console.log('Error writing data to: ');
+                    console.dir(client);
+                    console.dir(err);
+                    sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
+                    conn.emit('htmlrecv', 
+                        { id : id, data : null, finished : true }
+                    );
+                    connection_list[id].established=false;
+                    client.end();
+                    client.destroy();
+                    connection_list[id].ended=true;
+                }
+                outbound+=1;
+                if(params.verbose){
+                    console.log('Wrote to TCP socket '+id);
+                    sendLog('Wrote to TCP socket '+id);
+                }
+
+            });
+        }
+    }
 
     self.spin = function(old,msg){
         inbound = 0;
@@ -523,14 +555,3 @@ function cbtSocket(api, params) {
 }
 
 module.exports = cbtSocket;
-
-
-
-
-
-
-
-
-
-
-
