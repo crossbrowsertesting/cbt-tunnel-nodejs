@@ -100,7 +100,7 @@ function cbtSocket(api, params) {
     var conn = self.conn = null;
 
     if (process.env.http_proxy || process.env.https_proxy){
-        var agent = process.env.http_proxy ? process.env.http_proxy : process.env.https_proxy;
+        var agent = process.env.http_proxy ? new proxyAgent(process.env.http_proxy) : new proxyAgent(process.env.https_proxy);
         conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
     }else{
         conn = self.conn = new WebSocket(self.wsPath,{});
