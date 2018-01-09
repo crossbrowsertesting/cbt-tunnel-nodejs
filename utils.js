@@ -89,6 +89,8 @@ module.exports = {
                 }else{
                     res = res.split(' ')[1];
                     var resArr = res.replace(';','').split(':');
+                    console.log('in determine host, resArray:')
+                    console.dir(resArr)
                     return cb(null,{host:resArr[0],port:resArr[1]});
 
                 }
