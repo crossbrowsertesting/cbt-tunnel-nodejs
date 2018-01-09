@@ -82,8 +82,7 @@ module.exports = {
 
     determineHost: function(data,pac,cb){
         if(pac){
-            var host = data.host.startsWith('https://') ? data.host.replace('https://','http://') : data.host;
-            host = !(data.host.startsWith('http://')) ? 'http://'+data.host : data.host;
+            var host = !(data.host.startsWith('http://') ? 'http://'+data.host : data.host;
             console.log('In determine host with data:')
             console.dir(data);
             console.dir(pac);
