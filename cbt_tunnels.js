@@ -132,6 +132,7 @@ function cbtSocket(api, params) {
 
         console.log('Started connection attempt!');
         conn.on('message',function(message){
+            console.log('received message');
             try{
                 msg = JSON.parse(message);
                 self.handleMessage(msg);
@@ -193,6 +194,8 @@ function cbtSocket(api, params) {
     }
 
     self.handleMessage = function(msg){
+        console.log('in handlemessage');
+        console.dir(msg);
         var data = null,
             id = null;
         if(!!msg.data){
