@@ -300,6 +300,8 @@ function cbtSocket(api, params) {
 
         if( (data._type != 'end') && (!connection_list[id].established) && (!connection_list[id].ended) ){
             inbound += 1;
+            console.log('about to determine host with data: ')
+            console.dir(data);
             utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.pac,function(err,hostInfo){
                 var host = self.host = hostInfo.host;
                 var port = self.port = hostInfo.port;
@@ -313,7 +315,6 @@ function cbtSocket(api, params) {
                     console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
                     sendLog('Creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 }
-
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
                         console.log(err);
