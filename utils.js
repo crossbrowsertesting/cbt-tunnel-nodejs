@@ -97,11 +97,11 @@ module.exports = {
                     return cb(null,{host:resArr[0],port:resArr[1]});
 
                 }
-            }).catch(err){
+            }).catch(function(err){
                 console.log('Error determining host for:');
                 console.dir(data);
                 console.log(err.message);
-            }
+            });
         }else if(data.tType==='tunnel'){
             return cb(null,{host:data.proxyHost,port:data.proxyPort});
         }else{
