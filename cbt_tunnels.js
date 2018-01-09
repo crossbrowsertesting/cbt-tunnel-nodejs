@@ -132,7 +132,6 @@ function cbtSocket(api, params) {
 
         console.log('Started connection attempt!');
         conn.on('message',function(message){
-            var msg = null;
             try{
                 msg = JSON.parse(message);
                 self.handleMessage(msg);
@@ -274,8 +273,9 @@ function cbtSocket(api, params) {
 
     self.handleData = function(msg){
         var data = msg;
-        var id = data.id;
-        var wsid = data.wsid;
+        var id = msg.id;
+        var wsid = msg.wsid;
+
         if (!connection_list[id]) {
             connection_list[id] = { id : data.id , client : null };
             connection_list[id].established = false;
@@ -286,7 +286,6 @@ function cbtSocket(api, params) {
                 if(params.verbose){
                     console.log(id+" client ended by CBT server.");
                     sendLog(''+id+' tcp client ended by CBT server.');
-                    console.log(data);
                 }
                 connection_list[id].established=false;
                 connection_list[id].client.end();
@@ -318,9 +317,14 @@ function cbtSocket(api, params) {
                     }
                     connection_list[id].established = true;
                     connection_list[id].ended = false;
-                    if(fn){
-                        fn('ack ack ack');
+                    var dataToServer = {
+                        event: 'ack ack ack',
+                        id : id,
+                        data : null,
+                        finished : false,
+                        wsid: wsid
                     }
+                    conn.send(JSON.stringify(dataToServer));
                     if(params.verbose){
                         console.log('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                         sendLog('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
@@ -335,7 +339,9 @@ function cbtSocket(api, params) {
                     }
                     var dataToServer = {
                         event: 'htmlrecv',
-                        data: { id : id, data : null, finished : true },
+                        id : id,
+                        data : null,
+                        finished : true,
                         wsid: wsid
                     }
                     conn.send(JSON.stringify(dataToServer));
@@ -352,7 +358,9 @@ function cbtSocket(api, params) {
                         }
                         var dataToServer = {
                             event: 'htmlrecv',
-                            data: { id : id, data : dataRcvd, finished : true },
+                            id : id,
+                            data : dataRcvd, 
+                            finished : true,
                             wsid: wsid
                         }
                         conn.send(JSON.stringify(dataToServer));
@@ -372,7 +380,9 @@ function cbtSocket(api, params) {
                     }
                     var dataToServer = {
                         event: 'htmlrecv',
-                        data: { id : id, data : null, finished : true },
+                        id : id,
+                        data : null,
+                        finished : true,
                         wsid: wsid
                     }
                     conn.send(JSON.stringify(dataToServer));
@@ -394,7 +404,9 @@ function cbtSocket(api, params) {
                         }
                         var dataToServer = {
                             event: 'htmlrecv',
-                            data: { id : id, data : null, finished : true },
+                            id : id,
+                            data : null,
+                            finished : true,
                             wsid: wsid
                         }
                         conn.send(JSON.stringify(dataToServer));
@@ -417,7 +429,9 @@ function cbtSocket(api, params) {
                         }
                         var dataToServer = {
                             event: 'htmlrecv',
-                            data: { id : id, data : null, finished : true },
+                            id : id,
+                            data : null, 
+                            finished : true,
                             wsid: wsid
                         }
                         conn.send(JSON.stringify(dataToServer));
@@ -435,15 +449,20 @@ function cbtSocket(api, params) {
             if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
                 data = self.addProxyAuth(data);
             }
-            client.write(data.data, function(err){
+            var bufferToSend = new Buffer(data.data.data);
+            client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
                     console.log('Error writing data to: ');
                     console.dir(client);
                     console.dir(err);
                     sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
-                    conn.emit('htmlrecv', 
-                        { id : id, data : null, finished : true }
-                    );
+                    var dataToServer = {
+                        event: 'htmlrecv',
+                        id : id, 
+                        data : null, 
+                        finished : true,
+                        wsid: wsid
+                    }
                     connection_list[id].established=false;
                     client.end();
                     client.destroy();
