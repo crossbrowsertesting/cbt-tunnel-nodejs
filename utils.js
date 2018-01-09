@@ -83,13 +83,16 @@ module.exports = {
     determineHost: function(data,pac,cb){
         if(pac){
             var host = !(data.host.startsWith('http://') || data.host.startsWith('https://')) ? 'http://'+data.host : data.host;
+            console.log('In determine host with data:')
+            console.dir(data);
+            console.dir(pac);
             pac(data.host+':'+data.port).then(function(res){
+                console.log('past pac call');
                 if(res==='DIRECT'){
                     return cb(null,{host:data.host,port:data.port});
                 }else{
                     res = res.split(' ')[1];
                     var resArr = res.replace(';','').split(':');
-                    console.log('in determine host, resArray:')
                     console.dir(resArr)
                     return cb(null,{host:resArr[0],port:resArr[1]});
 
