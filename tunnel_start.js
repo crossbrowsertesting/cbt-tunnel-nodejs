@@ -56,9 +56,7 @@ var determineTunnelType = function(cmdArgs){
             // make sure user specifies both or neither of proxyUser and proxyPass
             throw new Error("You must specify both a proxy user (--proxyUser) and a proxy password "
             + "(--proxyPass) to use basic authentication with the proxy option.");
-        } else if(!!cmdArgs.pac){
-            tunnelType = 'tunnel';
-        }else{
+        } else {
             tunnelType = 'tunnel';
         }
     } else {

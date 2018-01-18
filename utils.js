@@ -82,20 +82,18 @@ module.exports = {
 
     determineHost: function(data,pac,cb){
         if(pac){
-            var host = (!(data.host.startsWith('http://')) && !(data.host.startsWith('https://'))) ? 'http://'+data.host : data.host;
+            var host = !(data.host.startsWith('http://')) ? 'http://'+data.host : data.host;
             console.log('In determine host with data:')
             console.dir(data);
             console.dir(pac);
-            pac(host+':'+data.port).then(function(res){
+            pac(data.host+':'+data.port).then(function(res){
                 console.log('past pac call');
                 if(res==='DIRECT'){
-                    console.log('GOING DIRECT');
                     return cb(null,{host:data.host,port:data.port});
                 }else{
-                    console.log('NOT GOING DIRECT');
                     res = res.split(' ')[1];
                     var resArr = res.replace(';','').split(':');
-                    console.dir({host:resArr[0],port:resArr[1]})
+                    console.dir(resArr)
                     return cb(null,{host:resArr[0],port:resArr[1]});
 
                 }
@@ -105,8 +103,6 @@ module.exports = {
                 console.log(err.message);
             });
         }else if(data.tType==='tunnel'){
-            console.log('TYPE IS TUNNEL:');
-            console.dir({host:data.proxyHost,port:data.proxyPort});
             return cb(null,{host:data.proxyHost,port:data.proxyPort});
         }else{
             return cb(null,{host:data.host,port:data.port});
