@@ -453,7 +453,7 @@ function cbtSocket(api, params) {
             if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
                 data = self.addProxyAuth(data);
             }
-            var bufferToSend = new Buffer(data.data.data);
+            var bufferToSend = new Buffer(data.data);
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
                     console.log('Error writing data to: ');
