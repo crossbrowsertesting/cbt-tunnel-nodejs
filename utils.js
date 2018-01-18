@@ -82,7 +82,7 @@ module.exports = {
 
     determineHost: function(data,pac,cb){
         if(pac){
-            var host = !(data.host.startsWith('http://')) ? 'http://'+data.host : data.host;
+            data.host = (!data.host.startsWith('http://')&&!data.host.startsWith('https://')) ? 'http://'+data.host : data.host;
             console.log('In determine host with data:')
             console.dir(data);
             console.dir(pac);
@@ -95,7 +95,6 @@ module.exports = {
                     var resArr = res.replace(';','').split(':');
                     console.dir(resArr)
                     return cb(null,{host:resArr[0],port:resArr[1]});
-
                 }
             }).catch(function(err){
                 console.log('Error determining host for:');
