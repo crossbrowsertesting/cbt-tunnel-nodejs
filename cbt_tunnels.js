@@ -132,7 +132,6 @@ function cbtSocket(api, params) {
 
         console.log('Started connection attempt!');
         conn.on('message',function(message){
-            console.log('received message');
             try{
                 msg = JSON.parse(message);
                 self.handleMessage(msg);
@@ -194,8 +193,6 @@ function cbtSocket(api, params) {
     }
 
     self.handleMessage = function(msg){
-        console.log('in handlemessage');
-        console.dir(msg);
         var data = null,
             id = null;
         if(!!msg.data){
@@ -450,10 +447,12 @@ function cbtSocket(api, params) {
 
         if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
             var client = connection_list[id].client;
-            if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
+            if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.data.toString().includes('Host')) ){
                 data = self.addProxyAuth(data);
             }
             var bufferToSend = new Buffer(data.data.data);
+            console.log('Writing to client:');
+            console.dir(data.data.data);
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
                     console.log('Error writing data to: ');
@@ -503,7 +502,7 @@ function cbtSocket(api, params) {
     }
 
     self.addProxyAuth = function(data){
-        var dataArr = data.data.toString().split('\r\n');
+        var dataArr = data.data.data.toString().split('\r\n');
         dataArr = _.filter(dataArr, function(col){
             if(!col==''){
                 return col;
@@ -512,7 +511,7 @@ function cbtSocket(api, params) {
         dataArr.push(proxyAuthString);
         dataArr.push('\r\n');
         dataStr = dataArr.join('\r\n');
-        data.data = Buffer.from(dataStr);
+        data.data.data = Buffer.from(dataStr);
         return data;
     }
 
