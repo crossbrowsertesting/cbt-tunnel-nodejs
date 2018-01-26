@@ -8,7 +8,9 @@ var net = require('net'),
     warn = gfx.warn,
     utils  = require('./utils.js'),
     WebSocket = require('ws'),
-    proxyAgent = require('https-proxy-agent');
+    proxyAgent = require('https-proxy-agent'),
+    os = require('os'),
+    crypto = require('crypto');
 
 function pad(n, width, z) {
     z = z || '0';
@@ -195,7 +197,6 @@ function cbtSocket(api, params) {
 
     self.handleMessage = function(msg){
         console.log('in handlemessage');
-        console.dir(msg);
         var data = null,
             id = null;
         if(!!msg.data){
@@ -315,6 +316,7 @@ function cbtSocket(api, params) {
                     console.log('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
                     sendLog('Creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 }
+                connection_list[id].manipulateHeaders = hostInfo.manipulateHeaders;
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
                         console.log(err);
@@ -367,6 +369,8 @@ function cbtSocket(api, params) {
                             finished : true,
                             wsid: wsid
                         }
+                        console.log('DATA TO SEND TO SERVER.JS:')
+                        console.dir(crypto.createHash('md5').update(dataRcvd).digest('hex'));
                         conn.send(JSON.stringify(dataToServer));
                         if(params.verbose){
                             console.log('TCP socket '+id+' internet data emitted to server.js!');
@@ -453,7 +457,12 @@ function cbtSocket(api, params) {
             if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
                 data = self.addProxyAuth(data);
             }
+            if(connection_list[id].manipulateHeaders){
+                data = self.manipulateHeaders(data);
+            }
+            console.log('DATA RECEIVED FROM SERVER.JS');
             var bufferToSend = new Buffer(data.data);
+            console.dir(crypto.createHash('md5').update(bufferToSend).digest('hex'));
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
                     console.log('Error writing data to: ');
@@ -503,7 +512,7 @@ function cbtSocket(api, params) {
     }
 
     self.addProxyAuth = function(data){
-        var dataArr = data.data.toString().split('\r\n');
+        var dataArr = data.data.toString('ascii').split('\r\n');
         dataArr = _.filter(dataArr, function(col){
             if(!col==''){
                 return col;
@@ -514,6 +523,37 @@ function cbtSocket(api, params) {
         dataStr = dataArr.join('\r\n');
         data.data = Buffer.from(dataStr);
         return data;
+    }
+
+    self.manipulateHeaders = function(data){
+        var dataArr = []
+        data.data.map((char)=>{
+            dataArr.push(String.fromCharCode(char))
+        })
+        dataStr = dataArr.join('')
+        dataArr = dataStr.split('\r\n')
+        dataArr = _.filter(dataArr, function(col){
+            if(!col==''){
+                return col
+            }
+        });
+        console.log('data before manipulation')
+        console.log(dataStr)
+        if(dataArr[0].includes('GET')){
+            var host = dataArr.find((element)=>{
+                return (element.includes('host:')||element.includes('Host:')||element.includes('HOST:'))
+            })
+            host = host.split(':')[1].replace(' ','')
+            host = !(host.includes('http://')&&host.includes('https://')) ? 'http://'+host : host
+            dataArr[0] = dataArr[0].replace('GET ','GET '+host)
+            dataStr = dataArr.join('\r\n')
+            dataStr+='\r\n\r\n';
+            data.data = Buffer.from(dataStr,'ascii')
+            console.log('data after manipulation')
+            console.log(dataStr)
+            return data
+        }
+        return data
     }
 
     self.end = function(cb){
