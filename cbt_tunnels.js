@@ -471,10 +471,10 @@ function cbtSocket(api, params) {
             if(connection_list[id].manipulateHeaders){
                 data = self.manipulateHeaders(data);
             }
-            console.log('DATA RECEIVED FROM SERVER.JS');
             self.isTLSHello(connection_list[id],data.data,id,function(err){
                 if(!err){
                     var bufferToSend = new Buffer(data.data);
+                    console.log('DATA RECEIVED FROM SERVER.JS');
                     console.dir(crypto.createHash('md5').update(bufferToSend).digest('hex'));
                     client.write(bufferToSend, function(err){
                         if(err&&params.verbose){
@@ -501,6 +501,8 @@ function cbtSocket(api, params) {
                         }
                     });
                 }else{
+                    console.log('mother flippin err');
+                    console.dir(err);
                     throw err;
                 }
             });
@@ -583,8 +585,6 @@ function cbtSocket(api, params) {
             dataArr.push(String.fromCharCode(char))
         })
         dataStr = dataArr.join('')
-        console.log('checking is connected. data:');
-        console.log(dataStr);
         if(dataStr.includes('Connection established')){
             return true;
         }else{
