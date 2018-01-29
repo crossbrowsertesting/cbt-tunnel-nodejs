@@ -146,6 +146,23 @@ There are three options provided for you to do this:
         Basic usage:
             Scripted: 'cbt.status()'
 
+    AcceptAllCerts:
+       Set up the tunnel to work with sites with invalid (self-signed, expired) certificates.  Useful for testing sites that present with certificate errors in a browser.
+
+        Basic usage:
+            Command line: '--acceptAllCerts'
+            Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","acceptAllCerts":true},function(err){ if(!err) do stuff })'
+
+    RejectUnauthorized:
+        Enable or disable SSL certificate checking in Node itself.  Useful if a self-signed certificate is in the chain (i.e., on a proxy), but only works in narrow cases.
+
+        Basic usage:
+            Command line: '--rejectUnauthorized false'
+            Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","rejectUnauthorized":"false"},function(err){ if(!err) do stuff })'
+
+
+
+
 ##### Building Binary From Source:
 
     Binaries may be found at https://github.com/crossbrowsertesting/cbt-tunnel-nodejs/releases 
