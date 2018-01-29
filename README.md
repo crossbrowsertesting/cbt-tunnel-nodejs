@@ -101,6 +101,13 @@ There are three options provided for you to do this:
             Command line: '--httpsProxy PROXYUSER:PROXYPASS@HTTPSPROXY'
             Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"PROXYUSER:PROXYPASS@HTTPSPROXY"},function(err){ if(!err) do stuff })'
 
+    Bypass:
+        Specify whether public-resolvable URLs should resolve direct (default/true behavior) or pass through the tunnel (false behavior).
+ 
+        Basic Usage:
+            Command line: '--bypass true' or '--bypass false'
+            Scripted: 'cbt.start({"username":"USERNAME", "authkey":"AUTHKEY", "bypass": "false"}, function(err){if (!err) do stuff })'
+
     Kill file:
         The kill file option allows you specify the name of a 'kill file' that if placed in the current 
         directory will cause the program to gracefully shutdown.
