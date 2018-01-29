@@ -628,8 +628,10 @@ function cbtSocket(api, params) {
                     }
                 },100)
             });
+        }else{
+            cb(null);   
         }
-        cb(null);
+
     }
 
     self.end = function(cb){
