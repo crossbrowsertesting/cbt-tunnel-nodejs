@@ -500,6 +500,8 @@ function cbtSocket(api, params) {
                             sendLog('Wrote to TCP socket '+id);
                         }
                     });
+                }else{
+                    throw err;
                 }
             });
         }
@@ -623,7 +625,7 @@ function cbtSocket(api, params) {
                     if(connection_list[id].connected){
                         cb(null);
                     }
-                },100)
+                },1);
             });
         }else{
             cb(null);   
