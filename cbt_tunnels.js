@@ -629,6 +629,7 @@ function cbtSocket(api, params) {
                 },100)
             });
         }
+        cb(null);
     }
 
     self.end = function(cb){
