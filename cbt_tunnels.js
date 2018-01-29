@@ -463,7 +463,7 @@ function cbtSocket(api, params) {
                 data = self.manipulateHeaders(data);
             }
             console.log('DATA RECEIVED FROM SERVER.JS');
-            self.isTLSHello(client,data.data,id,function(err){
+            self.isTLSHello(connection_list[id],data.data,id,function(err){
                 if(!err){
                     var bufferToSend = new Buffer(data.data);
                     console.dir(crypto.createHash('md5').update(bufferToSend).digest('hex'));
@@ -566,10 +566,11 @@ function cbtSocket(api, params) {
         return connect;
     }
 
-    self.isTLSHello = function(client,packet,id,cb){
+    self.isTLSHello = function(connection,packet,id,cb){
         if(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01&&params.pac){
+            var client = connection.client;
             console.log('This is a TLS HELLO! Sending connect...');
-            var bufferToSend = Buffer.from(buildConnect(client.host+':'+client.port));
+            var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
                     console.log('Error writing data to: ');
