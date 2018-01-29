@@ -317,14 +317,14 @@ function cbtSocket(api, params) {
                     sendLog('Creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 }
                 connection_list[id].manipulateHeaders = hostInfo.manipulateHeaders;
+                connection_list[id].host = host;
+                connection_list[id].port = port;
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
                         console.log(err);
                     }
                     connection_list[id].established = true;
                     connection_list[id].ended = false;
-                    connection_list[id].host = host;
-                    connection_list[id].port = port;
                     var dataToServer = {
                         event: 'ack ack ack',
                         id : id,
@@ -569,6 +569,7 @@ function cbtSocket(api, params) {
     self.isTLSHello = function(connection,packet,id,cb){
         if(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01&&params.pac){
             var client = connection.client;
+            console.log(connection);
             console.log('This is a TLS HELLO! Sending connect...');
             var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
             client.write(bufferToSend, function(err){
