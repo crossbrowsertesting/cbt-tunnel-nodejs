@@ -323,6 +323,8 @@ function cbtSocket(api, params) {
                     }
                     connection_list[id].established = true;
                     connection_list[id].ended = false;
+                    connection_list[id].host = host;
+                    connection_list[id].port = port;
                     var dataToServer = {
                         event: 'ack ack ack',
                         id : id,
@@ -461,33 +463,37 @@ function cbtSocket(api, params) {
                 data = self.manipulateHeaders(data);
             }
             console.log('DATA RECEIVED FROM SERVER.JS');
-            var bufferToSend = new Buffer(data.data);
-            console.dir(crypto.createHash('md5').update(bufferToSend).digest('hex'));
-            client.write(bufferToSend, function(err){
-                if(err&&params.verbose){
-                    console.log('Error writing data to: ');
-                    console.dir(client);
-                    console.dir(err);
-                    sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
-                    var dataToServer = {
-                        event: 'htmlrecv',
-                        id : id, 
-                        data : null, 
-                        finished : true,
-                        wsid: wsid
-                    }
-                    connection_list[id].established=false;
-                    client.end();
-                    client.destroy();
-                    connection_list[id].ended=true;
+            self.isTLSHello(client,data.data,id,function(err){
+                if(!err){
+                    var bufferToSend = new Buffer(data.data);
+                    console.dir(crypto.createHash('md5').update(bufferToSend).digest('hex'));
+                    client.write(bufferToSend, function(err){
+                        if(err&&params.verbose){
+                            console.log('Error writing data to: ');
+                            console.dir(client);
+                            console.dir(err);
+                            sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
+                            var dataToServer = {
+                                event: 'htmlrecv',
+                                id : id, 
+                                data : null, 
+                                finished : true,
+                                wsid: wsid
+                            }
+                            connection_list[id].established=false;
+                            client.end();
+                            client.destroy();
+                            connection_list[id].ended=true;
+                        }
+                        outbound+=1;
+                        if(params.verbose){
+                            console.log('Wrote to TCP socket '+id);
+                            sendLog('Wrote to TCP socket '+id);
+                        }
+                    });
                 }
-                outbound+=1;
-                if(params.verbose){
-                    console.log('Wrote to TCP socket '+id);
-                    sendLog('Wrote to TCP socket '+id);
-                }
+            }
 
-            });
         }
     }
 
@@ -554,6 +560,43 @@ function cbtSocket(api, params) {
             return data
         }
         return data
+    }
+
+    self.buildConnect = function(destination){
+        var connect = "CONNECT "+destination+" HTTP/1.1\r\nhost: "+desination+"\r\nConnection: close\r\n\r\n";
+        return connect;
+    }
+
+    self.isTLSHello = function(client,packet,id,cb){
+        if(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01&&params.pac){
+            var bufferToSend = Buffer.from(buildConnect(client.host+':'+client.port));
+            client.write(bufferToSend, function(err){
+                if(err&&params.verbose){
+                    console.log('Error writing data to: ');
+                    console.dir(client);
+                    console.dir(err);
+                    sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
+                    var dataToServer = {
+                        event: 'htmlrecv',
+                        id : id, 
+                        data : null, 
+                        finished : true,
+                        wsid: wsid
+                    }
+                    connection_list[id].established=false;
+                    client.end();
+                    client.destroy();
+                    connection_list[id].ended=true;
+                    cb(err);
+                }
+                outbound+=1;
+                if(params.verbose){
+                    console.log('Wrote to TCP socket '+id);
+                    sendLog('Wrote to TCP socket '+id);
+                }
+                cb(null);
+            });
+        }
     }
 
     self.end = function(cb){
