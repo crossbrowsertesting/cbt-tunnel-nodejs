@@ -319,6 +319,7 @@ function cbtSocket(api, params) {
                 connection_list[id].manipulateHeaders = hostInfo.manipulateHeaders;
                 connection_list[id].host = data.host;
                 connection_list[id].port = data.port;
+                connection_list[id].connected = false;
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
                         console.log(err);
@@ -371,13 +372,21 @@ function cbtSocket(api, params) {
                             finished : true,
                             wsid: wsid
                         }
-                        console.log('DATA TO SEND TO SERVER.JS:')
-                        console.dir(crypto.createHash('md5').update(dataRcvd).digest('hex'));
-                        conn.send(JSON.stringify(dataToServer));
-                        if(params.verbose){
-                            console.log('TCP socket '+id+' internet data emitted to server.js!');
-                            sendLog('TCP socket '+id+' internet data emitted to server.js!');
-                        }   
+                        self.isConnected(dataRcvd,function(err,connected){
+                            if(err){
+                                throw err;
+                            }else if(!err&&!connected){
+                                console.log('DATA TO SEND TO SERVER.JS:')
+                                console.dir(crypto.createHash('md5').update(dataRcvd).digest('hex'));
+                                conn.send(JSON.stringify(dataToServer));
+                                if(params.verbose){
+                                    console.log('TCP socket '+id+' internet data emitted to server.js!');
+                                    sendLog('TCP socket '+id+' internet data emitted to server.js!');
+                                }  
+                            }else if(connected){
+                                connection_list[id].connected = true;
+                            }
+                        }); 
                     }
                 });
 
@@ -566,7 +575,24 @@ function cbtSocket(api, params) {
         return connect;
     }
 
+    self.isConnected = function(packet){
+        var dataArr = []
+        packet.map((char)=>{
+            dataArr.push(String.fromCharCode(char))
+        })
+        dataStr = dataArr.join('')
+        console.log('checking is connected. data:');
+        console.log(dataStr);
+        if(dataStr.includes('Connection established')){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     self.isTLSHello = function(connection,packet,id,cb){
+        console.log('in isTLSHello with: ');
+        console.dir(packet);
         if(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01&&params.pac){
             var client = connection.client;
             console.log('This is a TLS HELLO! Sending connect...');
@@ -595,7 +621,12 @@ function cbtSocket(api, params) {
                     console.log('Wrote to TCP socket '+id);
                     sendLog('Wrote to TCP socket '+id);
                 }
-                cb(null);
+                setInterval(function(){
+                    console.log('waiting for connected...');
+                    if(connection_list[id].connected){
+                        cb(null);
+                    }
+                },100)
             });
         }
     }
