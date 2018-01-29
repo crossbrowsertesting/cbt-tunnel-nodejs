@@ -596,7 +596,7 @@ function cbtSocket(api, params) {
     }
 
     self.isTLSHello = function(connection,packet,id,cb){
-        if(packet[0]===0x16&&packet[1]===0x03&&params.pac){
+        if(packet[0]===0x16&&packet[1]===0x03&&params.pac&&!connection[id].connected){
             var client = connection.client;
             console.log(id+' This is a TLS HELLO! Sending connect...');
             var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
