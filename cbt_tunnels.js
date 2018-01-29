@@ -562,14 +562,13 @@ function cbtSocket(api, params) {
     }
 
     self.buildConnect = function(destination){
-        var connect = "CONNECT "+destination+" HTTP/1.1\r\nhost: "+desination+"\r\nConnection: close\r\n\r\n";
+        var connect = "CONNECT "+destination+" HTTP/1.1\r\nhost: "+destination+"\r\nConnection: close\r\n\r\n";
         return connect;
     }
 
     self.isTLSHello = function(connection,packet,id,cb){
         if(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01&&params.pac){
             var client = connection.client;
-            console.log(connection);
             console.log('This is a TLS HELLO! Sending connect...');
             var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
             client.write(bufferToSend, function(err){
