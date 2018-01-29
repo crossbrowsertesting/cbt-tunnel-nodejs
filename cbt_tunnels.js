@@ -492,8 +492,7 @@ function cbtSocket(api, params) {
                         }
                     });
                 }
-            }
-
+            });
         }
     }
 
@@ -569,6 +568,7 @@ function cbtSocket(api, params) {
 
     self.isTLSHello = function(client,packet,id,cb){
         if(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01&&params.pac){
+            console.log('This is a TLS HELLO! Sending connect...');
             var bufferToSend = Buffer.from(buildConnect(client.host+':'+client.port));
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
