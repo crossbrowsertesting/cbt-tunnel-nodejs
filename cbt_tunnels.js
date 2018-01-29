@@ -579,16 +579,19 @@ function cbtSocket(api, params) {
         return connect;
     }
 
-    self.isConnected = function(packet){
+    self.isConnected = function(packet,cb){
+        console.log('in is connected!')
         var dataArr = []
         packet.map((char)=>{
             dataArr.push(String.fromCharCode(char))
         })
         dataStr = dataArr.join('')
         if(dataStr.includes('Connection established')){
-            return true;
+            console.log('is connected!')
+            cb(null,true);
         }else{
-            return false;
+            console.log('is not connected!')
+            cb(null,false);
         }
     }
 
@@ -621,9 +624,10 @@ function cbtSocket(api, params) {
                     console.log('Wrote to TCP socket '+id);
                     sendLog('Wrote to TCP socket '+id);
                 }
-                setInterval(function(){
+                var connectedInterval = setInterval(function(){
                     if(connection_list[id].connected){
-                        console.log(id+' Received connection established!')
+                        console.log(id+' Received connection established!');
+                        clearInterval(connectedInterval);
                         cb(null);
                     }
                 },1);
