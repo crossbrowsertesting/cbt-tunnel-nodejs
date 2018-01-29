@@ -595,7 +595,7 @@ function cbtSocket(api, params) {
     self.isTLSHello = function(connection,packet,id,cb){
         if(packet[0]===0x16&&packet[1]===0x03&&params.pac){
             var client = connection.client;
-            console.log('This is a TLS HELLO! Sending connect...');
+            console.log(id+' This is a TLS HELLO! Sending connect...');
             var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
@@ -623,6 +623,7 @@ function cbtSocket(api, params) {
                 }
                 setInterval(function(){
                     if(connection_list[id].connected){
+                        console.log(id+' Received connection established!')
                         cb(null);
                     }
                 },1);
