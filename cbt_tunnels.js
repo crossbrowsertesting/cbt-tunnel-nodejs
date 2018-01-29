@@ -317,8 +317,8 @@ function cbtSocket(api, params) {
                     sendLog('Creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 }
                 connection_list[id].manipulateHeaders = hostInfo.manipulateHeaders;
-                connection_list[id].host = host;
-                connection_list[id].port = port;
+                connection_list[id].host = data.host;
+                connection_list[id].port = data.port;
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
                         console.log(err);
