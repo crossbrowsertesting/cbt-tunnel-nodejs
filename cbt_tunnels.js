@@ -622,7 +622,6 @@ function cbtSocket(api, params) {
                     sendLog('Wrote to TCP socket '+id);
                 }
                 setInterval(function(){
-                    console.log('waiting for connected...');
                     if(connection_list[id].connected){
                         cb(null);
                     }
