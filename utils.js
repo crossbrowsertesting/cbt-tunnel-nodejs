@@ -91,6 +91,7 @@ module.exports = {
             }
             pac(data.host+':'+data.port).then(function(res){
                 if(res==='DIRECT'){
+                    data.host = data.host.replace('http://','').replace('https://','');
                     if(params.verbose){
                         console.log('Host determined; going direct:');
                         console.log({host:data.host,port:data.port});
