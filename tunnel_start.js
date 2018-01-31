@@ -67,16 +67,22 @@ var determineTunnelType = function(cmdArgs){
 
 var pacInit = function(cbtUrls,cmdArgs,cb){
     if(cmdArgs.pac){
-        console.log(cmdArgs.pac);
         utils.getPac(cmdArgs.pac,function(err,pac){
             if(err){
                 cb(err);    
             }
-            utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
+            cmdArgs.pac = pac;
+            utils.determineHost({host:'https://'+cbtUrls.node,port:443},cmdArgs,function(err,hostInfo){
+                if(err){
+                    return cb(err,null);
+                }
                 if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
                     utils.setProxies(true,'http://'+hostInfo.host+':'+hostInfo.port);
                 }
-                utils.determineHost({host:'http://'+cbtUrls.node,port:80},pac,function(err,hostInfo){
+                utils.determineHost({host:'http://'+cbtUrls.node,port:80},cmdArgs,function(err,hostInfo){
+                    if(err){
+                        return cb(err,null);
+                    }
                     if(hostInfo.host+':'+hostInfo.port!=='http://'+cbtUrls.node+':'+80){
                         utils.setProxies(false,'http://'+hostInfo.host+':'+hostInfo.port);
                     }
