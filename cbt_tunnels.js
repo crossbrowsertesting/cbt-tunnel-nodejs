@@ -521,16 +521,21 @@ function cbtSocket(api, params) {
     }
 
     self.addProxyAuth = function(data){
-        var dataArr = data.data.toString('ascii').split('\r\n');
+        var dataArr = [];
+        data.data.map((char)=>{
+            dataArr.push(String.fromCharCode(char));
+        })
+        dataStr = dataArr.join('');
+        dataArr = dataStr.split('\r\n');
         dataArr = _.filter(dataArr, function(col){
             if(!col==''){
-                return col;
+                return col
             }
         });
         dataArr.push(proxyAuthString);
-        dataArr.push('\r\n');
         dataStr = dataArr.join('\r\n');
-        data.data = Buffer.from(dataStr);
+        dataStr+='\r\n\r\n';
+        data.data = Buffer.from(dataStr,'ascii');
         return data;
     }
 
