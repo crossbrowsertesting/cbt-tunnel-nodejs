@@ -569,13 +569,17 @@ function cbtSocket(api, params) {
     }
 
     self.isConnected = function(packet,cb){
-        var dataArr = [];
-        packet.map((char)=>{
-            dataArr.push(String.fromCharCode(char));
-        });
-        dataStr = dataArr.join('');
-        if(dataStr.includes('Connection established')){
-            cb(null,true);
+        if(params.pac){
+            var dataArr = [];
+            packet.map((char)=>{
+                dataArr.push(String.fromCharCode(char));
+            });
+            dataStr = dataArr.join('');
+            if(dataStr.includes('Connection established')){
+                cb(null,true);
+            }else{
+                cb(null,false);
+            }
         }else{
             cb(null,false);
         }
