@@ -78,7 +78,6 @@ function cbtSocket(api, params) {
     self.path = '/wsstunnel' + self.qPort + '/socket.io';
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
     self.wsPath = self.cbtServer+self.path+'?'+self.query;
-    //self.wsPath = 'ws://localhost:12050/wsstunnel050/socket.io?userid=34759&authkey=ua82e08647376a67';
     self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
     var proxyAuthString = self.proxyAuthString = '';
     self.nokill = params.nokill;
@@ -102,7 +101,7 @@ function cbtSocket(api, params) {
     var conn = self.conn = null;
 
     if (process.env.http_proxy || process.env.https_proxy){
-        var agent = process.env.http_proxy ? new proxyAgent({host:process.env.http_proxy.split(':')[1].replace('//',''),port:process.env.http_proxy.split(':')[2],secureProxy:true}) : new proxyAgent({host:process.env.http_proxy.split(':')[1].replace('//',''),port:process.env.http_proxy.split(':')[2],secureProxy:true});
+        var agent = process.env.http_proxy ? new proxyAgent({host:process.env.http_proxy.split(':')[1].replace('//',''),port:process.env.http_proxy.split(':')[2],secureProxy:true}) : new proxyAgent({host:process.env.https_proxy.split(':')[1].replace('//',''),port:process.env.https_proxy.split(':')[2],secureProxy:true});
         conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
     }else{
         conn = self.conn = new WebSocket(self.wsPath,{});
@@ -134,7 +133,6 @@ function cbtSocket(api, params) {
 
         console.log('Started connection attempt!');
         conn.on('message',function(message){
-            console.log('received message');
             try{
                 msg = JSON.parse(message);
                 self.handleMessage(msg);
@@ -196,7 +194,6 @@ function cbtSocket(api, params) {
     }
 
     self.handleMessage = function(msg){
-        console.log('in handlemessage');
         var data = null,
             id = null;
         if(!!msg.data){
@@ -301,9 +298,7 @@ function cbtSocket(api, params) {
 
         if( (data._type != 'end') && (!connection_list[id].established) && (!connection_list[id].ended) ){
             inbound += 1;
-            console.log('about to determine host with data: ')
-            console.dir(data);
-            utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params.pac,function(err,hostInfo){
+            utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params,function(err,hostInfo){
                 var host = self.host = hostInfo.host;
                 var port = self.port = hostInfo.port;
                 if(host === 'local' && self.tType === 'webserver'){
@@ -376,8 +371,6 @@ function cbtSocket(api, params) {
                             if(err){
                                 throw err;
                             }else if(!err&&!connected){
-                                console.log('DATA TO SEND TO SERVER.JS:')
-                                console.dir(crypto.createHash('md5').update(dataRcvd).digest('hex'));
                                 conn.send(JSON.stringify(dataToServer));
                                 if(params.verbose){
                                     console.log('TCP socket '+id+' internet data emitted to server.js!');
@@ -474,8 +467,6 @@ function cbtSocket(api, params) {
             self.isTLSHello(connection_list[id],data.data,id,function(err){
                 if(!err){
                     var bufferToSend = new Buffer(data.data);
-                    console.log('DATA RECEIVED FROM SERVER.JS');
-                    console.dir(crypto.createHash('md5').update(bufferToSend).digest('hex'));
                     client.write(bufferToSend, function(err){
                         if(err&&params.verbose){
                             console.log('Error writing data to: ');
@@ -501,7 +492,7 @@ function cbtSocket(api, params) {
                         }
                     });
                 }else{
-                    console.log('mother flippin err');
+                    console.log('TLS error:');
                     console.dir(err);
                     throw err;
                 }
@@ -544,32 +535,30 @@ function cbtSocket(api, params) {
     }
 
     self.manipulateHeaders = function(data){
-        var dataArr = []
+        console.log('in manipulateHeaders');
+        var dataArr = [];
         data.data.map((char)=>{
-            dataArr.push(String.fromCharCode(char))
+            dataArr.push(String.fromCharCode(char));
         })
-        dataStr = dataArr.join('')
-        dataArr = dataStr.split('\r\n')
+        dataStr = dataArr.join('');
+        dataArr = dataStr.split('\r\n');
         dataArr = _.filter(dataArr, function(col){
             if(!col==''){
                 return col
             }
         });
-        console.log('data before manipulation')
-        console.log(dataStr)
-        if(dataArr[0].includes('GET')){
+        var method = dataArr[0].includes('GET') ? 'GET' : (dataArr[0].includes('POST') ? 'POST' : (dataArr[0].includes('PUT') ? 'PUT' : (dataArr[0].includes('DELETE') ? 'DELETE' : (dataArr[0].includes('OPTIONS') ? 'OPTIONS' : null))));
+        if(method){
             var host = dataArr.find((element)=>{
                 return (element.includes('host:')||element.includes('Host:')||element.includes('HOST:'))
-            })
-            host = host.split(':')[1].replace(' ','')
-            host = !(host.includes('http://')&&host.includes('https://')) ? 'http://'+host : host
-            dataArr[0] = dataArr[0].replace('GET ','GET '+host)
-            dataStr = dataArr.join('\r\n')
+            });
+            host = host.split(':')[1].replace(' ','');
+            host = !(host.includes('http://')&&host.includes('https://')) ? 'http://'+host : host;
+            dataArr[0] = dataArr[0].replace(method+' ','GET '+host);
+            dataStr = dataArr.join('\r\n');
             dataStr+='\r\n\r\n';
-            data.data = Buffer.from(dataStr,'ascii')
-            console.log('data after manipulation')
-            console.log(dataStr)
-            return data
+            data.data = Buffer.from(dataStr,'ascii');
+            return data;
         }
         return data
     }
@@ -580,26 +569,25 @@ function cbtSocket(api, params) {
     }
 
     self.isConnected = function(packet,cb){
-        console.log('in is connected!')
-        var dataArr = []
+        var dataArr = [];
         packet.map((char)=>{
-            dataArr.push(String.fromCharCode(char))
-        })
-        dataStr = dataArr.join('')
+            dataArr.push(String.fromCharCode(char));
+        });
+        dataStr = dataArr.join('');
         if(dataStr.includes('Connection established')){
-            console.log('is connected!')
             cb(null,true);
         }else{
-            console.log('is not connected!')
             cb(null,false);
         }
     }
 
     self.isTLSHello = function(connection,packet,id,cb){
-        //||(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01)
+        //||(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x03)
         if(((packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01))&&params.pac){
             var client = connection.client;
-            console.log(id+' This is a TLS HELLO! Sending connect...');
+            if(params.verbose){
+                console.log(id+' This is a TLS HELLO! Sending connect...');
+            }
             var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){

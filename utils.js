@@ -80,24 +80,29 @@ module.exports = {
         });
     },
 
-    determineHost: function(data,pac,cb){
+    determineHost: function(data,params,cb){
+        var pac = params.pac;
         if(pac){
             data.host = (!data.host.startsWith('http://')&&data.port==80) ? 'http://'+data.host : data.host;
             data.host = (!data.host.startsWith('https://')&&data.port==443) ? 'https://'+data.host : data.host;
-            console.log('In determine host with data:')
-            console.dir(data);
-            console.dir(pac);
+            if(params.verbose){
+                console.log('In determine host with data:')
+                console.dir(data);
+            }
             pac(data.host+':'+data.port).then(function(res){
-                console.log('past pac call');
                 if(res==='DIRECT'){
-                    console.log('GOING DIRECT');
-                    console.log({host:data.host,port:data.port});
+                    if(params.verbose){
+                        console.log('Host determined; going direct:');
+                        console.log({host:data.host,port:data.port});
+                    }
                     return cb(null,{host:data.host,port:data.port,manipulateHeaders:false});
                 }else{
-                    console.log('NOT GOING DIRECT');
                     res = res.split(' ')[1];
                     var resArr = res.replace(';','').split(':');
-                    console.log({host:resArr[0],port:resArr[1]});
+                    if(params.verbose){
+                        console.log('Host determined; not going direct:');
+                        console.log({host:resArr[0],port:resArr[1]});
+                    }
                     return cb(null,{host:resArr[0],port:resArr[1],manipulateHeaders:true});
                 }
             }).catch(function(err){
@@ -106,6 +111,10 @@ module.exports = {
                 console.log(err.message);
             });
         }else if(data.tType==='tunnel'){
+            if(params.verbose){
+                console.log('Host determined; type tunnel:');
+                console.log({host:data.proxyHost,port:data.proxyPort,manipulateHeaders:false});
+            }
             return cb(null,{host:data.proxyHost,port:data.proxyPort,manipulateHeaders:false});
         }else{
             return cb(null,{host:data.host,port:data.port,manipulateHeaders:false});
