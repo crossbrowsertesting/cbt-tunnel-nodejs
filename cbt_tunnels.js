@@ -367,7 +367,7 @@ function cbtSocket(api, params) {
                             finished : true,
                             wsid: wsid
                         }
-                        self.isConnected(dataRcvd,function(err,connected){
+                        self.isConnected(dataRcvd,id,function(err,connected){
                             if(err){
                                 throw err;
                             }else if(!err&&!connected){
@@ -568,8 +568,8 @@ function cbtSocket(api, params) {
         return connect;
     }
 
-    self.isConnected = function(packet,cb){
-        if(params.pac){
+    self.isConnected = function(packet,id,cb){
+        if(connection_list[id].manipulateHeaders){
             var dataArr = [];
             packet.map((char)=>{
                 dataArr.push(String.fromCharCode(char));
@@ -587,7 +587,7 @@ function cbtSocket(api, params) {
 
     self.isTLSHello = function(connection,packet,id,cb){
         //||(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x03)
-        if(((packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01))&&params.pac){
+        if(((packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01))&&connection_list[id].manipulateHeaders){
             var client = connection.client;
             if(params.verbose){
                 console.log(id+' This is a TLS HELLO! Sending connect...');
