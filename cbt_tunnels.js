@@ -535,7 +535,6 @@ function cbtSocket(api, params) {
     }
 
     self.manipulateHeaders = function(data){
-        console.log('in manipulateHeaders:');
         var dataArr = [];
         data.data.map((char)=>{
             dataArr.push(String.fromCharCode(char));
@@ -547,13 +546,12 @@ function cbtSocket(api, params) {
                 return col
             }
         });
-        console.dir(dataStr);
         var method = dataArr[0].includes('GET') ? 'GET' : (dataArr[0].includes('POST') ? 'POST' : (dataArr[0].includes('PUT') ? 'PUT' : (dataArr[0].includes('DELETE') ? 'DELETE' : (dataArr[0].includes('OPTIONS') ? 'OPTIONS' : null))));
         if(method){
             var host = dataArr.find((element)=>{
                 return (element.includes('host:')||element.includes('Host:')||element.includes('HOST:'))
             });
-            host = host.split(':')[1].replace(' ','');
+            host = host.split('Host:')[1].replace(' ','');
             host = !(host.includes('http://')&&host.includes('https://')) ? 'http://'+host : host;
             dataArr[0] = dataArr[0].replace(method+' ','GET '+host);
             dataStr = dataArr.join('\r\n');
