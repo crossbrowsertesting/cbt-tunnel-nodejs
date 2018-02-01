@@ -144,7 +144,7 @@ var startTunnel = function(api, params, cb){
                                             if(err==null){
                                                 cbts.endWrap();
                                             }else{
-                                                console.log(err);
+                                                warn(err);
                                                 setTimeout(function(){
                                                     process.exit(1);
                                                 },10000);
@@ -156,7 +156,6 @@ var startTunnel = function(api, params, cb){
                         }
                         cb(null);
                     }else{
-                        // console.log(err);
                         cb(err);
                         cbts.endWrap();
                     }

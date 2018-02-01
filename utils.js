@@ -5,7 +5,8 @@ var _ = require('lodash'),
     version = require('./package.json').version,
     pacResolver = require('pac-resolver'),
     fs = require('fs'),
-    request = require('request');
+    request = require('request'),
+    urlCache = {};
 
 module.exports = {
 
@@ -14,6 +15,7 @@ module.exports = {
             var pac = pacResolver(fs.readFileSync(pac));
             cb(null,pac);
         }catch(e){
+            warn('getPac error: '+e);
             request(pac,function(err,response,body){
                 if(err){
                     var reqErr = new Error("Could not resolve PAC file.");
@@ -82,28 +84,34 @@ module.exports = {
 
     determineHost: function(data,params,cb){
         var pac = params.pac;
-        if(pac){
-            data.host = (!data.host.startsWith('http://')&&data.port==80) ? 'http://'+data.host : data.host;
-            data.host = (!data.host.startsWith('https://')&&data.port==443) ? 'https://'+data.host : data.host;
+        if(urlCache[data.host]){
+            console.log('Cache hit! Cached as : ');
+            console.dir(urlCache[data.host]);
+            return cb(null,urlCache[data.host]);
+        }else if(pac){
+            var host = (!data.host.startsWith('http://')&&data.port==80) ? 'http://'+data.host : data.host;
+            host = (!data.host.startsWith('https://')&&data.port==443) ? 'https://'+data.host : data.host;
             if(params.verbose){
                 console.log('In determine host with data:')
                 console.dir(data);
             }
-            pac(data.host+':'+data.port).then(function(res){
+            pac(host+':'+data.port).then(function(res){
                 if(res==='DIRECT'){
-                    data.host = data.host.replace('http://','').replace('https://','');
+                    //host = data.host.replace('http://','').replace('https://','');
                     if(params.verbose){
-                        console.log('Host determined; going direct:');
-                        console.log({host:data.host,port:data.port});
+                        console.log('Host determined for '+data.host+'; going direct:');
+                        console.log({host:host,port:data.port});
                     }
+                    urlCache[data.host] = {host:data.host,port:data.port,manipulateHeaders:false};
                     return cb(null,{host:data.host,port:data.port,manipulateHeaders:false});
                 }else{
                     res = res.split(' ')[1];
                     var resArr = res.replace(';','').split(':');
                     if(params.verbose){
-                        console.log('Host determined; not going direct:');
+                        console.log('Host determined for '+data.host+'; not going direct:');
                         console.log({host:resArr[0],port:resArr[1]});
                     }
+                    urlCache[data.host] = {host:resArr[0],port:resArr[1],manipulateHeaders:true};
                     return cb(null,{host:resArr[0],port:resArr[1],manipulateHeaders:true});
                 }
             }).catch(function(err){
