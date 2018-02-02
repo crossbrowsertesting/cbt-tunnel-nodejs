@@ -15,7 +15,6 @@ module.exports = {
             var pac = pacResolver(fs.readFileSync(pac));
             cb(null,pac);
         }catch(e){
-            warn('getPac error: '+e);
             request(pac,function(err,response,body){
                 if(err){
                     var reqErr = new Error("Could not resolve PAC file.");
@@ -85,16 +84,17 @@ module.exports = {
     determineHost: function(data,params,cb){
         var pac = params.pac;
         if(urlCache[data.host]){
-            console.log('Cache hit! Cached as : ');
+            console.log('Cache hit! Cached as: ');
             console.dir(urlCache[data.host]);
             return cb(null,urlCache[data.host]);
         }else if(pac){
-            var host = (!data.host.startsWith('http://')&&data.port==80) ? 'http://'+data.host : data.host;
-            host = (!data.host.startsWith('https://')&&data.port==443) ? 'https://'+data.host : data.host;
+            var host = ((!data.host.startsWith('http://'))&&data.port==80) ? 'http://'+data.host : data.host;
+            host = ((!host.startsWith('https://'))&&data.port==443) ? 'https://'+host : host;
             if(params.verbose){
                 console.log('In determine host with data:')
                 console.dir(data);
             }
+            console.log(host);
             pac(host+':'+data.port).then(function(res){
                 if(res==='DIRECT'){
                     //host = data.host.replace('http://','').replace('https://','');

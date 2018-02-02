@@ -595,6 +595,7 @@ function cbtSocket(api, params) {
             var client = connection.client;
             if(params.verbose){
                 console.log(id+' This is a TLS HELLO! Sending connect...');
+                sendLog('Client found TLS hello on: '+id);
             }
             var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
             client.write(bufferToSend, function(err){
