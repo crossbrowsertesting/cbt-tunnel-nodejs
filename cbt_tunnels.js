@@ -315,6 +315,7 @@ function cbtSocket(api, params) {
                 connection_list[id].host = data.host;
                 connection_list[id].port = data.port;
                 connection_list[id].connected = false;
+                connection_list[id].firstTLSHello = false;
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
                         console.log(err);
@@ -590,8 +591,12 @@ function cbtSocket(api, params) {
     }
 
     self.isTLSHello = function(connection,packet,id,cb){
-        //||(packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x03)
-        if(((packet[0]===0x16&&packet[1]===0x03&&packet[2]===0x01))&&connection_list[id].manipulateHeaders){
+        //&&(packet[4]===0x7C||packet[4]===0x7C)
+        if((packet[0]===0x16&&packet[5]===0x01)&&connection_list[id].manipulateHeaders){
+            if(!connection_list[id].firstTLSHello){
+                console.dir(packet.toString());
+            }
+            connection_list[id].firstTLSHello = true;
             var client = connection.client;
             if(params.verbose){
                 console.log(id+' This is a TLS HELLO! Sending connect...');
@@ -624,8 +629,11 @@ function cbtSocket(api, params) {
                 }
                 var connectedInterval = setInterval(function(){
                     if(connection_list[id].connected){
-                        console.log(id+' Received connection established!');
+                        if(params.verbose){
+                            console.log(id+' Received connection established!');
+                        }
                         clearInterval(connectedInterval);
+                        connection_list[id].connected = false;
                         cb(null);
                     }
                 },1);

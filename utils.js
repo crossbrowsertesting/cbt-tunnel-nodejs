@@ -84,8 +84,6 @@ module.exports = {
     determineHost: function(data,params,cb){
         var pac = params.pac;
         if(urlCache[data.host]){
-            console.log('Cache hit! Cached as: ');
-            console.dir(urlCache[data.host]);
             return cb(null,urlCache[data.host]);
         }else if(pac){
             var host = ((!data.host.startsWith('http://'))&&data.port==80) ? 'http://'+data.host : data.host;
@@ -94,7 +92,6 @@ module.exports = {
                 console.log('In determine host with data:')
                 console.dir(data);
             }
-            console.log(host);
             pac(host+':'+data.port).then(function(res){
                 if(res==='DIRECT'){
                     //host = data.host.replace('http://','').replace('https://','');
