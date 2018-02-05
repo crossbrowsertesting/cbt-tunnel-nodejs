@@ -101,6 +101,13 @@ There are three options provided for you to do this:
             Command line: '--httpsProxy PROXYUSER:PROXYPASS@HTTPSPROXY'
             Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"PROXYUSER:PROXYPASS@HTTPSPROXY"},function(err){ if(!err) do stuff })'
 
+    Bypass:
+        Specify whether public-resolvable URLs should resolve direct (default/true behavior) or pass through the tunnel (false behavior).
+ 
+        Basic Usage:
+            Command line: '--bypass true' or '--bypass false'
+            Scripted: 'cbt.start({"username":"USERNAME", "authkey":"AUTHKEY", "bypass": "false"}, function(err){if (!err) do stuff })'
+
     Kill file:
         The kill file option allows you specify the name of a 'kill file' that if placed in the current 
         directory will cause the program to gracefully shutdown.
@@ -138,6 +145,23 @@ There are three options provided for you to do this:
         This function takes no parameters and returns the status of the tunnel as a boolean (this is of limited use).
         Basic usage:
             Scripted: 'cbt.status()'
+
+    AcceptAllCerts:
+       Set up the tunnel to work with sites with invalid (self-signed, expired) certificates.  Useful for testing sites that present with certificate errors in a browser.
+
+        Basic usage:
+            Command line: '--acceptAllCerts'
+            Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","acceptAllCerts":true},function(err){ if(!err) do stuff })'
+
+    RejectUnauthorized:
+        Enable or disable SSL certificate checking in Node itself.  Useful if a self-signed certificate is in the chain (i.e., on a proxy), but only works in narrow cases.
+
+        Basic usage:
+            Command line: '--rejectUnauthorized false'
+            Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","rejectUnauthorized":"false"},function(err){ if(!err) do stuff })'
+
+
+
 
 ##### Building Binary From Source:
 
