@@ -88,6 +88,7 @@ module.exports = {
         }else if(pac){
             var host = ((!data.host.startsWith('http://'))&&data.port==80) ? 'http://'+data.host : data.host;
             host = ((!host.startsWith('https://'))&&data.port==443) ? 'https://'+host : host;
+            host = ((!host.startsWith('https://'))&&(!host.startsWith('http://'))) ? 'https://'+host : host;
             if(params.verbose){
                 console.log('In determine host with data:')
                 console.dir(data);
