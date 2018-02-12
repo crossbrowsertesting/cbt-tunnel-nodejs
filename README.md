@@ -140,11 +140,14 @@ There are three options provided for you to do this:
 
     Stop function:
         This function takes no parameters and kills the tunnel gracefully.
+
         Basic usage:
             Scripted: 'cbt.stop()'
+
     Status function:
         This function takes no parameters and returns the status of the tunnel as a boolean
         (this is of limited use).
+
         Basic usage:
             Scripted: 'cbt.status()'
 
@@ -182,5 +185,5 @@ There are three options provided for you to do this:
     - git clone https://github.com/crossbrowsertesting/cbt-tunnel-nodejs.git
     - navigate to cloned directory
     - type 'pkg ./cmd_start.js --targets TARGETSTRING --output OUTPUTBINARYPATH'
-    
+
     (for target string information see: https://github.com/zeit/pkg)
