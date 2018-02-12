@@ -5,7 +5,8 @@ var _ = require('lodash'),
     version = require('./package.json').version,
     pacResolver = require('pac-resolver'),
     fs = require('fs'),
-    request = require('request');
+    request = require('request'),
+    urlCache = {};
 
 module.exports = {
 
@@ -43,7 +44,6 @@ module.exports = {
             warn = gfx.warn,
             help = gfx.help;
 
-        data=JSON.parse(data);
         if(data.current!==version){
             if(_.indexOf(data.old,version)>-1){
                 if(!params.verbose&&params.cmd&&!params.quiet){
@@ -81,23 +81,50 @@ module.exports = {
         });
     },
 
-    determineHost: function(data,pac,cb){
-        if(pac){
-            var host = !(data.host.startsWith('http://') || data.host.startsWith('https://')) ? 'http://'+data.host : data.host;
-            pac(data.host+':'+data.port).then(function(res){
+    determineHost: function(data,params,cb){
+        var pac = params.pac;
+        if(urlCache[data.host]){
+            return cb(null,urlCache[data.host]);
+        }else if(pac){
+            var host = ((!data.host.startsWith('http://'))&&data.port==80) ? 'http://'+data.host : data.host;
+            host = ((!host.startsWith('https://'))&&data.port==443) ? 'https://'+host : host;
+            host = ((!host.startsWith('https://'))&&(!host.startsWith('http://'))) ? 'https://'+host : host;
+            if(params.verbose){
+                console.log('In determine host with data:')
+                console.dir(data);
+            }
+            pac(host+':'+data.port).then(function(res){
                 if(res==='DIRECT'){
-                    return cb(null,{host:data.host,port:data.port});
+                    //host = data.host.replace('http://','').replace('https://','');
+                    if(params.verbose){
+                        console.log('Host determined for '+data.host+'; going direct:');
+                        console.log({host:host,port:data.port});
+                    }
+                    urlCache[data.host] = {host:data.host,port:data.port,manipulateHeaders:false};
+                    return cb(null,{host:data.host,port:data.port,manipulateHeaders:false});
                 }else{
                     res = res.split(' ')[1];
                     var resArr = res.replace(';','').split(':');
-                    return cb(null,{host:resArr[0],port:resArr[1]});
-
+                    if(params.verbose){
+                        console.log('Host determined for '+data.host+'; not going direct:');
+                        console.log({host:resArr[0],port:resArr[1]});
+                    }
+                    urlCache[data.host] = {host:resArr[0],port:resArr[1],manipulateHeaders:true};
+                    return cb(null,{host:resArr[0],port:resArr[1],manipulateHeaders:true});
                 }
-            })
+            }).catch(function(err){
+                warn('Error determining host for:');
+                console.dir(data);
+                console.log(err.message);
+            });
         }else if(data.tType==='tunnel'){
-            return cb(null,{host:data.proxyHost,port:data.proxyPort});
+            if(params.verbose){
+                console.log('Host determined; type tunnel:');
+                console.log({host:data.proxyHost,port:data.proxyPort,manipulateHeaders:false});
+            }
+            return cb(null,{host:data.proxyHost,port:data.proxyPort,manipulateHeaders:false});
         }else{
-            return cb(null,{host:data.host,port:data.port});
+            return cb(null,{host:data.host,port:data.port,manipulateHeaders:false});
         }
     }
 

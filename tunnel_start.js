@@ -1,6 +1,6 @@
 var _ = require('lodash'),
     utils = require('./utils.js'),
-    cbtSocket = (require('./cbt_tunnels')),
+    cbtSocket = require('./cbt_tunnels'),
     argv = require('yargs').env('CBT_TUNNELS').argv,
     fs = require('fs'),
     gfx = require('./gfx.js'),
@@ -67,17 +67,23 @@ var determineTunnelType = function(cmdArgs){
 
 var pacInit = function(cbtUrls,cmdArgs,cb){
     if(cmdArgs.pac){
-        console.log(cmdArgs.pac);
         utils.getPac(cmdArgs.pac,function(err,pac){
             if(err){
                 cb(err);    
             }
-            utils.determineHost({host:'https://'+cbtUrls.node,port:443},pac,function(err,hostInfo){
-                if(hostInfo.host+':'+hostInfo.port!=='https://'+cbtUrls.node+':'+443){
+            cmdArgs.pac = pac;
+            utils.determineHost({host:'https://'+cbtUrls.node,port:443},cmdArgs,function(err,hostInfo){
+                if(err){
+                    return cb(err,null);
+                }
+                if(hostInfo.host+':'+hostInfo.port!=cbtUrls.node+':'+443){
                     utils.setProxies(true,'http://'+hostInfo.host+':'+hostInfo.port);
                 }
-                utils.determineHost({host:'http://'+cbtUrls.node,port:80},pac,function(err,hostInfo){
-                    if(hostInfo.host+':'+hostInfo.port!=='http://'+cbtUrls.node+':'+80){
+                utils.determineHost({host:'http://'+cbtUrls.node,port:80},cmdArgs,function(err,hostInfo){
+                    if(err){
+                        return cb(err,null);
+                    }
+                    if(hostInfo.host+':'+hostInfo.port!=cbtUrls.node+':'+80){
                         utils.setProxies(false,'http://'+hostInfo.host+':'+hostInfo.port);
                     }
                     cb(null,pac);
@@ -138,7 +144,7 @@ var startTunnel = function(api, params, cb){
                                             if(err==null){
                                                 cbts.endWrap();
                                             }else{
-                                                console.log(err);
+                                                warn(err);
                                                 setTimeout(function(){
                                                     process.exit(1);
                                                 },10000);
@@ -150,7 +156,6 @@ var startTunnel = function(api, params, cb){
                         }
                         cb(null);
                     }else{
-                        // console.log(err);
                         cb(err);
                         cbts.endWrap();
                     }
@@ -282,4 +287,3 @@ module.exports = {
         }
     }
 }
-

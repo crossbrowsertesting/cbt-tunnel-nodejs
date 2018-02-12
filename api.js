@@ -98,6 +98,7 @@ module.exports = function(username, authkey, env){
                 direct_resolution: bypass,
                 secret: secret,
                 accept_all_certs: acceptAllCerts | 0
+                ws: 1,
             } , username, authkey, (err, body) => {
                 // console.log(JSON.stringify(body));
                 return callback(err, body);
