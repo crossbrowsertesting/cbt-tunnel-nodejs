@@ -6,6 +6,7 @@ var _ = require('lodash'),
     pacResolver = require('pac-resolver'),
     fs = require('fs'),
     request = require('request'),
+    util = require('util'),
     urlCache = {};
 
 module.exports = {
@@ -113,9 +114,12 @@ module.exports = {
                     return cb(null,{host:resArr[0],port:resArr[1],manipulateHeaders:true});
                 }
             }).catch(function(err){
-                warn('Error determining host for:');
-                console.dir(data);
-                console.log(err.message);
+                if(params.verbose){
+                    var msg = 'Error determining host for:\n';
+                    msg+=util.inspect(data);
+                    msg+='\n'+err.message;
+                    cb(new Error(msg));
+                }
             });
         }else if(data.tType==='tunnel'){
             if(params.verbose){

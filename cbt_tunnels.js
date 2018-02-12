@@ -299,6 +299,12 @@ function cbtSocket(api, params) {
         if( (data._type != 'end') && (!connection_list[id].established) && (!connection_list[id].ended) ){
             inbound += 1;
             utils.determineHost({host:data.host,port:data.port,proxyHost:self.proxyHost,proxyPort:self.proxyPort,tType:self.tType},params,function(err,hostInfo){
+                if(err){
+                    sendLog(err);
+                    if(params.verbose){
+                        warn(err);
+                    }
+                }
                 var host = self.host = hostInfo.host;
                 var port = self.port = hostInfo.port;
                 if(host === 'local' && self.tType === 'webserver'){

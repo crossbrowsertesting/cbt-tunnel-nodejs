@@ -102,7 +102,8 @@ There are three options provided for you to do this:
             Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"PROXYUSER:PROXYPASS@HTTPSPROXY"},function(err){ if(!err) do stuff })'
 
     Bypass:
-        Specify whether public-resolvable URLs should resolve direct (default/true behavior) or pass through the tunnel (false behavior).
+        Specify whether public-resolvable URLs should resolve direct (default/true behavior) or pass through
+        the tunnel (false behavior).
  
         Basic Usage:
             Command line: '--bypass true' or '--bypass false'
@@ -142,19 +143,22 @@ There are three options provided for you to do this:
         Basic usage:
             Scripted: 'cbt.stop()'
     Status function:
-        This function takes no parameters and returns the status of the tunnel as a boolean (this is of limited use).
+        This function takes no parameters and returns the status of the tunnel as a boolean
+        (this is of limited use).
         Basic usage:
             Scripted: 'cbt.status()'
 
     AcceptAllCerts:
-       Set up the tunnel to work with sites with invalid (self-signed, expired) certificates.  Useful for testing sites that present with certificate errors in a browser.
+       Set up the tunnel to work with sites with invalid (self-signed, expired) certificates.  
+       Useful for testing sites that present with certificate errors in a browser.
 
         Basic usage:
             Command line: '--acceptAllCerts'
             Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","acceptAllCerts":true},function(err){ if(!err) do stuff })'
 
     RejectUnauthorized:
-        Enable or disable SSL certificate checking in Node itself.  Useful if a self-signed certificate is in the chain (i.e., on a proxy), but only works in narrow cases.
+        Enable or disable SSL certificate checking in Node itself.  Useful if a self-signed certificate
+        is in the chain (i.e., on a proxy), but only works in narrow cases.
 
         Basic usage:
             Command line: '--rejectUnauthorized false'
@@ -166,18 +170,17 @@ There are three options provided for you to do this:
 ##### Building Binary From Source:
 
     Binaries may be found at https://github.com/crossbrowsertesting/cbt-tunnel-nodejs/releases 
-    and are compiled using nexe. 
+    and are compiled using pkg. 
 
     You may compile from source as follows:
 
     Requirements:
     node.js/npm
-    Python 2.6/2.7
-    Visual Studio 2010+ (for Windows)
+    pkg
 
-    - npm install -g nexe
+    - npm install -g pkg
     - git clone https://github.com/crossbrowsertesting/cbt-tunnel-nodejs.git
     - navigate to cloned directory
-    - type 'npm install'
-    - npm install emitter utf-8-validate bufferutil
-    - nexe -f true -i ./cmd_start.js -o OUTPUTBINARYPATH
+    - type 'pkg ./cmd_start.js --targets TARGETSTRING --output OUTPUTBINARYPATH'
+    
+    (for target string information see: https://github.com/zeit/pkg)
