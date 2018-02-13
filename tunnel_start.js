@@ -215,7 +215,7 @@ module.exports = {
                     utils.setProxies(true,cmdArgs.httpsProxy);
                 }
                 var bypass = null;
-                if(!_.isUndefined(cmdArgs.bypass)){
+                if(!_.isUndefined(cmdArgs.bypass)&&!_.isNull(cmdArgs.bypass)){
                     bypass = ((cmdArgs.bypass.toLowerCase()) === 'false' || (parseInt(cmdArgs.bypass) === 0)) ? false : true;
                 }
                 // if ( cmdArgs.test === 'local' ){
