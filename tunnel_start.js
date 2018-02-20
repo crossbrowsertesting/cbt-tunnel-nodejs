@@ -78,14 +78,14 @@ var pacInit = function(cbtUrls,cmdArgs,cb){
                 if(err){
                     return cb(err,null);
                 }
-                if(hostInfo.host+':'+hostInfo.port!=cbtUrls.node+':'+443){
+                if(hostInfo.host+':'+hostInfo.port!='https://'+cbtUrls.node+':'+443){
                     utils.setProxies(true,'http://'+hostInfo.host+':'+hostInfo.port);
                 }
                 utils.determineHost({host:'http://'+cbtUrls.node,port:80},cmdArgs,function(err,hostInfo){
                     if(err){
                         return cb(err,null);
                     }
-                    if(hostInfo.host+':'+hostInfo.port!=cbtUrls.node+':'+80){
+                    if(hostInfo.host+':'+hostInfo.port!='http://'+cbtUrls.node+':'+80){
                         utils.setProxies(false,'http://'+hostInfo.host+':'+hostInfo.port);
                     }
                     cb(null,pac);
