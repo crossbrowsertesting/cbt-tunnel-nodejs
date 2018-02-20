@@ -172,11 +172,30 @@ var startTunnel = function(api, params, cb){
 module.exports = {
     start: function(cmdArgs, cb){
         try {
+            cmdArgs =  _(cmdArgs)
+                .omit(_.isUndefined)
+                .omit(_.isNull)
+                .mapValues((property)=>{ 
+                    return property === 'true' ? true :
+                            property === 'false' ? false 
+                            : property
+                }).value();
+
             var logLevel = cmdArgs.verbose ? 'ALL' : 
                 cmdArgs.quiet ? 'OFF' :
                 'INFO';
 
-            if(cmdArgs.log){
+            if(cmdArgs.log&&cmdArgs.quiet){
+                log4js.configure({
+                    appenders: {
+                        console: {type: 'console'},
+                        log: {type: 'file', filename: cmdArgs.log}
+                    },
+                    categories: {
+                        default: { appenders: ['log'], level: 'ALL' }
+                    }
+                });
+            }else if(cmdArgs.logs){
                 log4js.configure({
                     appenders: {
                         console: {type: 'console'},
@@ -198,7 +217,7 @@ module.exports = {
             }
 
             global.logger = log4js.getLogger();
-
+            
             // throws error if there's an invalid arg
             validateArgs(cmdArgs);
 
@@ -250,8 +269,6 @@ module.exports = {
                 //  cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
                 // }
                 //remove all null or undefined args and ensure boolean strings turn out booleans
-                cmdArgs =  _(cmdArgs).omit(_.isUndefined).omit(_.isNull).mapValues((property)=>{ return property === 'true' ? true : ( property === 'false' ? false : property ) }).value()
-
                 var params = {
                     urls: cbtUrls,
                     verbose: cmdArgs.verbose,
