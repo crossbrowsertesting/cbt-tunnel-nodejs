@@ -5,13 +5,15 @@ var _ = require('lodash'),
     fs = require('fs'),
     gfx = require('./gfx.js'),
     Api = require('./api'),
+    log4js = require('log4js'),
     cbts = null,
     warn = gfx.warn,
     help = gfx.help,
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
         'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 
-        'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts'];
+        'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts','log'];
+
 
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
@@ -98,7 +100,6 @@ var pacInit = function(cbtUrls,cmdArgs,cb){
 
 var startConManTunnelViaApi = function(api, params, cb){
     // sends err to callback if LCM is not running
-    // console.log("going to start a conman tunnel via api");
     api.getConManager( (err, getConManResult) => {
         // console.log("getconmanresult: " + util.inspect(getConManResult));
         if ( err ){ return cb(err) };
@@ -135,7 +136,7 @@ var startTunnel = function(api, params, cb){
             if(!err && socket){
                 api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
                     if(!err && putResult){
-                        console.log('Completely connected!');
+                        logger.info('Completely connected!');
                         if(params.kill){
                             setInterval(function(){
                                 fs.stat(params.kill,function(error,stat){
@@ -171,6 +172,33 @@ var startTunnel = function(api, params, cb){
 module.exports = {
     start: function(cmdArgs, cb){
         try {
+            var logLevel = cmdArgs.verbose ? 'ALL' : 
+                cmdArgs.quiet ? 'OFF' :
+                'INFO';
+
+            if(cmdArgs.log){
+                log4js.configure({
+                    appenders: {
+                        console: {type: 'console'},
+                        log: {type: 'file', filename: cmdArgs.log}
+                    },
+                    categories: {
+                        default: { appenders: ['console','log'], level: logLevel }
+                    }
+                });
+            }else{
+                log4js.configure({
+                    appenders: {
+                        console: {type: 'console'}
+                    },
+                    categories: {
+                        default: { appenders: ['console'], level: logLevel }
+                    }
+                });
+            }
+
+            global.logger = log4js.getLogger();
+
             // throws error if there's an invalid arg
             validateArgs(cmdArgs);
 

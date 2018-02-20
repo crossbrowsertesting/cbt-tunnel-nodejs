@@ -107,10 +107,10 @@ module.exports = {
         blankLine.output();
     },
     warn: function(message){
-        console.log(error(message));
+        logger.warn(error(message));
     },
     help: function(){
-        console.log(
+        logger.info(
             clc.bold("cbt_tunnels.js has three run modes:\n\n")
             + clc.underline("Internal Websites:\n")
             + "This directs requests from CBT browsers to your computer to test sites behind your firewall that would otherwise be inaccessible.\n"
