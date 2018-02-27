@@ -263,7 +263,7 @@ module.exports = {
                 }
                 var bypass = null;
                 if(!_.isUndefined(cmdArgs.bypass)&&!_.isNull(cmdArgs.bypass)){
-                    bypass = ((cmdArgs.bypass.toLowerCase()) === 'false' || (parseInt(cmdArgs.bypass) === 0)) ? false : true;
+                    bypass = ( cmdArgs.bypass === false || (parseInt(cmdArgs.bypass) === 0) || cmdArgs.bypass.toLowerCase() === 'false') ? false : true;
                 }
                 // if ( cmdArgs.test === 'local' ){
                 //  cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
