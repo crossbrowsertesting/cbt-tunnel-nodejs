@@ -307,7 +307,83 @@ module.exports = {
                     params.authkey = accountInfo.auth_key;
                     // LCM users can only use cbt_tunnels to start tunnel if secret is provided
                     if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
-                        startConManTunnelViaApi(api, params, ( err ) => { return cb(err) });
+                        startConManTunnelViaApi(api, params, ( err, tunnelObject ) => { 
+                            if (err){
+                                return cb(err)
+                            } else {
+                                process.on('SIGINT',function(){
+                                    // kill tunnel
+                                    api.deleteTunnel(tunnelObject.tunnel_id, (err) => {
+                                        if (err) {
+                                            warn(err);
+                                        }
+                                        if (params.ready){
+                                            fs.unlinkSync(params.ready);
+                                        }
+                                        logger.info('killed connection manager tunnel, quitting')
+                                        process.exit(0)
+                                    });
+                                    logger.info('\nAttempting a graceful shutdown...');
+                                });
+
+                                process.on('SIGTERM',function(){
+                                    logger.info('Attempting a graceful shutdown...');
+                                    // kill tunnel
+                                    api.deleteTunnel(tunnelObject.tunnel_id, (err) => {
+                                        if (err) {
+                                            warn(err);
+                                        }
+                                        if (params.ready){
+                                            fs.unlinkSync(params.ready);
+                                        }
+                                        logger.info('killed connection manager tunnel, quitting')
+                                        process.exit(0)
+                                    });
+                                });
+                                if(params.ready){
+                                    logger.info("SETTING READY FILE!");
+                                    fs.open(params.ready,'wx',function(err,fd){
+                                        if(err){
+                                            warn('The path specified for the "ready" file already exists or cannot be created (likely for permissions issues).');
+                                        }
+                                        cb(null);
+                                        fs.close(fd, function(err){
+                                            if(err){
+                                                logger.info(err);
+                                            }
+                                            logger.info('ready file written: '+params.ready);
+                                        });
+                                    })
+                                }
+                                if(params.kill){
+                                    setInterval(function(){
+                                        fs.stat(params.kill,function(error,stat){
+                                            if(error==null){
+                                                fs.unlink(params.kill,function(err){
+                                                    if(err==null){
+                                                        api.deleteTunnel(tunnelObject.tunnel_id, (err) => {
+                                                            if (err) {
+                                                                warn(err);
+                                                            }
+                                                            if (params.ready){
+                                                                fs.unlinkSync(params.ready);
+                                                            }
+                                                            logger.info('killed connection manager tunnel, quitting')
+                                                            process.exit(0)
+                                                        });
+                                                    }else{
+                                                        warn(err);
+                                                        setTimeout(function(){
+                                                            process.exit(1);
+                                                        },10000);
+                                                    }
+                                                })
+                                            }
+                                        })
+                                    },1000);
+                                }
+                            }
+                        }); 
                     } else {
                         startTunnel(api, params, ( err ) => { return cb(err) });
                     }
