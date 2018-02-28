@@ -423,8 +423,6 @@ function createConmanParams(params){
     };
     // apply other_options to our options object
     return _.reduce(params, (opts, value, optionName) => {
-        console.log(`looking at ${optionName}:${value}`)
-        console.log(`opts is currently ${util.inspect(opts)}`)
         if(forwardedParams[optionName]){
             opts[optionName] = value === 'true'  ? true :
                                value === 'false' ? false 
