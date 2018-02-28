@@ -415,7 +415,7 @@ function createConmanParams(params){
         "proxyIp": "local_ip",
         "proxyPort": "local_port" ,
         "dir": "directory",
-        "tunnelName": "tunnel_name",
+        "tunnelname": "tunnel_name",
         "pac": "pac",
         "rejectUnauthorized": "rejectUnauthorized",
         "acceptAllCerts": "accept_all_certs",
