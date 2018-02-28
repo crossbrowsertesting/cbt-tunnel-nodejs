@@ -412,7 +412,6 @@ function createConmanParams(params){
     // to the option names that we send to cbt_node
     forwardedParams =  {
         // <cmd arg name>: <cbt api param name>,
-        "tType": "tunnel_type",
         "proxyIp": "local_ip",
         "proxyPort": "local_port" ,
         "dir": "directory",
