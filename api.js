@@ -1,6 +1,7 @@
 'use-strict';
 var request = require('request');
 var util = require('util');
+var _ = require('lodash');
 
 /* 
  * Important notes:
@@ -139,14 +140,8 @@ module.exports = function(username, authkey, env){
             })
         },
         startConManagerTunnel: function(tunnelParams, callback){
-            makeApiCall(server, 'POST', 'localconman', {
-                local_ip: tunnelParams.proxyHost || 'localhost',
-                local_port: tunnelParams.proxyPort || '',
-                tunnel_type: tunnelParams.tType,
-                tunnel_name: tunnelParams.tunnelName || undefined,
-            }, username, authkey, (err, resp) => {
+            makeApiCall(server, 'POST', 'localconman', tunnelParams, username, authkey, (err, resp) => {
                 logger.info('Started tunnel remotely via Local Connection Manager');
-                // wait forever
                 return callback(err, resp);
             })
         }

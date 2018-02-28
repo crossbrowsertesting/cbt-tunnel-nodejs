@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     utils = require('./utils.js'),
+    util = require('util'),
     cbtSocket = require('./cbt_tunnels'),
     argv = require('yargs').env('CBT_TUNNELS').argv,
     fs = require('fs'),
@@ -99,6 +100,7 @@ var pacInit = function(cbtUrls,cmdArgs,cb){
 }
 
 var startConManTunnelViaApi = function(api, params, cb){
+    console.dir(params)
     // sends err to callback if LCM is not running
     api.getConManager( (err, getConManResult) => {
         // console.log("getconmanresult: " + util.inspect(getConManResult));
@@ -307,7 +309,11 @@ module.exports = {
                     params.authkey = accountInfo.auth_key;
                     // LCM users can only use cbt_tunnels to start tunnel if secret is provided
                     if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
-                        startConManTunnelViaApi(api, params, ( err, tunnelObject ) => { 
+                        // create conman post arguments
+                        var conmanParams = createConmanParams(cmdArgs)
+                        console.dir(conmanParams)
+
+                        startConManTunnelViaApi(api, conmanParams, ( err, tunnelObject ) => {
                             if (err){
                                 return cb(err)
                             } else {
@@ -383,7 +389,7 @@ module.exports = {
                                     },1000);
                                 }
                             }
-                        }); 
+                        });
                     } else {
                         startTunnel(api, params, ( err ) => { return cb(err) });
                     }
@@ -407,4 +413,32 @@ module.exports = {
             return false;
         }
     }
+}
+
+function createConmanParams(params){
+    // we need something to map between the option names that we get from users
+    // to the option names that we send to cbt_node
+    forwardedParams =  {
+        // <cmd arg name>: <cbt api param name>,
+        "tType": "tunnel_type",
+        "proxyIp": "local_ip",
+        "proxyPort": "local_port" ,
+        "tType": "tunnel_type",
+        "tunnelName": "tunnel_name",
+        "pac": "pac",
+        "rejectUnauthorized": "rejectUnauthorized",
+        "acceptAllCerts": "accept_all_certs",
+        "bypass": "direct_resolution"
+    };
+    // apply other_options to our options object
+    return _.reduce(params, (opts, value, optionName) => {
+        console.log(`looking at ${optionName}:${value}`)
+        console.log(`opts is currently ${util.inspect(opts)}`)
+        if(forwardedParams[optionName]){
+            opts[optionName] = value === 'true'  ? true :
+                               value === 'false' ? false 
+                               : value;
+        };
+        return opts;
+    }, {})
 }
