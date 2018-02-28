@@ -100,7 +100,6 @@ var pacInit = function(cbtUrls,cmdArgs,cb){
 }
 
 var startConManTunnelViaApi = function(api, params, cb){
-    console.dir(params)
     // sends err to callback if LCM is not running
     api.getConManager( (err, getConManResult) => {
         // console.log("getconmanresult: " + util.inspect(getConManResult));
@@ -305,7 +304,6 @@ module.exports = {
                     if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
                         // create conman post arguments
                         var conmanParams = createConmanParams(cmdArgs)
-                        console.dir(conmanParams)
 
                         startConManTunnelViaApi(api, conmanParams, ( err, tunnelObject ) => {
                             if (err){
@@ -417,7 +415,7 @@ function createConmanParams(params){
         "tType": "tunnel_type",
         "proxyIp": "local_ip",
         "proxyPort": "local_port" ,
-        "tType": "tunnel_type",
+        "dir": "directory",
         "tunnelName": "tunnel_name",
         "pac": "pac",
         "rejectUnauthorized": "rejectUnauthorized",
