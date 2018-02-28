@@ -174,6 +174,7 @@ var startTunnel = function(api, params, cb){
 module.exports = {
     start: function(cmdArgs, cb){
         try {
+            //remove all null or undefined args and ensure boolean strings turn out booleans
             cmdArgs =  _(cmdArgs)
                 .omit(_.isUndefined)
                 .omit(_.isNull)
@@ -263,14 +264,7 @@ module.exports = {
                 if(cmdArgs.httpsProxy){
                     utils.setProxies(true,cmdArgs.httpsProxy);
                 }
-                var bypass = null;
-                if(!_.isUndefined(cmdArgs.bypass)&&!_.isNull(cmdArgs.bypass)){
-                    bypass = ( cmdArgs.bypass === false || (parseInt(cmdArgs.bypass) === 0) || cmdArgs.bypass.toLowerCase() === 'false') ? false : true;
-                }
-                // if ( cmdArgs.test === 'local' ){
-                //  cbtUrls = {server: "localhost:3000", node: "localhost:3000"};
-                // }
-                //remove all null or undefined args and ensure boolean strings turn out booleans
+
                 var params = {
                     urls: cbtUrls,
                     verbose: cmdArgs.verbose,
@@ -288,7 +282,7 @@ module.exports = {
                     kill: cmdArgs.kill,
                     secret: cmdArgs.secret,
                     pac: cmdArgs.pac,
-                    bypass: bypass,
+                    bypass: !!cmdArgs.bypass,
                     nokill: cmdArgs.nokill,
                     acceptAllCerts: !!cmdArgs.acceptAllCerts
                 }
