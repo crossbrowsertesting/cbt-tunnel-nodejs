@@ -309,6 +309,7 @@ module.exports = {
                             if (err){
                                 return cb(err)
                             } else {
+                                var i = setInterval(()=>{}, 10000);
                                 process.on('SIGINT',function(){
                                     // kill tunnel
                                     api.deleteTunnel(tunnelObject.tunnel_id, (err) => {
@@ -424,7 +425,8 @@ function createConmanParams(params){
     // apply other_options to our options object
     return _.reduce(params, (opts, value, optionName) => {
         if(forwardedParams[optionName]){
-            opts[optionName] = value === 'true'  ? true :
+            var newkey = forwardedParams[optionName];
+            opts[newkey] = value === 'true'  ? true :
                                value === 'false' ? false 
                                : value;
         };
