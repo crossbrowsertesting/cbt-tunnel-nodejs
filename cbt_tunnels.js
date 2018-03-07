@@ -648,17 +648,20 @@ function cbtSocket(api, params) {
         }
     }
 
-    self.endWrap = function(){
+    self.endWrap = function(cb){
         self.end(function(err, killit){
             if(!err && killit === 'killit'){
                 logger.info('Local connection disconnected.');
                 if(!self.nokill){
                     logger.info('Bye!');
+                    if(cb) cb(true)
                     process.exit(0);
                 }
+                if(cb) cb(true)
             }else if(err){
                 logger.error(err);
                 setTimeout(function(){
+                    if(cb) cb(true)
                     process.exit(1);
                 }, 10000);
             }
