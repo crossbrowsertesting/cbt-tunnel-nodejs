@@ -654,14 +654,14 @@ function cbtSocket(api, params) {
                 logger.info('Local connection disconnected.');
                 if(!self.nokill){
                     logger.info('Bye!');
-                    if(cb) cb(true)
+                    if(cb) cb(null,true)
                     process.exit(0);
                 }
-                if(cb) cb(true)
+                if(cb) cb(null,true)
             }else if(err){
                 logger.error(err);
                 setTimeout(function(){
-                    if(cb) cb(true)
+                    if(cb) cb(err,false)
                     process.exit(1);
                 }, 10000);
             }
