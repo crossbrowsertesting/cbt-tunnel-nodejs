@@ -48,8 +48,8 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
         try {
             body = JSON.parse(body);
         } catch (ex) {
-            logger.error("Could not parse:");
-            logger.error(util.inspect(body));
+            global.logger.error("Could not parse:");
+            global.logger.error(util.inspect(body));
             return callback(new Error("Error parsing cbt_node response: " + ex));
         } 
 
@@ -141,7 +141,7 @@ module.exports = function(username, authkey, env){
         },
         startConManagerTunnel: function(tunnelParams, callback){
             makeApiCall(server, 'POST', 'localconman', tunnelParams, username, authkey, (err, resp) => {
-                logger.info('Started tunnel remotely via Local Connection Manager');
+                global.logger.info('Started tunnel remotely via Local Connection Manager');
                 return callback(err, resp);
             })
         }

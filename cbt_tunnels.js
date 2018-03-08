@@ -62,7 +62,7 @@ function cbtSocket(api, params) {
             }
         });
         self.server.on('listening',function(){
-            logger.info('Server listening on port '+sPort+', serving '+self.directory+'.');
+            global.logger.info('Server listening on port '+sPort+', serving '+self.directory+'.');
         })
     }
 
@@ -121,7 +121,7 @@ function cbtSocket(api, params) {
     self.start = function(cb){
 
         if(proxyAuthString !== ''){
-            logger.info('Using basic authentication for proxy server mode.');
+            global.logger.info('Using basic authentication for proxy server mode.');
             sendLog('Using basic authentication for proxy server mode.');
         }
         var reconnecting = false;
@@ -131,7 +131,7 @@ function cbtSocket(api, params) {
             conn.ping();
         },10000);
 
-        logger.info('Started connection attempt!');
+        global.logger.info('Started connection attempt!');
         conn.on('message',function(message){
             try{
                 msg = JSON.parse(message);
@@ -139,7 +139,7 @@ function cbtSocket(api, params) {
             }catch(e){
                 warn(e.message);
                 warn('Could not parse websocket message:');
-                logger.error(util.inspect(message));
+                global.logger.error(util.inspect(message));
             }
         })
 
@@ -156,15 +156,15 @@ function cbtSocket(api, params) {
         });
 
         conn.on('error',function(e){
-            logger.error('WebSocket error!');
+            global.logger.error('WebSocket error!');
             cb(e);
         });
 
         conn.on('open',function(){
             if(params.pac){
-                logger.info('Connecting using PAC file.');
+                global.logger.info('Connecting using PAC file.');
             }else{
-                logger.info('Connecting as '+self.tType+'.');
+                global.logger.info('Connecting as '+self.tType+'.');
             }
             if(!reconnecting){
                 cb(null,self);
@@ -174,7 +174,7 @@ function cbtSocket(api, params) {
                 clearInterval(self.drawTimeout);
             }
             if(!!self.ready){
-                logger.info('Setting ready file: '+self.ready);
+                global.logger.info('Setting ready file: '+self.ready);
                 fs.open(self.ready,'wx',function(err,fd){
                     if(err){
                         warn('The path specified for the "ready" file already exists or cannot be created (likely for permissions issues).');
@@ -182,7 +182,7 @@ function cbtSocket(api, params) {
                     }else{
                         fs.close(fd, function(err){
                             if(err){
-                                logger.error(err);
+                                global.logger.error(err);
                                 self.endWrap();
                             }
                             sendLog('ready file written: '+self.ready);
@@ -218,12 +218,12 @@ function cbtSocket(api, params) {
                 }
                 break;
             case 'check':
-                logger.debug('Received check request!');
+                global.logger.debug('Received check request!');
                 sendLog('node client received check request.');
                 self.api.checkTunnelIp((err, resp) => {
                     if(err){
                         warn('IP check error!');
-                        logger.error(util.inspect(response));
+                        global.logger.error(util.inspect(response));
                         warn(err);
                         var data = err;
                         var dataToServer = {
@@ -234,7 +234,7 @@ function cbtSocket(api, params) {
                         conn.send(JSON.stringify(dataToServer));
                     } else {
                         try{
-                            logger.debug('IP appears to CBT as: '+resp.ip);
+                            global.logger.debug('IP appears to CBT as: '+resp.ip);
                             var dataToServer = {
                                 event: 'checkrecv',
                                 ip: resp.ip,
@@ -263,7 +263,7 @@ function cbtSocket(api, params) {
                 break;
             default:
                 warn('Unknown message type:');
-                logger.error(util.inspect(msg));
+                global.logger.error(util.inspect(msg));
                 throw new Error('Unknown message type: '+msg);
         }
     }
@@ -280,7 +280,7 @@ function cbtSocket(api, params) {
 
         if(socketExists(id) && data._type === 'end'){
             if(connection_list[data.id].client){
-                logger.debug(id+" client ended by CBT server.");
+                global.logger.debug(id+" client ended by CBT server.");
                 sendLog(''+id+' tcp client ended by CBT server.');
                 connection_list[id].established=false;
                 connection_list[id].client.end();
@@ -305,7 +305,7 @@ function cbtSocket(api, params) {
                 }else if(host === 'local'){
                     host = 'localhost';
                 }
-                logger.debug('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
+                global.logger.debug('Creating TCP socket on: \n'+data._type+' '+host+' '+port+' '+id);
                 sendLog('Creating TCP socket on: '+data._type+' '+host+' '+port+' '+id);
                 connection_list[id].manipulateHeaders = hostInfo.manipulateHeaders;
                 connection_list[id].host = data.host;
@@ -313,7 +313,7 @@ function cbtSocket(api, params) {
                 connection_list[id].connected = false;
                 var client = self.client = connection_list[id].client = net.createConnection({allowHalfOpen:true, port: port, host: host},function(err){
                     if(err){
-                        logger.error(err);
+                        global.logger.error(err);
                     }
                     connection_list[id].established = true;
                     connection_list[id].ended = false;
@@ -325,13 +325,13 @@ function cbtSocket(api, params) {
                         wsid: wsid
                     }
                     conn.send(JSON.stringify(dataToServer));
-                    logger.debug('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
+                    global.logger.debug('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                     sendLog('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                 });
 
                 client.on('error',function(error){
-                    logger.debug('Error on '+id+'!');
-                    logger.debug(error.stack);
+                    global.logger.debug('Error on '+id+'!');
+                    global.logger.debug(error.stack);
                     sendLog('Error on TCP socket '+id+'\n'+error.stack);
                     var dataToServer = {
                         event: 'htmlrecv',
@@ -348,7 +348,7 @@ function cbtSocket(api, params) {
 
                 client.on('data', function(dataRcvd){
                     if(socketExists(id)){
-                        logger.debug('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
+                        global.logger.debug('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                         sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                         var dataToServer = {
                             event: 'htmlrecv',
@@ -362,7 +362,7 @@ function cbtSocket(api, params) {
                                 throw err;
                             }else if(!err&&!connected){
                                 conn.send(JSON.stringify(dataToServer));
-                                logger.debug('TCP socket '+id+' internet data emitted to server.js!');
+                                global.logger.debug('TCP socket '+id+' internet data emitted to server.js!');
                                 sendLog('TCP socket '+id+' internet data emitted to server.js!');
                             }else if(connected){
                                 connection_list[id].connected = true;
@@ -374,7 +374,7 @@ function cbtSocket(api, params) {
                 client.setTimeout(1000000);
 
                 client.on('timeout',function(data){
-                    logger.debug('TCP socket '+id+' session timed out.');
+                    global.logger.debug('TCP socket '+id+' session timed out.');
                     sendLog('TCP socket '+id+' session timed out.');
                     var dataToServer = {
                         event: 'htmlrecv',
@@ -395,8 +395,8 @@ function cbtSocket(api, params) {
 
                 client.on('end', function(data,err){
                     if(socketExists(id)){
-                        logger.debug(err);
-                        logger.debug('TCP socket '+id+' ended by external site.');
+                        global.logger.debug(err);
+                        global.logger.debug('TCP socket '+id+' ended by external site.');
                         sendLog('TCP socket '+id+' ended by external site.');
                         var dataToServer = {
                             event: 'htmlrecv',
@@ -415,10 +415,10 @@ function cbtSocket(api, params) {
 
                 client.on('close', function(err){
                     if(socketExists(id)){
-                        logger.debug('TCP socket '+id+' closed by external site.');
+                        global.logger.debug('TCP socket '+id+' closed by external site.');
                         sendLog('TCP socket '+id+' closed by external site.');
                         if(err&&params.verbose){
-                            logger.debug('Error on close of TCP socket: '+id);
+                            global.logger.debug('Error on close of TCP socket: '+id);
                             sendLog('Error on close of TCP socket: '+id);
                         }
                         var dataToServer = {
@@ -451,9 +451,9 @@ function cbtSocket(api, params) {
                     var bufferToSend = new Buffer(data.data);
                     client.write(bufferToSend, function(err){
                         if(err){
-                            logger.debug('Error writing data to: ');
-                            logger.debug(util.inspect(client));
-                            logger.debug(util.inspect(err));
+                            global.logger.debug('Error writing data to: ');
+                            global.logger.debug(util.inspect(client));
+                            global.logger.debug(util.inspect(err));
                             sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
                             var dataToServer = {
                                 event: 'htmlrecv',
@@ -468,12 +468,12 @@ function cbtSocket(api, params) {
                             connection_list[id].ended=true;
                         }
                         outbound+=1;
-                        logger.debug('Wrote to TCP socket '+id);
+                        global.logger.debug('Wrote to TCP socket '+id);
                         sendLog('Wrote to TCP socket '+id);
                     });
                 }else{
-                    logger.debug('TLS error:');
-                    logger.debug(util.inspect(err));
+                    global.logger.debug('TLS error:');
+                    global.logger.debug(util.inspect(err));
                     throw err;
                 }
             });
@@ -573,14 +573,14 @@ function cbtSocket(api, params) {
         //&&(packet[4]===0x7C||packet[4]===0x7C)
         if((packet[0]===0x16&&packet[5]===0x01)&&connection_list[id].manipulateHeaders){
             var client = connection.client;
-            logger.debug(id+' This is a TLS HELLO! Sending CONNECT...');
+            global.logger.debug(id+' This is a TLS HELLO! Sending CONNECT...');
             sendLog('Client found TLS hello on: '+id);
             var bufferToSend = Buffer.from(self.buildConnect(connection.host+':'+connection.port));
             client.write(bufferToSend, function(err){
                 if(err&&params.verbose){
-                    logger.debug('Error writing data to: ');
-                    logger.debug(util.inspect(client));
-                    logger.debug(util.inspect(err));
+                    global.logger.debug('Error writing data to: ');
+                    global.logger.debug(util.inspect(client));
+                    global.logger.debug(util.inspect(err));
                     sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
                     var dataToServer = {
                         event: 'htmlrecv',
@@ -596,12 +596,12 @@ function cbtSocket(api, params) {
                     cb(err);
                 }
                 outbound+=1;
-                logger.debug('Wrote to TCP socket '+id);
+                global.logger.debug('Wrote to TCP socket '+id);
                 sendLog('Wrote to TCP socket '+id);
                 var connectedInterval = setInterval(function(){
                     if(connection_list[id].connected){
                         if(params.verbose){
-                            logger.debug(id+' Received connection established!');
+                            global.logger.debug(id+' Received connection established!');
                         }
                         clearInterval(connectedInterval);
                         connection_list[id].connected = false;
@@ -629,7 +629,7 @@ function cbtSocket(api, params) {
                 }
             };
             if (err){
-                logger.error(err);
+                global.logger.error(err);
                 return cb(err);
             } else {
                 return cb(null, 'killit');
@@ -639,7 +639,7 @@ function cbtSocket(api, params) {
         if(self.ready){
             fs.unlink(self.ready, function(err){
                 if(err){
-                    logger.error(err);
+                    global.logger.error(err);
                     setTimeout(function(){
                         process.exit(1);
                     },10000);
@@ -651,15 +651,15 @@ function cbtSocket(api, params) {
     self.endWrap = function(cb){
         self.end(function(err, killit){
             if(!err && killit === 'killit'){
-                logger.info('Local connection disconnected.');
+                global.logger.info('Local connection disconnected.');
                 if(!self.nokill){
-                    logger.info('Bye!');
+                    global.logger.info('Bye!');
                     if(cb) cb(null,true)
                     process.exit(0);
                 }
                 if(cb) cb(null,true)
             }else if(err){
-                logger.error(err);
+                global.logger.error(err);
                 setTimeout(function(){
                     if(cb) cb(err,false)
                     process.exit(1);

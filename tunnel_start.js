@@ -137,7 +137,7 @@ var startTunnel = function(api, params, cb){
             if(!err && socket){
                 api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
                     if(!err && putResult){
-                        logger.info('Completely connected!');
+                        global.logger.info('Completely connected!');
                         if(params.kill){
                             setInterval(function(){
                                 fs.stat(params.kill,function(error,stat){
@@ -319,14 +319,14 @@ module.exports = {
                                         if (params.ready){
                                             fs.unlinkSync(params.ready);
                                         }
-                                        logger.info('killed connection manager tunnel, quitting')
+                                        global.logger.info('killed connection manager tunnel, quitting')
                                         process.exit(0)
                                     });
-                                    logger.info('\nAttempting a graceful shutdown...');
+                                    global.logger.info('\nAttempting a graceful shutdown...');
                                 });
 
                                 process.on('SIGTERM',function(){
-                                    logger.info('Attempting a graceful shutdown...');
+                                    global.logger.info('Attempting a graceful shutdown...');
                                     // kill tunnel
                                     api.deleteTunnel(tunnelObject.tunnel_id, (err) => {
                                         if (err) {
@@ -335,12 +335,12 @@ module.exports = {
                                         if (params.ready){
                                             fs.unlinkSync(params.ready);
                                         }
-                                        logger.info('killed connection manager tunnel, quitting')
+                                        global.logger.info('killed connection manager tunnel, quitting')
                                         process.exit(0)
                                     });
                                 });
                                 if(params.ready){
-                                    logger.info("SETTING READY FILE!");
+                                    global.logger.info("SETTING READY FILE!");
                                     fs.open(params.ready,'wx',function(err,fd){
                                         if(err){
                                             warn('The path specified for the "ready" file already exists or cannot be created (likely for permissions issues).');
@@ -348,9 +348,9 @@ module.exports = {
                                         cb(null);
                                         fs.close(fd, function(err){
                                             if(err){
-                                                logger.info(err);
+                                                global.logger.info(err);
                                             }
-                                            logger.info('ready file written: '+params.ready);
+                                            global.logger.info('ready file written: '+params.ready);
                                         });
                                     })
                                 }
@@ -367,7 +367,7 @@ module.exports = {
                                                             if (params.ready){
                                                                 fs.unlinkSync(params.ready);
                                                             }
-                                                            logger.info('killed connection manager tunnel, quitting')
+                                                            global.logger.info('killed connection manager tunnel, quitting')
                                                             process.exit(0)
                                                         });
                                                     }else{

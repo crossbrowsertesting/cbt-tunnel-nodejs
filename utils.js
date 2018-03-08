@@ -30,11 +30,11 @@ module.exports = {
 
     setProxies: function(secure,proxy){
         if(secure){
-            logger.info('HTTPS proxy set to '+proxy);
+            global.logger.info('HTTPS proxy set to '+proxy);
             process.env.https_proxy = proxy;
             process.env.HTTPS_PROXY = proxy;
         }else{
-            logger.info('HTTP proxy set to '+proxy);
+            global.logger.info('HTTP proxy set to '+proxy);
             process.env.http_proxy = proxy;
             process.env.HTTP_PROXY = proxy;
         }
@@ -71,11 +71,11 @@ module.exports = {
             if(!_.isNull(cbts)&&!_.isUndefined(cbts)){
                 cbts.endWrap();
             }
-            logger.info('\nAttempting a graceful shutdown...');
+            global.logger.info('\nAttempting a graceful shutdown...');
         });
 
         process.on('SIGTERM',function(){
-            logger.info('Attempting a graceful shutdown...');
+            global.logger.info('Attempting a graceful shutdown...');
             if(!_.isNull(cbts)&&!_.isUndefined(cbts)){
                 cbts.endWrap();
             }
@@ -91,15 +91,15 @@ module.exports = {
             host = ((!host.startsWith('https://'))&&data.port==443) ? 'https://'+host : host;
             host = ((!host.startsWith('https://'))&&(!host.startsWith('http://'))) ? 'https://'+host : host;
             if(params.verbose){
-                logger.debug('In determine host with data:')
-                logger.debug(util.inspect(data));
+                global.logger.debug('In determine host with data:')
+                global.logger.debug(util.inspect(data));
             }
             pac(host+':'+data.port).then(function(res){
                 if(res==='DIRECT'){
                     //host = data.host.replace('http://','').replace('https://','');
                     if(params.verbose){
-                        logger.debug('Host determined for '+data.host+'; going direct:');
-                        logger.debug({host:host,port:data.port});
+                        global.logger.debug('Host determined for '+data.host+'; going direct:');
+                        global.logger.debug({host:host,port:data.port});
                     }
                     urlCache[data.host] = {host:data.host,port:data.port,manipulateHeaders:false};
                     return cb(null,{host:data.host,port:data.port,manipulateHeaders:false});
@@ -107,8 +107,8 @@ module.exports = {
                     res = res.split(' ')[1];
                     var resArr = res.replace(';','').split(':');
                     if(params.verbose){
-                        logger.debug('Host determined for '+data.host+'; not going direct:');
-                        logger.debug({host:resArr[0],port:resArr[1]});
+                        global.logger.debug('Host determined for '+data.host+'; not going direct:');
+                        global.logger.debug({host:resArr[0],port:resArr[1]});
                     }
                     urlCache[data.host] = {host:resArr[0],port:resArr[1],manipulateHeaders:true};
                     return cb(null,{host:resArr[0],port:resArr[1],manipulateHeaders:true});
@@ -123,8 +123,8 @@ module.exports = {
             });
         }else if(data.tType==='tunnel'){
             if(params.verbose){
-                logger.debug('Host determined; type tunnel:');
-                logger.debug({host:data.proxyHost,port:data.proxyPort,manipulateHeaders:false});
+                global.logger.debug('Host determined; type tunnel:');
+                global.logger.debug({host:data.proxyHost,port:data.proxyPort,manipulateHeaders:false});
             }
             return cb(null,{host:data.proxyHost,port:data.proxyPort,manipulateHeaders:false});
         }else{
