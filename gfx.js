@@ -107,7 +107,7 @@ module.exports = {
         blankLine.output();
     },
     warn: function(message){
-        global.logger.warn(error(message));
+        global.logger.error(error(message));
     },
     help: function(){
         global.logger.info(
