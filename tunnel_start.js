@@ -395,6 +395,7 @@ module.exports = {
     stop: function(cb){
         if(!_.isNull(cbts)){
             cbts.endWrap(cb);
+            cbts = null
         }else{
             warn('You must start the tunnel first by calling the function "start" with the relevant parameters.');
         }
