@@ -91,9 +91,9 @@ module.exports = function(username, authkey, env){
                 return callback(err, body);
             })
         },
-        postTunnel: function(tunnelType, tunnelName, bypass, secret, acceptAllCerts, callback){
+        postTunnel: function(tunnelType, tunnelName, bypass, secret, acceptAllCerts, electron, callback){
             makeApiCall(server, 'POST', 'tunnels', {
-                tunnel_source: 'nodews',
+                tunnel_source: electron ? 'electron-app' : 'nodews',
                 tunnel_type: tunnelType,
                 tunnel_name: tunnelName,
                 direct_resolution: bypass,
@@ -105,7 +105,7 @@ module.exports = function(username, authkey, env){
                 return callback(err, body);
             })
         },
-        putTunnel: function(tunnelId, tunnelType, directory, proxyHost, proxyPort, callback){
+        putTunnel: function(tunnelId, tunnelType, directory, proxyHost, proxyPort, electron, callback){
             // console.log(`got resp for putTunnel`);
             makeApiCall(server, 'PUT', 'tunnels/' + tunnelId, {
                 local_directory: directory || '',
@@ -113,7 +113,7 @@ module.exports = function(username, authkey, env){
                 local_port: proxyPort || '',
                 message:'SUCCESS',
                 state:'1',
-                tunnel_source: 'nodews',
+                tunnel_source: electron ? 'electron-app' : 'nodews',
                 tunnel_type: tunnelType
             }, username, authkey, (err, body) => {
                 // console.log(`got resp for putTunnel`);

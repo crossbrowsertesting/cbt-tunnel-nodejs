@@ -13,7 +13,7 @@ var _ = require('lodash'),
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
         'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 
-        'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts','log'];
+        'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts','log','electron'];
 
 
 var validateArgs = function(cmdArgs){
@@ -119,7 +119,7 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, function(err, postResult){
+    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, electron, function(err, postResult){
         if( err || !postResult){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);
@@ -135,7 +135,7 @@ var startTunnel = function(api, params, cb){
         cbts = new cbtSocket(api, params);
         cbts.start(function(err,socket){
             if(!err && socket){
-                api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, function(err,putResult){
+                api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, electron, function(err,putResult){
                     if(!err && putResult){
                         global.logger.info('Completely connected!');
                         if(params.kill){
@@ -283,7 +283,8 @@ module.exports = {
                     pac: cmdArgs.pac,
                     bypass: !!cmdArgs.bypass,
                     nokill: cmdArgs.nokill,
-                    acceptAllCerts: !!cmdArgs.acceptAllCerts
+                    acceptAllCerts: !!cmdArgs.acceptAllCerts,
+                    electron: cmdArgs.electron
                 }
                 // This api call just to make sure the credentials are valid.
                 // We might could remove this and rely on the connection 

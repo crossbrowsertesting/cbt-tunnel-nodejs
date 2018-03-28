@@ -125,7 +125,7 @@ module.exports = {
             + "    '--kill KILLFILENAME'  |  Appending this flag allows you specify the\n"
             + "                           |  name of a 'kill file' that if placed in\n"
             + "                           |  the current directory will cause the\n"
-            + "                           | program to gracefully shutdown.\n"
+            + "                           |  program to gracefully shutdown.\n"
             + clc.underline("_                          |\n")
             + "    '--ready READYFILENAME'|  Specifiying this flag creates an\n"
             + "                           |  empty file at the path specified\n"
