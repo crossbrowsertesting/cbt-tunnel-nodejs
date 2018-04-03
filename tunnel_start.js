@@ -119,7 +119,7 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, electron, function(err, postResult){
+    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, params.electron, function(err, postResult){
         if( err || !postResult){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);
@@ -135,7 +135,7 @@ var startTunnel = function(api, params, cb){
         cbts = new cbtSocket(api, params);
         cbts.start(function(err,socket){
             if(!err && socket){
-                api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, electron, function(err,putResult){
+                api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, params.electron, function(err,putResult){
                     if(!err && putResult){
                         global.logger.info('Completely connected!');
                         if(params.kill){
