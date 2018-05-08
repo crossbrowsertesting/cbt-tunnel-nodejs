@@ -16,6 +16,18 @@ var _ = require('lodash'),
         'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts','log','electron'];
 
 
+//account for logging behavior before tunnel is started
+log4js.configure({
+    appenders: {
+        log: {type: 'file', filename: 'tunnel.log'}
+    },
+    categories: {
+        default: { appenders: ['log'], level: 'ALL' }
+    }
+});
+
+global.logger = log4js.getLogger();
+
 var validateArgs = function(cmdArgs){
     // make sure that user has provided username/authkey and no extraneous options
     if(!cmdArgs.username){
@@ -179,8 +191,8 @@ module.exports = {
                 .omit(_.isNull)
                 .mapValues((property)=>{ 
                     return property === 'true' ? true :
-                            property === 'false' ? false 
-                            : property
+                            property === 'false' ? false :
+                            property
                 }).value();
 
             var logLevel = cmdArgs.verbose ? 'ALL' : 
@@ -197,7 +209,7 @@ module.exports = {
                         default: { appenders: ['log'], level: 'ALL' }
                     }
                 });
-            }else if(cmdArgs.logs){
+            }else if(cmdArgs.log){
                 log4js.configure({
                     appenders: {
                         console: {type: 'console'},
