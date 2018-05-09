@@ -409,10 +409,9 @@ module.exports = {
         if(!_.isNull(cbts)){
             cbts.endWrap(cb);
             cbts = null;
-            cb(null,true);
         }else{
             warn('You must start the tunnel first by calling the function "start" with the relevant parameters.');
-            cb(new Error('Tunnel is not started!'));
+            cb(new Error('Tunnel is not started!'),false);
         }
     },
     status: function(){
