@@ -131,7 +131,7 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, params.electron, function(err, postResult){
+    api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, params.electron, params.directory, function(err, postResult){
         if( err || !postResult){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);

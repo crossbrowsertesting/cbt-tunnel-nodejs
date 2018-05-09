@@ -91,11 +91,12 @@ module.exports = function(username, authkey, env){
                 return callback(err, body);
             })
         },
-        postTunnel: function(tunnelType, tunnelName, bypass, secret, acceptAllCerts, electron, callback){
+        postTunnel: function(tunnelType, tunnelName, bypass, secret, acceptAllCerts, electron, directory, callback){
             makeApiCall(server, 'POST', 'tunnels', {
                 tunnel_source: electron ? 'electron-app' : 'nodews',
                 tunnel_type: tunnelType,
                 tunnel_name: tunnelName,
+                local_directory: directory,
                 direct_resolution: bypass,
                 secret: secret,
                 accept_all_certs: acceptAllCerts | 0,
