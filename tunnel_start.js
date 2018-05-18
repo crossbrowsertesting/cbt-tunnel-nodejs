@@ -147,7 +147,7 @@ var startTunnel = function(api, params, cb){
         cbts = new cbtSocket(api, params);
         cbts.start(function(err,socket){
             if(!err && socket){
-                api.putTunnel(postResult.tunnel_id, params.tType, postResult.local, params.proxyIp, params.proxyPort, params.electron, function(err,putResult){
+                api.putTunnel(postResult.tunnel_id, params.tType, params.directory, params.proxyIp, params.proxyPort, params.electron, function(err,putResult){
                     if(!err && putResult){
                         global.logger.info('Completely connected!');
                         if(params.kill){
