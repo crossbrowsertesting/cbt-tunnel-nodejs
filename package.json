@@ -5,13 +5,13 @@
   "dependencies": {
     "cli-color": "1.1.0",
     "clui": "0.3.1",
-    "express": "4.13.3",
+    "express": "4.16.3",
     "https-proxy-agent": "2.2.1",
-    "lodash": "3.10.1",
+    "lodash": "4.17.10",
     "log4js": "3.0.3",
     "pac-resolver": "https://github.com/rosesandhello/node-pac-resolver",
     "request": "2.87.0",
-    "serve-index": "1.7.2",
+    "serve-index": "1.9.1",
     "serve-static": "1.10.0",
     "ws": "6.0.0",
     "yargs": "12.0.1"
