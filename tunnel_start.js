@@ -159,9 +159,13 @@ var startTunnel = function(api, params, cb){
                                                 cbts.endWrap();
                                             }else{
                                                 warn(err);
-                                                setTimeout(function(){
-                                                    process.exit(1);
-                                                },10000);
+                                                if (!cbts.nokill){
+                                                    setTimeout(function(){
+                                                        process.exit(1);
+                                                    },10000);
+                                                } else {
+                                                    throw err;
+                                                }
                                             }
                                         })
                                     }
@@ -322,7 +326,15 @@ module.exports = {
                             if (err){
                                 return cb(err)
                             } else {
-                                var i = setInterval(()=>{}, 10000);
+                                var i = setInterval(()=>{
+                                    // console.log(`checking if tunnel ${tunnelObject.tunnel_id} is still alive`)
+                                    api.isTunnelAlive(tunnelObject.tunnel_id, (err, isAlive) =>{
+                                        if (!isAlive){
+                                            // console.log(`tunnel ${tunnelObject.tunnel_id} is dead!`)
+                                            clearInterval(i)
+                                        }
+                                    })
+                                }, 10000);
                                 process.on('SIGINT',function(){
                                     // kill tunnel
                                     api.deleteTunnel(tunnelObject.tunnel_id, (err) => {
@@ -333,7 +345,10 @@ module.exports = {
                                             fs.unlinkSync(params.ready);
                                         }
                                         global.logger.info('killed connection manager tunnel, quitting')
-                                        process.exit(0)
+                                        clearInterval(i);
+                                        if (!params.nokill){
+                                            process.exit(0);
+                                        }
                                     });
                                     global.logger.info('\nAttempting a graceful shutdown...');
                                 });
@@ -349,7 +364,10 @@ module.exports = {
                                             fs.unlinkSync(params.ready);
                                         }
                                         global.logger.info('killed connection manager tunnel, quitting')
-                                        process.exit(0)
+                                        clearInterval(i);
+                                        if (!params.nokill){
+                                            process.exit(0)
+                                        }
                                     });
                                 });
                                 if(params.ready){
@@ -381,13 +399,19 @@ module.exports = {
                                                                 fs.unlinkSync(params.ready);
                                                             }
                                                             global.logger.info('killed connection manager tunnel, quitting')
-                                                            process.exit(0)
+                                                            clearInterval(i);
+                                                            if (!params.nokill){
+                                                                process.exit(0);
+                                                            }
                                                         });
                                                     }else{
                                                         warn(err);
-                                                        setTimeout(function(){
-                                                            process.exit(1);
-                                                        },10000);
+                                                        clearInterval(i);
+                                                        if (!params.nokill){
+                                                            setTimeout(function(){
+                                                                process.exit(1);
+                                                            },10000);
+                                                        }
                                                     }
                                                 })
                                             }

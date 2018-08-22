@@ -127,6 +127,17 @@ module.exports = function(username, authkey, env){
                 return callback(err, resp);
             })
         },
+        isTunnelAlive: function(tunnelId, callback){
+            makeApiCall(server, 'GET', 'tunnels/' + tunnelId, null, username, authkey, (err, resp) => {
+                if (err) return callback(err)
+                // console.log('we got: ' + util.inspect(resp))
+                if (resp.active !== undefined){
+                    return callback(null, resp.active);
+                } else {
+                    return callback(null, false)
+                }
+            })
+        },
         checkTunnelIp: function(callback){
             makeApiCall(server, 'GET', 'tunnels/checkIp', null, username, authkey, (err, resp) => {
                 // console.log('got resp for checkTunnelIp');

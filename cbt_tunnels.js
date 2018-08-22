@@ -640,9 +640,11 @@ function cbtSocket(api, params) {
             fs.unlink(self.ready, function(err){
                 if(err){
                     global.logger.error(err);
-                    setTimeout(function(){
-                        process.exit(1);
-                    },10000);
+                    if (!self.nokill){
+                        setTimeout(function(){
+                            process.exit(1);
+                        },10000);
+                    }
                 } 
             })
         }
@@ -652,18 +654,20 @@ function cbtSocket(api, params) {
         self.end(function(err, killit){
             if(!err && killit === 'killit'){
                 global.logger.info('Local connection disconnected.');
+                if(cb) cb(null,true)
                 if(!self.nokill){
                     global.logger.info('Bye!');
-                    if(cb) cb(null,true)
                     process.exit(0);
                 }
                 if(cb) cb(null,true)
             }else if(err){
                 global.logger.error(err);
-                setTimeout(function(){
-                    if(cb) cb(err,false)
-                    process.exit(1);
-                }, 10000);
+                if(cb) cb(err,false)
+                if(!self.nokill){
+                    setTimeout(function(){
+                        process.exit(1);
+                    }, 10000);
+                }
             }
         });
     }
