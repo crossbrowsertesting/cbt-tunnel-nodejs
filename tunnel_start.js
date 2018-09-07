@@ -13,7 +13,7 @@ var _ = require('lodash'),
     validParameters = ['quiet', 'proxyUser', 'proxyPass', 'httpsProxy', 'httpProxy', '_', 'ready',
         'username', 'authkey', '$0', 'simpleproxy', 'tunnel', 'webserver', 'cmd', 'proxyIp',
         'proxyPort', 'port', 'dir', 'verbose', 'kill', 'test', 'tunnelname', 'secret', 'pac', 
-        'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts','log','electron'];
+        'rejectUnauthorized', 'bypass', 'nokill', 'acceptAllCerts','log','electron','dev'];
 
 
 //account for logging behavior before tunnel is started
@@ -258,9 +258,11 @@ module.exports = {
             _.merge(argv, cmdArgs);
 
             if ( cmdArgs.test ){
-                var cbtUrls = {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"}
+                var cbtUrls = {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"};
+            } else if ( cmdArgs.dev ){
+                var cbtUrls = {server: "devawsvnc.crossbrowsertesting.com", node: "devaws.crossbrowsertesting.com"}
             } else {
-                var cbtUrls = {server: "crossbrowsertesting.com", node: "crossbrowsertesting.com"}
+                var cbtUrls = {server: "crossbrowsertesting.com", node: "crossbrowsertesting.com"};
             }
 
             pacInit(cbtUrls,cmdArgs,function(err,pac){
@@ -301,7 +303,7 @@ module.exports = {
                 // This api call just to make sure the credentials are valid.
                 // We might could remove this and rely on the connection 
                 // manager check to validate credentials.
-                var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test);
+                var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test, cmdArgs.dev);
                 // debugger;
                 api.getAccountInfo(function(err, accountInfo){
                     // console.log("account info: " + util.inspect(accountInfo));

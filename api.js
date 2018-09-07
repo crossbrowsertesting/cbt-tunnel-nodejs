@@ -63,21 +63,28 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
     })
 }
 
-module.exports = function(username, authkey, env){
+module.exports = function(username, authkey, test, dev){
     // api can be called with env == argv.test
     // these first two ifs account for when env/argv.test is true/false
-    if(env === true){ env = 'test'};
-    if(!env){ env = 'prod' };
+    if(test === true){ 
+        env = 'test'
+    }else if(dev === true){ 
+        env = 'dev'; 
+    }else{
+        env = 'prod';
+    }
     switch (env.toLowerCase()) {
         case 'prod':
-            var server = 'https://crossbrowsertesting.com'
+            var server = 'https://crossbrowsertesting.com';
             break;
         case 'test':
-            var server = 'https://testapp.crossbrowsertesting.com'
+            var server = 'https://testapp.crossbrowsertesting.com';
             break;
         case 'local':
-            var server = 'http://localhost:3000'
+            var server = 'http://localhost:3000';
             break;
+        case 'dev':
+            var server = 'https://devaws.crossbrowsertesting.com';
     }
 
 //////////////////////////////////////////////////
