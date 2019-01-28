@@ -7,6 +7,7 @@ var _ = require('lodash'),
     fs = require('fs'),
     request = require('request'),
     util = require('util'),
+    os = require('os'),
     urlCache = {};
 
 module.exports = {
@@ -83,6 +84,7 @@ module.exports = {
     },
 
     determineHost: function(data,params,cb){
+        data.host = data.host.replace('localhost',this.getInternalIp());
         var pac = params.pac;
         if(urlCache[data.host]){
             return cb(null,urlCache[data.host]);
@@ -130,6 +132,15 @@ module.exports = {
         }else{
             return cb(null,{host:data.host,port:data.port,manipulateHeaders:false});
         }
+    },
+
+    getInternalIp: function(){
+        return _.chain(os.networkInterfaces())
+                .values()
+                .flatten()
+                .find({family: 'IPv4', internal: false})
+                .value()
+                .address
     }
 
 }
