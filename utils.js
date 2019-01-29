@@ -10,23 +10,6 @@ var _ = require('lodash'),
     os = require('os'),
     urlCache = {};
 
-function isLocalhost(uri){
-    if(uri.startWith('localhost')||
-        uri.startsWith('localhost:')||
-        uri.startsWith('localhost/')||
-        uri.startsWith('https://localhost')||
-        uri.startsWith('https://localhost:')||
-        uri.startsWith('https://localhost/')||
-        uri.startsWith('http://localhost')||
-        uri.startsWith('http://localhost:')||
-        uri.startsWith('http://localhost/')){
-
-        return true;
-    }else{
-        return false;
-    }
-}
-
 module.exports = {
 
     getPac: function(pac,cb){
@@ -101,9 +84,7 @@ module.exports = {
     },
 
     determineHost: function(data,params,cb){
-        if(isLocalhost(data.host)){
-            data.host = data.host.replace('localhost',this.getInternalIp());
-        }
+        data.host = data.host.replace('localhost',this.getInternalIp());
         var pac = params.pac;
         if(urlCache[data.host]){
             return cb(null,urlCache[data.host]);
