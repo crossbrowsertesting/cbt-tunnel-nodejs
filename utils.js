@@ -11,13 +11,13 @@ var _ = require('lodash'),
     urlCache = {};
 
 function isLocalhost(uri){
-    if((uri.startWith('localhost')&&(!uri.startsWith('localhost.')))||
+    if(uri.startWith('localhost')||
         uri.startsWith('localhost:')||
         uri.startsWith('localhost/')||
-        (uri.startsWith('https://localhost')&&(!uri.startsWith('https://localhost.')))||
+        uri.startsWith('https://localhost')||
         uri.startsWith('https://localhost:')||
         uri.startsWith('https://localhost/')||
-        (uri.startsWith('http://localhost')&&(!uri.startsWith('http://localhost.')))||
+        uri.startsWith('http://localhost')||
         uri.startsWith('http://localhost:')||
         uri.startsWith('http://localhost/')){
 
