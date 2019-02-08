@@ -21,7 +21,7 @@ var _ = require('lodash');
  */
 
 var encodeAuth = function(username, authkey){
-    return (new Buffer(username+':'+authkey)).toString('base64');
+    return (Buffer.from(username+':'+authkey)).toString('base64');
 }
 
 var makeApiCall = function(server, method, path, qs, username, authkey, callback){

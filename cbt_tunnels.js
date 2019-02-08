@@ -67,7 +67,7 @@ function cbtSocket(api, params) {
     }
 
     var tType = self.tType = params.tType;
-    self.auth_header = (new Buffer(params.username+':'+params.authkey)).toString('base64');
+    self.auth_header = (Buffer.from(params.username+':'+params.authkey)).toString('base64');
     self.t = params.t;
     self.userId = params.userId;
     self.authkey = params.authkey;
@@ -82,7 +82,7 @@ function cbtSocket(api, params) {
     var proxyAuthString = self.proxyAuthString = '';
     self.nokill = params.nokill;
     if(!!params.proxyUser && !!params.proxyPass){
-        proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic ' + (new Buffer(params.proxyUser + ':' + params.proxyPass)).toString('base64');
+        proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic ' + (Buffer.from(params.proxyUser + ':' + params.proxyPass)).toString('base64');
     }
     self.ready = params.ready;
     switch(tType){
@@ -448,7 +448,7 @@ function cbtSocket(api, params) {
             }
             self.isTLSHello(connection_list[id],data.data,id,function(err){
                 if(!err){
-                    var bufferToSend = new Buffer(data.data);
+                    var bufferToSend = Buffer.from(data.data);
                     client.write(bufferToSend, function(err){
                         if(err){
                             global.logger.debug('Error writing data to: ');
