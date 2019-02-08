@@ -1,31 +1,45 @@
-var request = require('request'),
-	cbt 	= require('cbt_tunnels'),
-	username = "", //Place CBT user credentials here
-	authkey = "",
-	url = 'https://'+username+':'+authkey+'@crossbrowsertesting.com/api/v3/screenshots?browsers=FF42&check_url=true&hide_fixed_elements=true&url=http:%2F%2Fwhatismyip.com',
-	running = true;
+var cbt = require('cbt_tunnels');
+var request = require('request');
 
-cbt.start({'username': username,'authkey': authkey},function(err){
-	if(!err){
-		request.post({url: url}, function(error,response,body){
-			if(!error){
-				var areWeThereYet = setInterval(function(){
-					request.get({url:'https://'+username+':'+authkey+'@crossbrowsertesting.com/api/v3/screenshots/'+JSON.parse(body).screenshot_test_id+'?format=json'},function(err,r,b){
-						if(JSON.parse(b).versions[0].active==false){
-							clearInterval(areWeThereYet);
-							cbt.stop();
-							console.log('Took screenshot!');
-							process.exit(0);
-						}else{
-							console.log("Are we there yet?");
-						}
-					});
-				},3000);
-			}else{
-				console.log(error);
-			}
-		});
-	}else{
-		console.log(username);
-	}
-})
+var authkey = ""; // Place CBT user credentials here
+var username = "";
+
+var configObj = {
+    authkey: authkey,
+    username: username,
+}
+
+var baseUrl = 'https://' + configObj.username + ':' + configObj.authkey + '@crossbrowsertesting.com/api/v3/';
+console.info("baseUrl: ", baseUrl);
+
+cbt.start(configObj, function(err) {
+    if (err) {
+        console.error("Error starting: ", err);
+        return err;
+    }
+    var url = baseUrl + 'screenshots?browsers=FF42&check_url=true&hide_fixed_elements=true&url=http:%2F%2Fwhatismyip.com';
+    request.post({ url: url }, function(error, response, body) {
+        if (error) {
+            console.error("Error posting: ", error);
+            return error;
+        }
+				var screenshotTestUrl = baseUrl + 'screenshots/' + JSON.parse(body).screenshot_test_id + '?format=json';
+				
+        var areWeThereYet = setInterval(function() {
+            request.get({ url: screenshotTestUrl }, function(err, r, b) {
+								if (err) {
+										console.error("Error retrieving screenshot test data: ", err);
+										return err;
+								}
+                if (!JSON.parse(b).versions[0].active) {
+                    clearInterval(areWeThereYet);
+                    cbt.stop();
+                    console.log('Took screenshot!');
+                    process.exit(0);
+                } else {
+                    console.log("Are we there yet?");
+                }
+            });
+        }, 3000);
+    });
+});
