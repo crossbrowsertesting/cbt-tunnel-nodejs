@@ -101,7 +101,7 @@ function cbtSocket(api, params) {
     var conn = self.conn = null;
 
     if (process.env.http_proxy || process.env.https_proxy){
-        var agent = process.env.http_proxy ? new proxyAgent({host:process.env.http_proxy.split(':')[1].replace('//',''),port:process.env.http_proxy.split(':')[2],secureProxy:true}) : new proxyAgent({host:process.env.https_proxy.split(':')[1].replace('//',''),port:process.env.https_proxy.split(':')[2],secureProxy:true});
+        var agent = makeProxyAgent();
         conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
     }else{
         conn = self.conn = new WebSocket(self.wsPath,{});
@@ -680,6 +680,19 @@ function cbtSocket(api, params) {
             && (connection_list[id].established) // id property established is true
             && (Object.getOwnPropertyNames(connection_list[id].client.address()).length > 0)
         )
+    }
+
+    function makeProxyAgent(){
+        var pString = process.env.http_proxy || process.env.https_proxy;
+        pString = pString.replace('http://','');
+        var agentAuth;
+        if(pString.includes('@')){
+            agentAuth = pString.slice(0,pString.indexOf('@'));
+        }
+        var agentHost = pString.slice(pString.indexOf('@')+1,pString.lastIndexOf(':'));
+        var agentPort = pString.slice(pString.lastIndexOf(':')+1);
+        var agent = new proxyAgent({host:agentHost,port:agentPort,auth:agentAuth,secureProxy:true});
+        return agent;
     }
 }
 
