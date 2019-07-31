@@ -121,8 +121,8 @@ function cbtSocket(api, params) {
     self.start = function(cb){
 
         if(proxyAuthString !== ''){
-            global.logger.info('Using basic authentication for proxy server mode.');
-            sendLog('Using basic authentication for proxy server mode.');
+            global.logger.debug('Using basic authentication for proxy server mode.');
+            // sendLog('Using basic authentication for proxy server mode.');
         }
         var reconnecting = false;
         var reconnectAttempts = 0;
@@ -131,7 +131,7 @@ function cbtSocket(api, params) {
             conn.ping();
         },10000);
 
-        global.logger.info('Started connection attempt!');
+        global.logger.debug('Started connection attempt!');
         conn.on('message',function(message){
             try{
                 msg = JSON.parse(message);
@@ -440,8 +440,10 @@ function cbtSocket(api, params) {
 
         if((socketExists(id)&&data.data)||(data._type==='bytesonly')){
             var client = connection_list[id].client;
-            if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (data.data.toString().includes('Host')) ){
-                data = self.addProxyAuth(data);
+            var receivedDataString = Buffer.from(data.data).toString();
+
+            if( (data._type === 'bytesonly') && (proxyAuthString !== '') && (receivedDataString.includes('Host')) ){
+                data = self.addProxyAuth(data, receivedDataString);
             }
             if(connection_list[id].manipulateHeaders){
                 data = self.manipulateHeaders(data);
@@ -500,12 +502,7 @@ function cbtSocket(api, params) {
         });
     }
 
-    self.addProxyAuth = function(data){
-        var dataArr = [];
-        data.data.map((char)=>{
-            dataArr.push(String.fromCharCode(char));
-        })
-        dataStr = dataArr.join('');
+    self.addProxyAuth = function(data, dataStr){
         dataArr = dataStr.split('\r\n');
         dataArr = _.filter(dataArr, function(col){
             if(!col==''){

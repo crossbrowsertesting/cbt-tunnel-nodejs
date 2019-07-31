@@ -194,14 +194,14 @@ module.exports = {
                 .omit(_.isUndefined)
                 .omit(_.isNull)
                 .mapValues((property)=>{ 
-                    return property === 'true' ? true :
+                    return  property === 'true'  ? true  :
                             property === 'false' ? false :
-                            property
+                                                   property
                 }).value();
 
             var logLevel = cmdArgs.verbose ? 'ALL' : 
-                cmdArgs.quiet ? 'OFF' :
-                'INFO';
+                           cmdArgs.quiet   ? 'OFF' :
+                                             'INFO';
 
             if(cmdArgs.log&&cmdArgs.quiet){
                 log4js.configure({
@@ -291,6 +291,8 @@ module.exports = {
                     port: cmdArgs.port,
                     proxyIp: cmdArgs.proxyIp,
                     proxyPort: cmdArgs.proxyPort,
+                    proxyUser: cmdArgs.proxyUser,
+                    proxyPass: cmdArgs.proxyPass,
                     quiet: cmdArgs.quiet,
                     tType: cmdArgs.tType,
                     tunnelName: cmdArgs.tunnelname,
