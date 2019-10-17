@@ -87,6 +87,7 @@ var determineTunnelType = function(cmdArgs){
 
     if (global.isLocal) {
         tunnelType = 'local';
+        // tunnelType = 'simpleproxy';
     }
 
     return tunnelType;

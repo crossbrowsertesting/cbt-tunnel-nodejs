@@ -294,6 +294,8 @@ function cbtSocket(api, params) {
 
     self.handleData = function(msg){
         var data = msg;
+
+        global.logger.info(`msg recevied from server: ${util.inspect(msg)}`);
         var id = msg.id;
         var wsid = msg.wsid;
 
