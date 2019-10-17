@@ -18,15 +18,91 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+function genDefParams() {
+
+}
+
 function cbtSocket(api, params) {
     var inbound;
     var outbound;
     var self = this;
+
+    global.logger.info(`in cbtSocket with: ${util.inspect(api)} and ${util.inspect(params)}`);
+
+
     var killLever = utils.killLever(self);
     params.context = self;
 
     self.tunnelId = params.tid;
     self.api = api;
+
+    var tType = self.tType = params.tType;
+    self.auth_header = (Buffer.from(params.username+':'+params.authkey)).toString('base64');
+
+    // not used elsewhere
+    self.t = params.t;
+    self.userId = params.userId;
+    self.authkey = params.authkey;
+    self.qPort = (params.bytecode ? pad((params.tcpPort-11000),3) : pad((params.tcpPort-11000), 3));
+    self.wsPort = params.tcpPort+1000;
+
+    self.cbtServer = 'https://'+params.cbtServer;
+    self.cbtApp = 'https://'+params.urls.node;
+    self.path = '/wsstunnel' + self.qPort + '/socket.io';
+    self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
+
+    global.logger.info(`self.path: ${self.path}, self.query: ${self.query}`);
+
+    
+
+    self.wsPath = self.cbtServer+self.path+'?'+self.query;
+
+    if (global.isLocal) {
+        self.wsPath = 'ws://localhost:10118'
+        global.logger.info(`change wsPath to ${self.path}`);
+    }
+
+    self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
+    var proxyAuthString = self.proxyAuthString = '';
+    self.nokill = params.nokill;
+    if(!!params.proxyUser && !!params.proxyPass){
+        proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic ' + (Buffer.from(params.proxyUser + ':' + params.proxyPass)).toString('base64');
+    }
+    self.ready = params.ready;
+
+    switch(tType){
+        case 'simple':
+            break;
+        case 'webserver':
+            self.startStaticServer();
+            break;
+        case 'tunnel':
+            var tType = self.tType = 'tunnel';
+            var port = self.proxyPort = params.proxyPort;
+            var host = self.proxyHost = params.proxyIp;
+            break;
+        default:
+    }
+    var conn = self.conn = null;
+
+    if (process.env.http_proxy || process.env.https_proxy){
+        var agent = makeProxyAgent();
+        conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
+    }else{
+        global.logger.info(`self before creating WebSocket`, self.wsPath);
+        conn = self.conn = new WebSocket(self.wsPath,{});
+    }
+    if(!params.rejectUnauthorized){
+        conn.rejectUnauthorized = false;
+    }
+
+    var sendLog = self.sendLog = function(log){
+        var dataToServer = {
+            event:'clientLog',
+            client_verbose_log: log
+        }
+        conn.send(JSON.stringify(dataToServer));
+    }
 
     function getInbound(){
         return inbound;
@@ -64,58 +140,6 @@ function cbtSocket(api, params) {
         self.server.on('listening',function(){
             global.logger.info('Server listening on port '+sPort+', serving '+self.directory+'.');
         })
-    }
-
-    var tType = self.tType = params.tType;
-    self.auth_header = (Buffer.from(params.username+':'+params.authkey)).toString('base64');
-    self.t = params.t;
-    self.userId = params.userId;
-    self.authkey = params.authkey;
-    self.qPort = (params.bytecode ? pad((params.tcpPort-11000),3) : pad((params.tcpPort-11000), 3));
-    self.wsPort = params.tcpPort+1000;
-    self.cbtServer = 'https://'+params.cbtServer;
-    self.cbtApp = 'https://'+params.urls.node;
-    self.path = '/wsstunnel' + self.qPort + '/socket.io';
-    self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
-    self.wsPath = self.cbtServer+self.path+'?'+self.query;
-    self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
-    var proxyAuthString = self.proxyAuthString = '';
-    self.nokill = params.nokill;
-    if(!!params.proxyUser && !!params.proxyPass){
-        proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic ' + (Buffer.from(params.proxyUser + ':' + params.proxyPass)).toString('base64');
-    }
-    self.ready = params.ready;
-    switch(tType){
-        case 'simple':
-            break;
-        case 'webserver':
-            self.startStaticServer();
-            break;
-        case 'tunnel':
-            var tType = self.tType = 'tunnel';
-            var port = self.proxyPort = params.proxyPort;
-            var host = self.proxyHost = params.proxyIp;
-            break;
-        default:
-    }
-    var conn = self.conn = null;
-
-    if (process.env.http_proxy || process.env.https_proxy){
-        var agent = makeProxyAgent();
-        conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
-    }else{
-        conn = self.conn = new WebSocket(self.wsPath,{});
-    }
-    if(!params.rejectUnauthorized){
-        conn.rejectUnauthorized = false;
-    }
-
-    var sendLog = self.sendLog = function(log){
-        var dataToServer = {
-            event:'clientLog',
-            client_verbose_log: log
-        }
-        conn.send(JSON.stringify(dataToServer));
     }
 
     self.start = function(cb){

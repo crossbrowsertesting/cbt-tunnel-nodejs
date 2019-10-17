@@ -29,6 +29,11 @@ log4js.configure({
 global.logger = log4js.getLogger();
 
 var validateArgs = function(cmdArgs){
+    if (global.isLocal) {
+        // don't worry about auth anymore
+        return cmdArgs;
+    }
+
     // make sure that user has provided username/authkey and no extraneous options
     if(!cmdArgs.username){
         help()
@@ -50,6 +55,8 @@ var validateArgs = function(cmdArgs){
 var determineTunnelType = function(cmdArgs){
     // throws errors if args conflict and no valid tunnelType can be determined
     var tunnelType;
+
+
     if(cmdArgs.dir){
         if( !cmdArgs.proxyIp && !cmdArgs.proxyPort ){
             tunnelType = 'webserver';
@@ -77,6 +84,11 @@ var determineTunnelType = function(cmdArgs){
     } else {
         tunnelType = 'simpleproxy';
     }
+
+    if (global.isLocal) {
+        tunnelType = 'local';
+    }
+
     return tunnelType;
 }
 
@@ -131,8 +143,10 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
+    global.logger.info(`startTunnel with api: ${util.inspect(api)} and params: ${util.inspect(params)}`);
     api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, params.electron, params.directory, function(err, postResult){
-        if( err || !postResult){
+        global.logger.info('Sent request to start tunnel!');
+        if( err || (!global.isLocal && !postResult)){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);
         }
@@ -145,6 +159,8 @@ var startTunnel = function(api, params, cb){
         }
         _.merge(params,opts);
         cbts = new cbtSocket(api, params);
+
+        global.logger.info('cbts.start')
         cbts.start(function(err,socket){
             if(!err && socket){
                 api.putTunnel(postResult.tunnel_id, params.tType, params.directory, params.proxyIp, params.proxyPort, params.electron, function(err,putResult){
@@ -202,6 +218,7 @@ module.exports = {
             var logLevel = cmdArgs.verbose ? 'ALL' : 
                            cmdArgs.quiet   ? 'OFF' :
                                              'INFO';
+            
 
             if(cmdArgs.log&&cmdArgs.quiet){
                 log4js.configure({
@@ -235,6 +252,20 @@ module.exports = {
             }
 
             global.logger = log4js.getLogger();
+
+            if (cmdArgs.local) {
+                global.logger.info('Running locally');
+                global.isLocal = true;
+            }
+            
+            // console.log(cmdArgs);
+            
+            //     console.log('Using local configuration!');
+            //     cbts = new cbtSocket();
+            //     cbts.start(function(err,socket){
+            //         global.logger.info('Completely connected!');
+            //     });
+            // }
             
             // throws error if there's an invalid arg
             validateArgs(cmdArgs);
@@ -247,6 +278,7 @@ module.exports = {
             cmdArgs.tType = determineTunnelType(cmdArgs); 
 
             if( cmdArgs.tType == 'tunnel' ){
+                // what does bytecode do? - CC
                 cmdArgs.bytecode = true;
             }
             // default tunnelName to null
@@ -265,9 +297,11 @@ module.exports = {
                 var cbtUrls = {server: "test.crossbrowsertesting.com", node: "testapp.crossbrowsertesting.com"};
             } else if ( cmdArgs.dev ){
                 var cbtUrls = {server: "devawsvnc.crossbrowsertesting.com", node: "devaws.crossbrowsertesting.com"}
+            } else if ( global.isLocal ) {
+                var cbtUrls = {server: "localhost", node: "localhost"}
             } else {
                 var cbtUrls = {server: "crossbrowsertesting.com", node: "crossbrowsertesting.com"};
-            }
+            } 
 
             pacInit(cbtUrls,cmdArgs,function(err,pac){
                 if(err){
@@ -312,7 +346,7 @@ module.exports = {
                 var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test, cmdArgs.dev);
                 // debugger;
                 api.getAccountInfo(function(err, accountInfo){
-                    // console.log("account info: " + util.inspect(accountInfo));
+                    global.logger.info(`err: ${err}, accountInfo: ${accountInfo}`);
                     if (err){
                         // console.log('Authentication error! Please check your credentials and try again.');
                         warn('Authentication error! Please check your credentials and try again.');
@@ -322,7 +356,11 @@ module.exports = {
                     params.userId = accountInfo.user_id;
                     params.authkey = accountInfo.auth_key;
                     // LCM users can only use cbt_tunnels to start tunnel if secret is provided
-                    if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
+
+                    if (global.isLocal) {
+                        global.logger.info('starting tunnel with different params cuz isLocal.');
+                        startTunnel(api, params, ( err ) => { return cb(err) });
+                    } else if( accountInfo.subscription.localConManEnabled && !cmdArgs.secret ) {
                         // create conman post arguments
                         var conmanParams = createConmanParams(cmdArgs)
 

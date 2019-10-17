@@ -187,3 +187,6 @@ There are three options provided for you to do this:
     - type 'pkg ./cmd_start.js --targets TARGETSTRING --output OUTPUTBINARYPATH'
 
     (for target string information see: https://github.com/zeit/pkg)
+
+##### To run locally:
+    `node cmd_start.js --local --debug`

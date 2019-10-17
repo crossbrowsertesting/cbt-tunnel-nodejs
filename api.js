@@ -27,6 +27,7 @@ var encodeAuth = function(username, authkey){
 var makeApiCall = function(server, method, path, qs, username, authkey, callback){
     // this is a generic function to make different api calls to cbt
     // console.log(`about to make a ${method} request to ${server} at ${path} for ${username}`)
+
     var options = {
         url: server + '/api/v3/' + path,
         method: method,
@@ -38,6 +39,11 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
         options.qs = qs;
     }
     request(options, (err, resp, body) => {
+        if (global.isLocal) {
+            global.logger.info('Running separately, error calling callback URL not thrown.');
+            return callback(null, {});
+        }
+
         if( err ){
             return callback(err);
         }
@@ -99,6 +105,7 @@ module.exports = function(username, authkey, test, dev){
             })
         },
         postTunnel: function(tunnelType, tunnelName, bypass, secret, acceptAllCerts, electron, directory, callback){
+            global.logger.info('In postTunnel');
             makeApiCall(server, 'POST', 'tunnels', {
                 tunnel_source: electron ? 'electron-app' : 'nodews',
                 tunnel_type: tunnelType,
@@ -109,6 +116,7 @@ module.exports = function(username, authkey, test, dev){
                 accept_all_certs: acceptAllCerts | 0,
                 ws: 1,
             } , username, authkey, (err, body) => {
+                global.logger.info('got response from postTunnel');
                 // console.log(JSON.stringify(body));
                 return callback(err, body);
             })
