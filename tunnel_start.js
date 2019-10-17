@@ -341,6 +341,15 @@ module.exports = {
                     acceptAllCerts: !!cmdArgs.acceptAllCerts,
                     electron: cmdArgs.electron
                 }
+
+                if (global.isLocal) {
+                    if (cmdArgs.wssUrl) {
+                        params.wssUrl = cmdArgs.wssUrl;
+                    } else {
+                        params.wssUrl = 'ws://localhost:10118';
+                    }
+                }
+                
                 // This api call just to make sure the credentials are valid.
                 // We might could remove this and rely on the connection 
                 // manager check to validate credentials.

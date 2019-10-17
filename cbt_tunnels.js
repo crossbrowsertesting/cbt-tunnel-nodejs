@@ -18,6 +18,49 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+function pad2(lengthNumber) {
+    while (lengthNumber.length < 4) {
+        lengthNumber = '0' + lengthNumber;
+    }
+
+    return lengthNumber;
+}
+
+// takes an header object and packs it alongside binary blob
+function packData(obj, dataReceived) {
+    console.log(`packing data for cbt_tunnels`)
+    console.log(`header: ${JSON.stringify(obj)}`);
+    if (dataReceived){
+        console.log(`data:) ${dataReceived.toString()}`);
+    }
+    var binaryObject = Buffer.from(JSON.stringify(obj));
+    var paddedLength = pad2(String(binaryObject.byteLength));
+    // console.log(paddedLength)
+    var objectLength = Buffer.from(paddedLength);
+    // console.log(objectLength.length);
+    return Buffer.from(objectLength + binaryObject + dataReceived);
+}
+
+function unpackData(binaryData) {
+    // look at first three bytes to get the length of the header
+    var length = binaryData.slice(0,4);
+    // console.log(`length parsed from buffer: ${length.toString()}`);
+    length = parseInt(length);
+    var headerData = binaryData.slice(4, length+4);
+    //console.log(headerData.toString());
+    
+    //console.log(JSON.parse(headerData));
+    headerData = JSON.parse(headerData);
+    if (length + 4 == binaryData.byteLength){
+        headerData.data = null;
+    } else {
+     
+           headerData.data = binaryData.slice(length+4, binaryData.byteLength);
+           console.log(`unpacked data from server.js: ${headerData.data.toString()}`)
+    }
+    return headerData;
+}
+
 function genDefParams() {
 
 }
@@ -53,12 +96,10 @@ function cbtSocket(api, params) {
 
     global.logger.info(`self.path: ${self.path}, self.query: ${self.query}`);
 
-    
-
     self.wsPath = self.cbtServer+self.path+'?'+self.query;
 
     if (global.isLocal) {
-        self.wsPath = 'ws://localhost:10118'
+        self.wsPath = params.wssUrl;
         global.logger.info(`change wsPath to ${self.path}`);
     }
 
@@ -92,6 +133,7 @@ function cbtSocket(api, params) {
         global.logger.info(`self before creating WebSocket`, self.wsPath);
         conn = self.conn = new WebSocket(self.wsPath,{});
     }
+    self.conn.bufferType = "arraybuffer";
     if(!params.rejectUnauthorized){
         conn.rejectUnauthorized = false;
     }
@@ -101,7 +143,8 @@ function cbtSocket(api, params) {
             event:'clientLog',
             client_verbose_log: log
         }
-        conn.send(JSON.stringify(dataToServer));
+        var payload = packData(dataToServer, Buffer.from([]))
+        conn.send(payload);
     }
 
     function getInbound(){
@@ -158,7 +201,8 @@ function cbtSocket(api, params) {
         global.logger.debug('Started connection attempt!');
         conn.on('message',function(message){
             try{
-                msg = JSON.parse(message);
+                msg = unpackData(message)
+                console.log(`Message from server.js: ${util.inspect(msg)}`)
                 self.handleMessage(msg);
             }catch(e){
                 warn(e.message);
@@ -232,7 +276,8 @@ function cbtSocket(api, params) {
                     event: 'established',
                     wsid: wsid
                 }
-                conn.send(JSON.stringify(dataToServer));
+                var payload = packData(dataToServer, Buffer.from([]))
+                conn.send(payload);
                 break;
             case 'versions':
                 var checkResult = utils.checkVersion(msg,params);
@@ -252,10 +297,10 @@ function cbtSocket(api, params) {
                         var data = err;
                         var dataToServer = {
                             event: 'checkrecv',
-                            data: data,
                             wsid: wsid
                         }
-                        conn.send(JSON.stringify(dataToServer));
+                        var payload = packData(dataToServer, data)
+                        conn.send(payload);
                     } else {
                         try{
                             global.logger.debug('IP appears to CBT as: '+resp.ip);
@@ -264,7 +309,8 @@ function cbtSocket(api, params) {
                                 ip: resp.ip,
                                 wsid: wsid
                             }
-                            conn.send(JSON.stringify(dataToServer));
+                            var payload = packData(dataToServer, Buffer.from([]))
+                            conn.send(payload);
                         }catch(e){
                             warn('Parsing response failed: '+e);
                             var dataToServer = {
@@ -272,7 +318,8 @@ function cbtSocket(api, params) {
                                 error: e,
                                 wsid: wsid
                             }
-                            conn.send(JSON.stringify(dataToServer));
+                            var payload = packData(dataToServer, Buffer.from([]))
+                            conn.send(payload);
                         }
                     }
                 });
@@ -346,11 +393,11 @@ function cbtSocket(api, params) {
                     var dataToServer = {
                         event: 'ack ack ack',
                         id : id,
-                        data : null,
                         finished : false,
                         wsid: wsid
                     }
-                    conn.send(JSON.stringify(dataToServer));
+                    var payload = packData(dataToServer, Buffer.from([]))
+                    conn.send(payload);
                     global.logger.debug('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                     sendLog('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                 });
@@ -362,11 +409,11 @@ function cbtSocket(api, params) {
                     var dataToServer = {
                         event: 'htmlrecv',
                         id : id,
-                        data : null,
                         finished : true,
                         wsid: wsid
                     }
-                    conn.send(JSON.stringify(dataToServer));
+                    var payload = packData(dataToServer, Buffer.from([]))
+                    conn.send(payload); 
                     connection_list[id].established=false;
                     client.end();
                     connection_list[id].ended=true;
@@ -376,18 +423,22 @@ function cbtSocket(api, params) {
                     if(socketExists(id)){
                         global.logger.debug('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
                         sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
+
+
                         var dataToServer = {
                             event: 'htmlrecv',
                             id : id,
-                            data : dataRcvd, 
                             finished : true,
                             wsid: wsid
                         }
+
+                        var payload = packData(dataToServer, dataRcvd)
+
                         self.isConnected(dataRcvd,id,function(err,connected){
                             if(err){
                                 throw err;
                             }else if(!err&&!connected){
-                                conn.send(JSON.stringify(dataToServer));
+                                conn.send(payload);
                                 global.logger.debug('TCP socket '+id+' internet data emitted to server.js!');
                                 sendLog('TCP socket '+id+' internet data emitted to server.js!');
                             }else if(connected){
@@ -405,11 +456,11 @@ function cbtSocket(api, params) {
                     var dataToServer = {
                         event: 'htmlrecv',
                         id : id,
-                        data : null,
                         finished : true,
                         wsid: wsid
                     }
-                    conn.send(JSON.stringify(dataToServer));
+                    var payload = packData(dataToServer, Buffer.from([]))
+                    conn.send(payload);
                     client.write('end');
                     client.end();
                     client.destroy();
@@ -427,11 +478,11 @@ function cbtSocket(api, params) {
                         var dataToServer = {
                             event: 'htmlrecv',
                             id : id,
-                            data : null,
                             finished : true,
                             wsid: wsid
                         }
-                        conn.send(JSON.stringify(dataToServer));
+                        var payload = packData(dataToServer, Buffer.from([]))
+                        conn.send(payload);
                         connection_list[id].established=false;
                         client.write('end');
                         client.end();
@@ -450,11 +501,11 @@ function cbtSocket(api, params) {
                         var dataToServer = {
                             event: 'htmlrecv',
                             id : id,
-                            data : null, 
                             finished : true,
                             wsid: wsid
                         }
-                        conn.send(JSON.stringify(dataToServer));
+                        var payload = packData(dataToServer, Buffer.from([]))
+                        conn.send(payload);
                         connection_list[id].established=false;
                         client.write('end');
                         client.end();
