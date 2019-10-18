@@ -28,35 +28,23 @@ function pad2(lengthNumber) {
 
 // takes an header object and packs it alongside binary blob
 function packData(obj, dataReceived) {
-    console.log(`packing data for cbt_tunnels`)
-    console.log(`header: ${JSON.stringify(obj)}`);
-    if (dataReceived){
-        console.log(`data:) ${dataReceived.toString()}`);
-    }
     var binaryObject = Buffer.from(JSON.stringify(obj));
     var paddedLength = pad2(String(binaryObject.byteLength));
-    // console.log(paddedLength)
     var objectLength = Buffer.from(paddedLength);
-    // console.log(objectLength.length);
     return Buffer.from(objectLength + binaryObject + dataReceived);
 }
 
 function unpackData(binaryData) {
     // look at first three bytes to get the length of the header
     var length = binaryData.slice(0,4);
-    // console.log(`length parsed from buffer: ${length.toString()}`);
     length = parseInt(length);
     var headerData = binaryData.slice(4, length+4);
-    //console.log(headerData.toString());
-    
-    //console.log(JSON.parse(headerData));
+
     headerData = JSON.parse(headerData);
     if (length + 4 == binaryData.byteLength){
         headerData.data = null;
     } else {
-     
            headerData.data = binaryData.slice(length+4, binaryData.byteLength);
-           console.log(`unpacked data from server.js: ${headerData.data.toString()}`)
     }
     return headerData;
 }
@@ -202,7 +190,6 @@ function cbtSocket(api, params) {
         conn.on('message',function(message){
             try{
                 msg = unpackData(message)
-                console.log(`Message from server.js: ${util.inspect(msg)}`)
                 self.handleMessage(msg);
             }catch(e){
                 warn(e.message);
@@ -342,7 +329,6 @@ function cbtSocket(api, params) {
     self.handleData = function(msg){
         var data = msg;
 
-        global.logger.info(`msg recevied from server: ${util.inspect(msg)}`);
         var id = msg.id;
         var wsid = msg.wsid;
 
@@ -422,13 +408,11 @@ function cbtSocket(api, params) {
                 client.on('data', function(dataRcvd){
                     if(socketExists(id)){
                         global.logger.debug('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
-                        sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
-
 
                         var dataToServer = {
                             event: 'htmlrecv',
                             id : id,
-                            finished : true,
+                            finished : false,
                             wsid: wsid
                         }
 
@@ -440,7 +424,6 @@ function cbtSocket(api, params) {
                             }else if(!err&&!connected){
                                 conn.send(payload);
                                 global.logger.debug('TCP socket '+id+' internet data emitted to server.js!');
-                                sendLog('TCP socket '+id+' internet data emitted to server.js!');
                             }else if(connected){
                                 connection_list[id].connected = true;
                             }
@@ -548,7 +531,6 @@ function cbtSocket(api, params) {
                         }
                         outbound+=1;
                         global.logger.debug('Wrote to TCP socket '+id);
-                        sendLog('Wrote to TCP socket '+id);
                     });
                 }else{
                     global.logger.debug('TLS error:');
@@ -671,7 +653,6 @@ function cbtSocket(api, params) {
                 }
                 outbound+=1;
                 global.logger.debug('Wrote to TCP socket '+id);
-                sendLog('Wrote to TCP socket '+id);
                 var connectedInterval = setInterval(function(){
                     if(connection_list[id].connected){
                         if(params.verbose){
