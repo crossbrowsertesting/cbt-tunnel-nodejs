@@ -49,10 +49,6 @@ function unpackData(binaryData) {
     return headerData;
 }
 
-function genDefParams() {
-
-}
-
 function cbtSocket(api, params) {
     var inbound;
     var outbound;
