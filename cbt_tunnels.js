@@ -31,7 +31,11 @@ function packData(obj, dataReceived) {
     var binaryObject = Buffer.from(JSON.stringify(obj));
     var paddedLength = pad2(String(binaryObject.byteLength));
     var objectLength = Buffer.from(paddedLength);
-    return Buffer.from(objectLength + binaryObject + dataReceived);
+    if (!dataReceived) {
+        return Buffer.concat([objectLength, binaryObject]);
+    }
+
+    return Buffer.concat([objectLength, binaryObject, dataReceived]);
 }
 
 function unpackData(binaryData) {
@@ -53,9 +57,6 @@ function cbtSocket(api, params) {
     var inbound;
     var outbound;
     var self = this;
-
-    global.logger.info(`in cbtSocket with: ${util.inspect(api)} and ${util.inspect(params)}`);
-
 
     var killLever = utils.killLever(self);
     params.context = self;
@@ -506,12 +507,9 @@ function cbtSocket(api, params) {
             }
             self.isTLSHello(connection_list[id],data.data,id,function(err){
                 if(!err){
-                    var bufferToSend = Buffer.from(data.data);
+                    var bufferToSend = Buffer.from(data.data.toJSON());
                     client.write(bufferToSend, function(err){
                         if(err){
-                            global.logger.debug('Error writing data to: ');
-                            global.logger.debug(util.inspect(client));
-                            global.logger.debug(util.inspect(err));
                             sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
                             var dataToServer = {
                                 event: 'htmlrecv',
@@ -623,7 +621,7 @@ function cbtSocket(api, params) {
 
     self.isTLSHello = function(connection,packet,id,cb){
         //&&(packet[4]===0x7C||packet[4]===0x7C)
-        if((packet[0]===0x16&&packet[5]===0x01)&&connection_list[id].manipulateHeaders){
+        if((packet[0]===22&&packet[5]===191 && connection_list[id].manipulateHeaders)){
             var client = connection.client;
             global.logger.debug(id+' This is a TLS HELLO! Sending CONNECT...');
             sendLog('Client found TLS hello on: '+id);
