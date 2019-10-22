@@ -18,7 +18,7 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-function pad2(lengthNumber) {
+function padHeaderLength(lengthNumber) {
     while (lengthNumber.length < 4) {
         lengthNumber = '0' + lengthNumber;
     }
@@ -29,7 +29,7 @@ function pad2(lengthNumber) {
 // takes an header object and packs it alongside binary blob
 function packData(obj, dataReceived) {
     var binaryObject = Buffer.from(JSON.stringify(obj));
-    var paddedLength = pad2(String(binaryObject.byteLength));
+    var paddedLength = padHeaderLength(String(binaryObject.byteLength));
     var objectLength = Buffer.from(paddedLength);
     if (!dataReceived) {
         return Buffer.concat([objectLength, binaryObject]);
