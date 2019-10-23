@@ -10,7 +10,8 @@ var net = require('net'),
     WebSocket = require('ws'),
     proxyAgent = require('https-proxy-agent'),
     os = require('os'),
-    crypto = require('crypto');
+    crypto = require('crypto'),
+    version = require('./package.json').version;
 
 function pad(n, width, z) {
     z = z || '0';
@@ -258,9 +259,10 @@ function cbtSocket(api, params) {
             case 'hello':
                 var dataToServer = {
                     event: 'established',
-                    wsid: wsid
+                    wsid: wsid,
                 }
-                var payload = packData(dataToServer, Buffer.from([]))
+                // versions of cbt_tunnels > 1.0.0 send their version to server.js on hello. - CC
+                var payload = packData(dataToServer, Buffer.from(version));
                 conn.send(payload);
                 break;
             case 'versions':
