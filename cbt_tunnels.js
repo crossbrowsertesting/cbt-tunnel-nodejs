@@ -117,7 +117,7 @@ function cbtSocket(api, params) {
         conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
     }else{
         global.logger.info(`self before creating WebSocket`, self.wsPath);
-        conn = self.conn = new WebSocket(self.wsPath,{});
+        conn = self.conn = new WebSocket(self.wsPath,{ perMessageDeflate: false });
     }
     self.conn.bufferType = "arraybuffer";
     if(!params.rejectUnauthorized){
