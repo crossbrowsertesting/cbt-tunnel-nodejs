@@ -45,7 +45,7 @@ module.exports = {
                 break;
             case 'local':
                 typeMsg = `
-                        This is local, fuck off. 
+                        Tunnel running locally.
                     `;
 
                 break;
