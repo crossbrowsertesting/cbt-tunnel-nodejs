@@ -10,7 +10,8 @@ var net = require('net'),
     WebSocket = require('ws'),
     proxyAgent = require('https-proxy-agent'),
     os = require('os'),
-    crypto = require('crypto');
+    crypto = require('crypto'),
+    version = require('./package.json').version;
 
 function pad(n, width, z) {
     z = z || '0';
@@ -18,10 +19,46 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+function padHeaderLength(lengthNumber) {
+    while (lengthNumber.length < 4) {
+        lengthNumber = '0' + lengthNumber;
+    }
+
+    return lengthNumber;
+}
+
+// takes an header object and packs it alongside binary blob
+function packData(obj, dataReceived) {
+    var binaryObject = Buffer.from(JSON.stringify(obj));
+    var paddedLength = padHeaderLength(String(binaryObject.byteLength));
+    var objectLength = Buffer.from(paddedLength);
+    if (!dataReceived) {
+        return Buffer.concat([objectLength, binaryObject]);
+    }
+
+    return Buffer.concat([objectLength, binaryObject, dataReceived]);
+}
+
+function unpackData(binaryData) {
+    // look at first three bytes to get the length of the header
+    var length = binaryData.slice(0,4);
+    length = parseInt(length);
+    var headerData = binaryData.slice(4, length+4);
+
+    headerData = JSON.parse(headerData);
+    if (length + 4 == binaryData.byteLength){
+        headerData.data = null;
+    } else {
+           headerData.data = binaryData.slice(length+4, binaryData.byteLength);
+    }
+    return headerData;
+}
+
 function cbtSocket(api, params) {
     var inbound;
     var outbound;
     var self = this;
+
     var killLever = utils.killLever(self);
     params.context = self;
 
@@ -68,16 +105,26 @@ function cbtSocket(api, params) {
 
     var tType = self.tType = params.tType;
     self.auth_header = (Buffer.from(params.username+':'+params.authkey)).toString('base64');
+
+    // not used elsewhere
     self.t = params.t;
     self.userId = params.userId;
     self.authkey = params.authkey;
     self.qPort = (params.bytecode ? pad((params.tcpPort-11000),3) : pad((params.tcpPort-11000), 3));
     self.wsPort = params.tcpPort+1000;
+
     self.cbtServer = 'https://'+params.cbtServer;
     self.cbtApp = 'https://'+params.urls.node;
     self.path = '/wsstunnel' + self.qPort + '/socket.io';
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
+
     self.wsPath = self.cbtServer+self.path+'?'+self.query;
+
+    if (global.isLocal) {
+        self.wsPath = params.wssUrl;
+        global.logger.info(`change wsPath to ${self.path}`);
+    }
+
     self.tunnelapi = params.urls.node+'/api/v3/tunnels/'+params.tid;
     var proxyAuthString = self.proxyAuthString = '';
     self.nokill = params.nokill;
@@ -85,6 +132,7 @@ function cbtSocket(api, params) {
         proxyAuthString = self.proxyAuthString = 'Proxy-Authorization: Basic ' + (Buffer.from(params.proxyUser + ':' + params.proxyPass)).toString('base64');
     }
     self.ready = params.ready;
+
     switch(tType){
         case 'simple':
             break;
@@ -104,8 +152,9 @@ function cbtSocket(api, params) {
         var agent = makeProxyAgent();
         conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
     }else{
-        conn = self.conn = new WebSocket(self.wsPath,{});
+        conn = self.conn = new WebSocket(self.wsPath,{ perMessageDeflate: false });
     }
+    self.conn.bufferType = "arraybuffer";
     if(!params.rejectUnauthorized){
         conn.rejectUnauthorized = false;
     }
@@ -115,7 +164,8 @@ function cbtSocket(api, params) {
             event:'clientLog',
             client_verbose_log: log
         }
-        conn.send(JSON.stringify(dataToServer));
+        var payload = packData(dataToServer, Buffer.from([]))
+        conn.send(payload);
     }
 
     self.start = function(cb){
@@ -134,7 +184,17 @@ function cbtSocket(api, params) {
         global.logger.debug('Started connection attempt!');
         conn.on('message',function(message){
             try{
-                msg = JSON.parse(message);
+                /*
+                    the first hello we get will be a string,
+                    we'll respond with a buffer, and from that
+                    point forward, we'll be talking buffers.
+                 */
+                if (_.isString(message)) {
+                    global.logger.debug("Incoming message is string");
+                    msg = JSON.parse(message);
+                } else {
+                    msg = unpackData(message)
+                }
                 self.handleMessage(msg);
             }catch(e){
                 warn(e.message);
@@ -206,9 +266,11 @@ function cbtSocket(api, params) {
             case 'hello':
                 var dataToServer = {
                     event: 'established',
-                    wsid: wsid
+                    wsid: wsid,
                 }
-                conn.send(JSON.stringify(dataToServer));
+                // versions of cbt_tunnels > 1.0.0 send their version to server.js on hello. - CC
+                var payload = packData(dataToServer, Buffer.from(version));
+                conn.send(payload);
                 break;
             case 'versions':
                 var checkResult = utils.checkVersion(msg,params);
@@ -228,10 +290,10 @@ function cbtSocket(api, params) {
                         var data = err;
                         var dataToServer = {
                             event: 'checkrecv',
-                            data: data,
                             wsid: wsid
                         }
-                        conn.send(JSON.stringify(dataToServer));
+                        var payload = packData(dataToServer, data)
+                        conn.send(payload);
                     } else {
                         try{
                             global.logger.debug('IP appears to CBT as: '+resp.ip);
@@ -240,7 +302,8 @@ function cbtSocket(api, params) {
                                 ip: resp.ip,
                                 wsid: wsid
                             }
-                            conn.send(JSON.stringify(dataToServer));
+                            var payload = packData(dataToServer, Buffer.from([]))
+                            conn.send(payload);
                         }catch(e){
                             warn('Parsing response failed: '+e);
                             var dataToServer = {
@@ -248,7 +311,8 @@ function cbtSocket(api, params) {
                                 error: e,
                                 wsid: wsid
                             }
-                            conn.send(JSON.stringify(dataToServer));
+                            var payload = packData(dataToServer, Buffer.from([]))
+                            conn.send(payload);
                         }
                     }
                 });
@@ -270,6 +334,7 @@ function cbtSocket(api, params) {
 
     self.handleData = function(msg){
         var data = msg;
+
         var id = msg.id;
         var wsid = msg.wsid;
 
@@ -320,11 +385,11 @@ function cbtSocket(api, params) {
                     var dataToServer = {
                         event: 'ack ack ack',
                         id : id,
-                        data : null,
                         finished : false,
                         wsid: wsid
                     }
-                    conn.send(JSON.stringify(dataToServer));
+                    var payload = packData(dataToServer, Buffer.from([]))
+                    conn.send(payload);
                     global.logger.debug('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                     sendLog('Created TCP socket: '+data._type+' '+host+' '+port+' '+id);
                 });
@@ -336,11 +401,11 @@ function cbtSocket(api, params) {
                     var dataToServer = {
                         event: 'htmlrecv',
                         id : id,
-                        data : null,
                         finished : true,
                         wsid: wsid
                     }
-                    conn.send(JSON.stringify(dataToServer));
+                    var payload = packData(dataToServer, Buffer.from([]))
+                    conn.send(payload); 
                     connection_list[id].established=false;
                     client.end();
                     connection_list[id].ended=true;
@@ -349,21 +414,22 @@ function cbtSocket(api, params) {
                 client.on('data', function(dataRcvd){
                     if(socketExists(id)){
                         global.logger.debug('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
-                        sendLog('TCP socket '+id+' received data: Port:'+port+' Host:'+host);
+
                         var dataToServer = {
                             event: 'htmlrecv',
                             id : id,
-                            data : dataRcvd, 
-                            finished : true,
+                            finished : false,
                             wsid: wsid
                         }
+
+                        var payload = packData(dataToServer, dataRcvd)
+
                         self.isConnected(dataRcvd,id,function(err,connected){
                             if(err){
                                 throw err;
                             }else if(!err&&!connected){
-                                conn.send(JSON.stringify(dataToServer));
+                                conn.send(payload);
                                 global.logger.debug('TCP socket '+id+' internet data emitted to server.js!');
-                                sendLog('TCP socket '+id+' internet data emitted to server.js!');
                             }else if(connected){
                                 connection_list[id].connected = true;
                             }
@@ -379,11 +445,11 @@ function cbtSocket(api, params) {
                     var dataToServer = {
                         event: 'htmlrecv',
                         id : id,
-                        data : null,
                         finished : true,
                         wsid: wsid
                     }
-                    conn.send(JSON.stringify(dataToServer));
+                    var payload = packData(dataToServer, Buffer.from([]))
+                    conn.send(payload);
                     client.write('end');
                     client.end();
                     client.destroy();
@@ -401,11 +467,11 @@ function cbtSocket(api, params) {
                         var dataToServer = {
                             event: 'htmlrecv',
                             id : id,
-                            data : null,
                             finished : true,
                             wsid: wsid
                         }
-                        conn.send(JSON.stringify(dataToServer));
+                        var payload = packData(dataToServer, Buffer.from([]))
+                        conn.send(payload);
                         connection_list[id].established=false;
                         client.write('end');
                         client.end();
@@ -424,11 +490,11 @@ function cbtSocket(api, params) {
                         var dataToServer = {
                             event: 'htmlrecv',
                             id : id,
-                            data : null, 
                             finished : true,
                             wsid: wsid
                         }
-                        conn.send(JSON.stringify(dataToServer));
+                        var payload = packData(dataToServer, Buffer.from([]))
+                        conn.send(payload);
                         connection_list[id].established=false;
                         client.write('end');
                         client.end();
@@ -450,12 +516,9 @@ function cbtSocket(api, params) {
             }
             self.isTLSHello(connection_list[id],data.data,id,function(err){
                 if(!err){
-                    var bufferToSend = Buffer.from(data.data);
+                    var bufferToSend = Buffer.from(data.data.toJSON());
                     client.write(bufferToSend, function(err){
                         if(err){
-                            global.logger.debug('Error writing data to: ');
-                            global.logger.debug(util.inspect(client));
-                            global.logger.debug(util.inspect(err));
                             sendLog('Error writing data to: '+util.inspect(client)+' '+util.inspect(err));
                             var dataToServer = {
                                 event: 'htmlrecv',
@@ -471,7 +534,6 @@ function cbtSocket(api, params) {
                         }
                         outbound+=1;
                         global.logger.debug('Wrote to TCP socket '+id);
-                        sendLog('Wrote to TCP socket '+id);
                     });
                 }else{
                     global.logger.debug('TLS error:');
@@ -568,7 +630,7 @@ function cbtSocket(api, params) {
 
     self.isTLSHello = function(connection,packet,id,cb){
         //&&(packet[4]===0x7C||packet[4]===0x7C)
-        if((packet[0]===0x16&&packet[5]===0x01)&&connection_list[id].manipulateHeaders){
+        if((packet[0]===22&&packet[5]===191 && connection_list[id].manipulateHeaders)){
             var client = connection.client;
             global.logger.debug(id+' This is a TLS HELLO! Sending CONNECT...');
             sendLog('Client found TLS hello on: '+id);
@@ -594,7 +656,6 @@ function cbtSocket(api, params) {
                 }
                 outbound+=1;
                 global.logger.debug('Wrote to TCP socket '+id);
-                sendLog('Wrote to TCP socket '+id);
                 var connectedInterval = setInterval(function(){
                     if(connection_list[id].connected){
                         if(params.verbose){

@@ -27,6 +27,7 @@ var encodeAuth = function(username, authkey){
 var makeApiCall = function(server, method, path, qs, username, authkey, callback){
     // this is a generic function to make different api calls to cbt
     // console.log(`about to make a ${method} request to ${server} at ${path} for ${username}`)
+
     var options = {
         url: server + '/api/v3/' + path,
         method: method,
@@ -38,6 +39,11 @@ var makeApiCall = function(server, method, path, qs, username, authkey, callback
         options.qs = qs;
     }
     request(options, (err, resp, body) => {
+        if (global.isLocal) {
+            global.logger.info('Running separately, error calling callback URL not thrown.');
+            return callback(null, {});
+        }
+
         if( err ){
             return callback(err);
         }

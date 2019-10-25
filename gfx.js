@@ -43,6 +43,12 @@ module.exports = {
                         + ' sites, use the domain "local" as opposed to '
                         + ' "localhost":\n\n\te.g. http://local';
                 break;
+            case 'local':
+                typeMsg = `
+                        Tunnel running locally.
+                    `;
+
+                break;
             default:
                 typeMsg = 'How did you get here...';
         }
