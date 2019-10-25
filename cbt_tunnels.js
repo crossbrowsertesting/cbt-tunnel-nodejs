@@ -171,8 +171,6 @@ function cbtSocket(api, params) {
         conn.send(payload);
     }
 
-
-
     self.start = function(cb){
 
         if(proxyAuthString !== ''){
@@ -189,7 +187,17 @@ function cbtSocket(api, params) {
         global.logger.debug('Started connection attempt!');
         conn.on('message',function(message){
             try{
-                msg = unpackData(message)
+                /*
+                    the first hello we get will be a string,
+                    we'll respond with a buffer, and from that
+                    point forward, we'll be talking buffers.
+                 */
+                if (_.isString(message)) {
+                    global.logger.info("Incoming message is string");
+                    msg = JSON.parse(message);
+                } else {
+                    msg = unpackData(message)
+                }
                 self.handleMessage(msg);
             }catch(e){
                 warn(e.message);
