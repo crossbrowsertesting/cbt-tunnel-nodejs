@@ -105,7 +105,6 @@ module.exports = function(username, authkey, test, dev){
             })
         },
         postTunnel: function(tunnelType, tunnelName, bypass, secret, acceptAllCerts, electron, directory, callback){
-            global.logger.info('In postTunnel');
             makeApiCall(server, 'POST', 'tunnels', {
                 tunnel_source: electron ? 'electron-app' : 'nodews',
                 tunnel_type: tunnelType,
@@ -116,7 +115,6 @@ module.exports = function(username, authkey, test, dev){
                 accept_all_certs: acceptAllCerts | 0,
                 ws: 1,
             } , username, authkey, (err, body) => {
-                global.logger.info('got response from postTunnel');
                 // console.log(JSON.stringify(body));
                 return callback(err, body);
             })

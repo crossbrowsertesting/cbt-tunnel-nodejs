@@ -144,9 +144,7 @@ var startConManTunnelViaApi = function(api, params, cb){
 }
 
 var startTunnel = function(api, params, cb){
-    global.logger.info(`startTunnel with api: ${util.inspect(api)} and params: ${util.inspect(params)}`);
     api.postTunnel(params.tType, params.tunnelName, params.bypass, params.secret, params.acceptAllCerts, params.electron, params.directory, function(err, postResult){
-        global.logger.info('Sent request to start tunnel!');
         if( err || (!global.isLocal && !postResult)){
             err = err ||  new Error("Post to CBT failed. Returned falsy value: " + postResult);
             return cb(err);
@@ -161,7 +159,6 @@ var startTunnel = function(api, params, cb){
         _.merge(params,opts);
         cbts = new cbtSocket(api, params);
 
-        global.logger.info('cbts.start')
         cbts.start(function(err,socket){
             if(!err && socket){
                 api.putTunnel(postResult.tunnel_id, params.tType, params.directory, params.proxyIp, params.proxyPort, params.electron, function(err,putResult){
@@ -356,7 +353,6 @@ module.exports = {
                 var api = Api(cmdArgs.username, cmdArgs.authkey, cmdArgs.test, cmdArgs.dev);
                 // debugger;
                 api.getAccountInfo(function(err, accountInfo){
-                    global.logger.info(`err: ${err}, accountInfo: ${accountInfo}`);
                     if (err){
                         // console.log('Authentication error! Please check your credentials and try again.');
                         warn('Authentication error! Please check your credentials and try again.');

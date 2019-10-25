@@ -118,8 +118,6 @@ function cbtSocket(api, params) {
     self.path = '/wsstunnel' + self.qPort + '/socket.io';
     self.query = 'userid=' + self.userId + '&authkey=' + self.authkey;
 
-    global.logger.info(`self.path: ${self.path}, self.query: ${self.query}`);
-
     self.wsPath = self.cbtServer+self.path+'?'+self.query;
 
     if (global.isLocal) {
@@ -154,7 +152,6 @@ function cbtSocket(api, params) {
         var agent = makeProxyAgent();
         conn = self.conn = new WebSocket(self.wsPath,{agent: agent});
     }else{
-        global.logger.info(`self before creating WebSocket`, self.wsPath);
         conn = self.conn = new WebSocket(self.wsPath,{ perMessageDeflate: false });
     }
     self.conn.bufferType = "arraybuffer";
@@ -193,7 +190,7 @@ function cbtSocket(api, params) {
                     point forward, we'll be talking buffers.
                  */
                 if (_.isString(message)) {
-                    global.logger.info("Incoming message is string");
+                    global.logger.debug("Incoming message is string");
                     msg = JSON.parse(message);
                 } else {
                     msg = unpackData(message)
