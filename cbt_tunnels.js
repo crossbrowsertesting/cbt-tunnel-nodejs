@@ -65,6 +65,44 @@ function cbtSocket(api, params) {
     self.tunnelId = params.tid;
     self.api = api;
 
+    function getInbound(){
+        return inbound;
+    }
+
+    function getOutbound(){
+        return outbound;
+    }
+
+    self.startStaticServer = function(attempt){
+        if (!attempt){ attempt = 0 };
+        self.localServe = require('express')();
+        self.serveDir = require('serve-index');
+        self.serveStatic = require('serve-static');
+        self.directory = params.directory;
+        var sPort = self.sPort = params.port || 8080+attempt;
+        self.localServe.use('/', self.serveDir(self.directory, {'icons': true, 'hidden': true, 'view':'details'}));
+        self.localServe.use('/', self.serveStatic(self.directory));
+        self.server = self.localServe.listen(sPort);
+        self.server.on('error',function(err){
+            if(err.code == 'EADDRINUSE' && attempt<9 && (!params.port)){
+                warn('Port '+(8080+attempt)+' in use');
+                self.startStaticServer(attempt+1);
+            }else if(attempt>=9){
+                warn('Tried serving local directory on ports 8080-8089--all appear to be in use. Please specify a custom port using the --port flag.');
+                self.endWrap();
+            }else if(params.port){
+                warn(params.port+' in use. Please choose a different port.');
+                self.endWrap();
+            }else{
+                warn('Error starting webserver.');
+                self.endWrap();
+            }
+        });
+        self.server.on('listening',function(){
+            global.logger.info('Server listening on port '+sPort+', serving '+self.directory+'.');
+        })
+    }
+
     var tType = self.tType = params.tType;
     self.auth_header = (Buffer.from(params.username+':'+params.authkey)).toString('base64');
 
@@ -133,43 +171,7 @@ function cbtSocket(api, params) {
         conn.send(payload);
     }
 
-    function getInbound(){
-        return inbound;
-    }
 
-    function getOutbound(){
-        return outbound;
-    }
-
-    self.startStaticServer = function(attempt){
-        if (!attempt){ attempt = 0 };
-        self.localServe = require('express')();
-        self.serveDir = require('serve-index');
-        self.serveStatic = require('serve-static');
-        self.directory = params.directory;
-        var sPort = self.sPort = params.port || 8080+attempt;
-        self.localServe.use('/', self.serveDir(self.directory, {'icons': true, 'hidden': true, 'view':'details'}));
-        self.localServe.use('/', self.serveStatic(self.directory));
-        self.server = self.localServe.listen(sPort);
-        self.server.on('error',function(err){
-            if(err.code == 'EADDRINUSE' && attempt<9 && (!params.port)){
-                warn('Port '+(8080+attempt)+' in use');
-                self.startStaticServer(attempt+1);
-            }else if(attempt>=9){
-                warn('Tried serving local directory on ports 8080-8089--all appear to be in use. Please specify a custom port using the --port flag.');
-                self.endWrap();
-            }else if(params.port){
-                warn(params.port+' in use. Please choose a different port.');
-                self.endWrap();
-            }else{
-                warn('Error starting webserver.');
-                self.endWrap();
-            }
-        });
-        self.server.on('listening',function(){
-            global.logger.info('Server listening on port '+sPort+', serving '+self.directory+'.');
-        })
-    }
 
     self.start = function(cb){
 
