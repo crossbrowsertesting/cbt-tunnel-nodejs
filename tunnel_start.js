@@ -432,6 +432,8 @@ module.exports = {
                                             global.logger.info('ready file written: '+params.ready);
                                         });
                                     })
+                                } else {
+                                    cb(null);
                                 }
                                 if(params.kill){
                                     setInterval(function(){
