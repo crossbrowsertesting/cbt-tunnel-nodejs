@@ -102,8 +102,8 @@ There are three options provided for you to do this:
             Scripted: 'cbt.start({"username":"USERNAME","authkey":"AUTHKEY","httpsProxy":"PROXYUSER:PROXYPASS@HTTPSPROXY"},function(err){ if(!err) do stuff })'
 
     Bypass:
-        Specify whether public-resolvable URLs should resolve direct (default/true behavior) or pass through
-        the tunnel (false behavior).
+        Specify whether public-resolvable URLs should resolve direct (true behavior) or pass through
+        the tunnel (default/false behavior).
  
         Basic Usage:
             Command line: '--bypass true' or '--bypass false'
