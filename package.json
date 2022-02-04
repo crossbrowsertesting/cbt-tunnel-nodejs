@@ -10,7 +10,7 @@
     "https-proxy-agent": "^3.0.1",
     "lodash": "4.17.15",
     "log4js": "3.0.3",
-    "request": "2.87.0",
+    "request": "2.88.0",
     "serve-index": "1.9.1",
     "serve-static": "1.13.2",
     "ws": "6.0.0",
